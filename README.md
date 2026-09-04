@@ -1,0 +1,3 @@
+# Kridge
+
+Welcome to Kridge.
