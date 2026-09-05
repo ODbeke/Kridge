@@ -6,23 +6,30 @@ import { Zap, Send, Code, Copy, Check, ShieldAlert, Cpu, Activity } from "lucide
 import { useKridgeStore } from "@/lib/store";
 import { formatTokens, formatCurrency } from "@/lib/utils";
 
+interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+  tokens?: number;
+  latencyMs?: number;
+}
+
 export default function PlaygroundPage() {
   const { rentals } = useKridgeStore();
-  const [selectedSubKey, setSelectedSubKey] = useState(
+  const [selectedSubKey, setSelectedSubKey] = useState<string>(
     rentals[0]?.subKey || "krdg_live_demo_claude_9a8f4c1e7b2d"
   );
   const activeRental = rentals.find((r) => r.subKey === selectedSubKey) || rentals[0];
-  const [prompt, setPrompt] = useState("Explain how GenLayer Intelligent Contracts reach consensus on subjective disputes.");
-  const [messages, setMessages] = useState([
+  const [prompt, setPrompt] = useState<string>("Explain how GenLayer Intelligent Contracts reach consensus on subjective disputes.");
+  const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: "Hello! I am connected through the Kridge Secure Proxy Gateway. Send a prompt to test inference speed and observe live token quota metering." }
   ]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastMeta, setLastMeta] = useState(null);
-  const [copiedCode, setCopiedCode] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [lastMeta, setLastMeta] = useState<any>(null);
+  const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
   const handleSendPrompt = async () => {
     if (!prompt.trim() || isLoading) return;
-    const userMessage = { role: "user", content: prompt };
+    const userMessage: ChatMessage = { role: "user", content: prompt };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setPrompt("");
@@ -39,8 +46,8 @@ export default function PlaygroundPage() {
       const meta = { promptTokens: data.usage?.prompt_tokens || 20, completionTokens: data.usage?.completion_tokens || 45, latencyMs: data.kridge_meta?.gateway_latency_ms || 142, receiptSignature: "SIG_0x" + Math.random().toString(16).substring(2, 10) };
       setLastMeta(meta);
       setMessages((prev) => [...prev, { role: "assistant", content: assistantReply, tokens: meta.completionTokens, latencyMs: meta.latencyMs }]);
-    } catch (e) {
-      setMessages((prev) => [...prev, { role: "system", content: "Gateway Error: " + e.message }]);
+    } catch (e: any) {
+      setMessages((prev) => [...prev, { role: "system", content: "Gateway Error: " + (e?.message || "Unknown error") }]);
     } finally { setIsLoading(false); }
   };
 
@@ -78,7 +85,7 @@ export default function PlaygroundPage() {
           </div>
           <div className="border-t border-white/10 p-4 bg-black/40">
             <form onSubmit={(e) => { e.preventDefault(); handleSendPrompt(); }} className="flex gap-2">
-              <input type="text" placeholder="Ask anything or test prompt completion..." value="prompt" onChange={(e) => setPrompt(e.target.value)} value={prompt} disabled={isLoading} className="flex-1 rounded-xl border border-white/10 bg-[#080B10] px-4 py-2.5 text-xs text-white placeholder:text-zinc-500 focus:border-cyan-500 focus:outline-none font-mono" />
+              <input type="text" placeholder="Ask anything or test prompt completion..." value={prompt} onChange={(e) => setPrompt(e.target.value)} disabled={isLoading} className="flex-1 rounded-xl border border-white/10 bg-[#080B10] px-4 py-2.5 text-xs text-white placeholder:text-zinc-500 focus:border-cyan-500 focus:outline-none font-mono" />
               <button type="submit" disabled={isLoading || !prompt.trim()} className="flex items-center gap-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-bold px-4 py-2.5 text-xs transition-colors"><Send className="h-3.5 w-3.5" /><span>Send</span></button>
             </form>
           </div>
@@ -110,7 +117,7 @@ export default function PlaygroundPage() {
                 {copiedCode ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}<span>{copiedCode ? "Copied" : "Copy Code"}</span>
               </button>
             </div>
-            <pre className="rounded-xl bg-black/60 p-3.5 font-mono text-[11px] text-zinc-300 overflow-x-auto leading-relaxed border border-white/5 whitespace-pre-wrap"><code>{`from openai import OpenAI\n\nclient = OpenAI(\n    api_key="${selectedSubKey}",\n    base_url="http://localhost:3000/api/proxy/v1"\n)\n\nresponse = client.chat.completions.create(\n    model="${activeRental?.modelFamily || claude-3-5-sonnet}",\n    messages=[{"role": "user", "content": "Hello Kridge!"}]\n)\nprint(response.choices[0].message.content)`}</code></pre>
+            <pre className="rounded-xl bg-black/60 p-3.5 font-mono text-[11px] text-zinc-300 overflow-x-auto leading-relaxed border border-white/5 whitespace-pre-wrap"><code>{`from openai import OpenAI\n\nclient = OpenAI(\n    api_key="${selectedSubKey}",\n    base_url="http://localhost:3000/api/proxy/v1"\n)\n\nresponse = client.chat.completions.create(\n    model="${activeRental?.modelFamily || 'claude-3-5-sonnet'}",\n    messages=[{"role": "user", "content": "Hello Kridge!"}]\n)\nprint(response.choices[0].message.content)`}</code></pre>
           </div>
         </div>
       </div>

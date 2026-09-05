@@ -30,7 +30,7 @@ export default function AgenticPage() {
     "[00:00:01] Autonomous task: Scraping and summarizing daily DeFi governance proposals.",
     "[00:00:02] Local OpenAI balance check: 0 tokens remaining (QUOTA_DEPLETED)."
   ]);
-  const [copiedEndpoint, setCopiedEndpoint] = useState(null);
+  const [copiedEndpoint, setCopiedEndpoint] = useState<string | null>(null);
 
   const runAgentSimulation = async () => {
     setIsSimulating(true);
@@ -68,7 +68,7 @@ export default function AgenticPage() {
     setIsSimulating(false);
   };
 
-  const copyToClipboard = (text, key) => {
+  const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedEndpoint(key);
     setTimeout(() => setCopiedEndpoint(null), 2000);
