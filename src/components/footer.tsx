@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Cpu, Github, Twitter, ShieldCheck, Zap, Award } from "lucide-react";
+import { Cpu, ShieldCheck, Zap, Award, ExternalLink } from "lucide-react";
 
 export function Footer() {
   return (
@@ -47,7 +47,7 @@ export function Footer() {
               <li><Link href="/bridge" className="hover:text-cyan-400 transition-colors">Hyperlane Cross-Chain</Link></li>
               <li>
                 <a href="https://github.com/ODbeke/Kridge" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-cyan-400 transition-colors">
-                  <Github className="h-3.5 w-3.5" /> GitHub Repository
+                  <ExternalLink className="h-3.5 w-3.5" /> GitHub Repository
                 </a>
               </li>
               <li>
