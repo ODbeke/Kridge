@@ -1,0 +1,34 @@
+{
+  "name": "Kridge Protocol Deployments",
+  "networks": {
+    "genlayer-testnet": {
+      "chainId": "genlayer-1",
+      "rpc": "https://testnet.genlayer.network",
+      "contracts": {
+        "KridgeMarketplace": "0x4A29B3f631C81c818105B01e51C47Ea2D6F59102",
+        "Treasury": "0xKridgeTreasury_GenLayer",
+        "HyperlaneAdapter": "0x7F2B36D36eF59C759882Fe77CfaeF91D3b697851"
+      }
+    },
+    "base-sepolia": {
+      "chainId": 84532,
+      "rpc": "https://sepolia.base.org",
+      "contracts": {
+        "KridgeHyperlaneReceiver": "0x91834eC952136067C0877994EAbFE89a05F4A801",
+        "HyperlaneMailbox": "0x8B7E9F90aA2A944C3c57D7A04E85817AcFF0B6E6"
+      }
+    },
+    "zksync-sepolia": {
+      "chainId": 300,
+      "rpc": "https://sepolia.era.zksync.dev",
+      "contracts": {
+        "KridgeHyperlaneReceiver": "0x12a99C048A463c647b0197dFa36D4FF3924f7988",
+        "HyperlaneMailbox": "0x367F4F718B63273eE14631D1f0E38676aFdFF53B"
+      }
+    },
+    "solana-devnet": {
+      "cluster": "devnet",
+      "programId": "KrdgSolanaMailboxReceiver11111111111111111"
+    }
+  }
+}
