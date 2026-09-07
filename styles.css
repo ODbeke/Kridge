@@ -164,7 +164,7 @@ body.menu-open {
   height: 100dvh;
   max-height: 100vh;
   max-height: 100dvh;
-  padding: clamp(12px, 2.2vh, 24px) clamp(16px, 3vw, 32px) clamp(12px, 2vh, 20px);
+  padding: clamp(14px, 2.5vh, 26px) clamp(16px, 3vw, 32px) clamp(28px, 5.5vh, 56px);
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -490,6 +490,7 @@ body.menu-open {
   flex-shrink: 0;
   z-index: 1;
   padding-top: 0;
+  margin-bottom: clamp(10px, 2vh, 24px);
 }
 
 .stats-grid {
