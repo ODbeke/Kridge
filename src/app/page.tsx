@@ -80,8 +80,8 @@ export default function LandingPage() {
   }, []);
 
   const navItems = [
-    { name: "Explore Market", href: "/explore", icon: Layers },
-    { name: "Sell / Donate", href: "/sell", icon: PlusCircle },
+    { name: "Explore", href: "/explore", icon: Layers },
+    { name: "Sell Quota", href: "/sell", icon: PlusCircle },
     { name: "Playground", href: "/playground", icon: Play },
     { name: "AI Tribunal", href: "/tribunal", icon: Scale },
     { name: "Impact Badges", href: "/impact", icon: Award },
@@ -112,7 +112,7 @@ export default function LandingPage() {
         {/* 1. Header (Top) */}
         <header className="header">
           <Link href="/" className="logo" aria-label="Home" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            <img src="/assets/logo.webp" alt="Kridge Logo" width="52" height="52" />
+            <img src="/assets/logo.svg" alt="Kridge Logo" width="30" height="30" />
           </Link>
 
           <nav className="desktop-nav" aria-label="Main Navigation">
@@ -132,7 +132,8 @@ export default function LandingPage() {
             className="desktop-signin"
             onClick={() => setWalletModalOpen(true)}
           >
-            {connectedWallet ? connectedWallet : "Connect Wallet"}
+            <Wallet className="w-3.5 h-3.5 text-cyan-400" />
+            <span>{connectedWallet ? connectedWallet : "Connect Wallet"}</span>
           </button>
 
           <button
