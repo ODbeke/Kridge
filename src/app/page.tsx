@@ -14,6 +14,7 @@ import {
   Wallet,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
   Cpu,
   Bot,
   Scale,
@@ -224,24 +225,22 @@ export default function LandingPage() {
           </p>
 
           {/* Action CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <Link href="/explore" className="cta anim" style={{ "--d": "0.4s" } as React.CSSProperties}>
-              Explore Marketplace
+          <div className="hero-actions anim" style={{ "--d": "0.38s" } as React.CSSProperties}>
+            <Link href="/explore" className="cta">
+              <span>Explore Marketplace</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link
-              href="/sell"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium text-sm transition-all hover:scale-105"
-            >
-              <DollarSign className="w-4 h-4 text-emerald-400 mr-1.5" />
+            <Link href="/sell" className="cta-secondary">
+              <DollarSign className="w-4 h-4 text-emerald-400" />
               <span>List Credits (Rent / Free)</span>
             </Link>
           </div>
         </main>
 
-        {/* 3. Stats Footer (Bottom) */}
+        {/* 3. Stats Footer (Bottom of Hero Viewport) */}
         <footer className="stats">
           <div className="stats-grid">
-            <Link href="/explore" className="stat-item anim" style={{ "--d": "0.5s" } as React.CSSProperties}>
+            <Link href="/explore" className="stat-item anim" style={{ "--d": "0.48s" } as React.CSSProperties}>
               <span className="stat-icon">&lt;</span>
               <div className="stat-content">
                 <span className="stat-value">{stats.discount}</span>
@@ -249,7 +248,7 @@ export default function LandingPage() {
               </div>
             </Link>
 
-            <Link href="/sell" className="stat-item anim" style={{ "--d": "0.58s" } as React.CSSProperties}>
+            <Link href="/sell" className="stat-item anim" style={{ "--d": "0.54s" } as React.CSSProperties}>
               <span className="stat-icon">%</span>
               <div className="stat-content">
                 <span className="stat-value">{stats.sellerYield}</span>
@@ -257,7 +256,7 @@ export default function LandingPage() {
               </div>
             </Link>
 
-            <Link href="/tribunal" className="stat-item anim" style={{ "--d": "0.66s" } as React.CSSProperties}>
+            <Link href="/tribunal" className="stat-item anim" style={{ "--d": "0.60s" } as React.CSSProperties}>
               <span className="stat-icon">*</span>
               <div className="stat-content">
                 <span className="stat-value">{stats.bond}</span>
@@ -265,7 +264,7 @@ export default function LandingPage() {
               </div>
             </Link>
 
-            <Link href="/impact" className="stat-item anim" style={{ "--d": "0.74s" } as React.CSSProperties}>
+            <Link href="/impact" className="stat-item anim" style={{ "--d": "0.66s" } as React.CSSProperties}>
               <span className="stat-icon">#</span>
               <div className="stat-content">
                 <span className="stat-value">{stats.badges}</span>
@@ -273,23 +272,41 @@ export default function LandingPage() {
               </div>
             </Link>
           </div>
+
+          {/* Smooth Scroll Down Indicator */}
+          <div className="flex justify-center pt-4 pb-1">
+            <a
+              href="#architecture"
+              className="inline-flex items-center gap-1.5 text-[11px] font-mono text-gray-400/80 hover:text-cyan-400 transition-colors px-3 py-1 rounded-full bg-white/5 border border-white/5 hover:border-cyan-500/30 backdrop-blur-sm"
+            >
+              <span>Explore Architecture & Mechanics</span>
+              <ChevronDown className="w-3 h-3 animate-bounce" />
+            </a>
+          </div>
         </footer>
       </div>
 
       {/* Interactive Below-the-Fold Feature Explorer (Smooth Scrollable) */}
-      <section className="relative z-10 w-full max-w-6xl mx-auto px-4 py-20 space-y-16">
+      <section id="architecture" className="relative z-10 w-full max-w-6xl mx-auto px-4 pt-28 pb-24 space-y-16">
         
-        {/* Section Title */}
-        <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs font-mono text-cyan-400">
+        {/* Section Divider Badge */}
+        <div className="relative flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/10" />
+          </div>
+          <div className="relative px-4 bg-black text-xs font-mono text-cyan-400 tracking-wider flex items-center gap-2">
             <Cpu className="w-3.5 h-3.5" />
             <span>HOW KRIDGE OPERATES</span>
           </div>
+        </div>
+
+        {/* Section Title */}
+        <div className="text-center space-y-3">
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
             Zero Raw Key Exposure. 100% On-Chain Settlement.
           </h2>
-          <p className="text-sm text-gray-400 max-w-2xl mx-auto">
-            Combining GenLayer web-connected intelligent contracts, ephemeral sub-key proxy routing, and Hyperlane multi-chain bridges.
+          <p className="text-sm text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            Combining GenLayer web-connected intelligent contracts, ephemeral sub-key proxy routing, and Hyperlane multi-chain bridges across Base, zkSync, and Solana.
           </p>
         </div>
 
