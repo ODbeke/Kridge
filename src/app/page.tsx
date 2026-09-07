@@ -103,6 +103,7 @@ export default function LandingPage() {
             type="video/mp4"
           />
         </video>
+        <div className="bg-overlay" aria-hidden="true" />
       </div>
 
       {/* Main Single Viewport Hero Region */}
