@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initCountUp();
   initMobileMenu();
   initNavLinks();
+  initModals();
 });
 
 /**
@@ -15,7 +16,6 @@ function initCountUp() {
   if (!statItems.length) return;
 
   const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-
   let hasAnimated = false;
 
   const startAnimation = () => {
@@ -55,7 +55,6 @@ function initCountUp() {
     });
   };
 
-  // IntersectionObserver threshold 0.25 (with immediate fallback)
   if ("IntersectionObserver" in window) {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -94,14 +93,12 @@ function initMobileMenu() {
     burgerBtn.setAttribute("aria-expanded", "true");
     mobileMenu.removeAttribute("hidden");
     mobileOverlay.removeAttribute("hidden");
-    document.body.classList.add("menu-open");
   }
 
   function closeMenu() {
     burgerBtn.setAttribute("aria-expanded", "false");
     mobileMenu.setAttribute("hidden", "");
     mobileOverlay.setAttribute("hidden", "");
-    document.body.classList.remove("menu-open");
   }
 
   function toggleMenu() {
@@ -116,22 +113,19 @@ function initMobileMenu() {
   burgerBtn.addEventListener("click", toggleMenu);
   mobileOverlay.addEventListener("click", closeMenu);
 
-  // Close on Escape key press
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && burgerBtn.getAttribute("aria-expanded") === "true") {
       closeMenu();
     }
   });
 
-  // Close menu on mobile link click
-  const mobileLinks = mobileMenu.querySelectorAll("a");
+  const mobileLinks = mobileMenu.querySelectorAll("a, button");
   mobileLinks.forEach((link) => {
     link.addEventListener("click", () => {
       closeMenu();
     });
   });
 
-  // Automatically close mobile menu if resized to desktop viewport
   window.addEventListener("resize", () => {
     if (window.innerWidth > 720 && burgerBtn.getAttribute("aria-expanded") === "true") {
       closeMenu();
@@ -152,14 +146,32 @@ function initNavLinks() {
   }
 
   desktopLinks.forEach((link) => {
-    link.addEventListener("click", (e) => {
+    link.addEventListener("click", () => {
       handleActiveState(desktopLinks, link);
     });
   });
 
   mobileLinks.forEach((link) => {
-    link.addEventListener("click", (e) => {
+    link.addEventListener("click", () => {
       handleActiveState(mobileLinks, link);
+    });
+  });
+}
+
+/**
+ * 4) Interactive Modals & Click Handlers
+ */
+function initModals() {
+  const signinBtns = document.querySelectorAll(".desktop-signin, .mobile-signin");
+  signinBtns.forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      // If href is not standard URL, prompt wallet connect
+      if (!btn.getAttribute("href") || btn.getAttribute("href").startsWith("#")) {
+        const addr = prompt("Connect Web3 Wallet (Enter public address or click OK to simulate):", "0x71C840...392B");
+        if (addr) {
+          btn.textContent = addr.substring(0, 6) + "..." + addr.slice(-4);
+        }
+      }
     });
   });
 }

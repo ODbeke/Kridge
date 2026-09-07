@@ -32,9 +32,11 @@
 
 html, body {
   width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: smooth;
   background-color: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
@@ -48,11 +50,14 @@ body.menu-open {
 
 /* Full-viewport Background Video */
 .bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
   background-color: #000000;
   overflow: hidden;
   z-index: 0;
+  pointer-events: none;
 }
 
 .bg-video {
@@ -68,15 +73,15 @@ body.menu-open {
 /* Single Viewport Page (3 Vertical Regions) */
 .page {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  height: 100vh;
-  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
   padding: clamp(16px, 2.4vh, 28px) clamp(14px, 3vw, 32px);
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 /* ==========================================================================
@@ -729,4 +734,17 @@ body.menu-open {
     transform: none !important;
     filter: none !important;
   }
+}
+
+
+/* Clickable Enhancements */
+.header, .hero, .stats, .cta, .nav-link, .desktop-signin, .logo, .mobile-burger, .mobile-nav-link, .mobile-signin, .trust-avatar, .stat-item {
+  pointer-events: auto !important;
+  cursor: pointer;
+  position: relative;
+  z-index: 20;
+}
+
+.logo img {
+  pointer-events: none;
 }
