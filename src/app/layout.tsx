@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "../styles/globals.css";
+import { LayoutWrapper } from "@/components/layout-wrapper";
 
 export const metadata: Metadata = {
-  title: "Intelligence Designed To Evolve",
-  description: "Build applications that reason, adapt and collaborate using a modular AI platform designed for production.",
+  title: "Kridge | Decentralized AI API Credit Marketplace & Faucet",
+  description: "Stop wasting unused AI subscriptions. Rent or donate expiring API quota to developers and autonomous AI agents. Powered by GenLayer Intelligent Contracts and Hyperlane.",
 };
 
 export default function RootLayout({
@@ -12,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         {/* Inter UI Font */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -37,8 +38,8 @@ export default function RootLayout({
           referrerPolicy="no-referrer"
         />
       </head>
-      <body>
-        {children}
+      <body className="min-h-screen bg-[#000000] text-zinc-100 overflow-x-hidden">
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );
