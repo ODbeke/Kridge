@@ -14,7 +14,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#080B10] text-zinc-100 flex flex-col selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="min-h-screen bg-[#000000] text-zinc-100 flex flex-col selection:bg-white/20 selection:text-white">
       <Navbar />
       <main className="flex-1 w-full">{children}</main>
       <Footer />

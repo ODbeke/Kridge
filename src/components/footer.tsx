@@ -4,19 +4,19 @@ import { Cpu, ShieldCheck, Zap, Award, ExternalLink } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="border-t border-white/10 bg-[#06080C] text-zinc-400 text-xs">
+    <footer className="border-t border-white/[0.08] bg-black text-zinc-400 text-xs">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-2">
-              <Cpu className="h-5 w-5 text-cyan-400" />
-              <span className="text-base font-bold text-white tracking-wider">KRIDGE NETWORK</span>
+              <span className="text-base font-extrabold text-white tracking-wider">KRIDGE</span>
+              <span className="text-[10px] font-mono text-zinc-500 uppercase">AI API Credit Market</span>
             </div>
-            <p className="text-zinc-400 max-w-md leading-relaxed">
-              Decentralized AI API Credit Marketplace & Public Compute Faucet. Powered by 
-              <strong className="text-white"> GenLayer Intelligent Contracts</strong> for real-time validator key health checks,
-              AI-driven dispute arbitration, and cross-chain settlement via <strong className="text-white">Hyperlane</strong>.
+            <p className="text-zinc-400 max-w-md leading-relaxed text-xs">
+              Decentralized AI API credit marketplace & public compute faucet. Powered by 
+              <strong className="text-zinc-200 font-medium"> GenLayer Smart Contracts</strong> for validator key health checks,
+              dispute arbitration, and cross-chain settlement.
             </p>
             <div className="flex flex-wrap items-center gap-2.5 pt-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400 border border-emerald-500/20">
