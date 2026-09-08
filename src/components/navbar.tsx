@@ -68,7 +68,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden xl:flex items-center gap-1 bg-white/5 border border-white/10 p-1 rounded-full backdrop-blur-md">
+          <nav className="hidden lg:flex items-center gap-1 bg-white/5 border border-white/10 p-1 rounded-full backdrop-blur-md">
             {NAV_LINKS.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
@@ -76,7 +76,7 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-1.5 rounded-full px-2.5 xl:px-3 py-1.5 text-[11px] xl:text-xs font-medium whitespace-nowrap transition-all ${
                     isActive
                       ? "bg-white/15 text-white shadow-sm border border-white/10"
                       : "text-zinc-400 hover:bg-white/10 hover:text-white"
@@ -142,7 +142,7 @@ export function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden flex items-center justify-center h-9 w-9 rounded-full bg-white/5 border border-white/10 text-zinc-300 hover:text-white"
+            className="lg:hidden flex items-center justify-center h-9 w-9 rounded-full bg-white/5 border border-white/10 text-zinc-300 hover:text-white"
           >
             {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
@@ -152,7 +152,7 @@ export function Navbar() {
 
       {/* Mobile Menu Sheet */}
       {mobileMenuOpen && (
-        <div className="xl:hidden border-t border-white/10 bg-[#080B10] px-4 py-3 space-y-1 animate-in slide-in-from-top-2 duration-200">
+        <div className="lg:hidden border-t border-white/10 bg-[#080B10] px-4 py-3 space-y-1 animate-in slide-in-from-top-2 duration-200">
           {NAV_LINKS.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
