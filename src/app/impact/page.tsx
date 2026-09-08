@@ -79,7 +79,7 @@ export default function ImpactPage() {
 
         <Link
           href="/sell"
-          className="flex items-center space-x-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2.5 text-xs font-bold text-black shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-all self-start sm:self-auto"
+          className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2.5 text-xs font-bold text-black shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-all self-start sm:self-auto"
         >
           <HeartHandshake className="h-4 w-4" />
           <span>Donate AI Credits</span>

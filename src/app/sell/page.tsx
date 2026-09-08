@@ -399,7 +399,7 @@ export default function SellPage() {
               type="button"
               onClick={handlePublish}
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center space-x-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 hover:scale-[1.01] transition-all"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 hover:scale-[1.01] transition-all"
             >
               <Sparkles className="h-4 w-4" />
               <span>

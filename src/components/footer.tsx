@@ -9,7 +9,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           
           <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <Cpu className="h-5 w-5 text-cyan-400" />
               <span className="text-base font-bold text-white tracking-wider">KRIDGE NETWORK</span>
             </div>
@@ -18,7 +18,7 @@ export function Footer() {
               <strong className="text-white"> GenLayer Intelligent Contracts</strong> for real-time validator key health checks,
               AI-driven dispute arbitration, and cross-chain settlement via <strong className="text-white">Hyperlane</strong>.
             </p>
-            <div className="flex items-center space-x-4 pt-2">
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400 border border-emerald-500/20">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
                 GenLayer Validators: Live
@@ -64,7 +64,7 @@ export function Footer() {
           <p className="text-zinc-500 text-[11px]">
             © {new Date().getFullYear()} Kridge Protocol. Built for the GenLayer Hackathon.
           </p>
-          <div className="flex items-center space-x-6 text-[11px] text-zinc-500">
+          <div className="flex items-center gap-6 text-[11px] text-zinc-500">
             <span>5% Marketplace Protocol Take Rate</span>
             <span>$1.00 Anti-Spam Bond Protection</span>
           </div>

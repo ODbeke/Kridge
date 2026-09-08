@@ -113,7 +113,7 @@ export default function ExplorePage() {
 
         <Link
           href="/sell"
-          className="flex items-center space-x-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all self-start md:self-auto"
+          className="flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all self-start md:self-auto hover:scale-105"
         >
           <span>List Your Credits</span>
           <ArrowRight className="h-3.5 w-3.5" />
@@ -127,7 +127,7 @@ export default function ExplorePage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setSelectedType("ALL")}
-            className={`rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition-all ${
               selectedType === "ALL"
                 ? "bg-white text-black shadow-md"
                 : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
@@ -138,7 +138,7 @@ export default function ExplorePage() {
 
           <button
             onClick={() => setSelectedType("RENT")}
-            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
               selectedType === "RENT"
                 ? "bg-cyan-500 text-black shadow-md shadow-cyan-500/20"
                 : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
@@ -150,7 +150,7 @@ export default function ExplorePage() {
 
           <button
             onClick={() => setSelectedType("DONATION")}
-            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
               selectedType === "DONATION"
                 ? "bg-emerald-500 text-black shadow-md shadow-emerald-500/20"
                 : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
@@ -165,14 +165,14 @@ export default function ExplorePage() {
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
           
           {/* Search Bar */}
-          <div className="sm:col-span-6 relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <div className="sm:col-span-6 relative flex items-center">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search by model (e.g. Claude 3.5, GPT-4o, Llama-3.3, Gemini)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#0E131F] pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-zinc-500 focus:border-cyan-500 focus:outline-none transition-colors"
+              className="w-full h-11 rounded-xl border border-white/10 bg-[#0E131F] pl-10 pr-4 text-xs text-white placeholder:text-zinc-500 focus:border-cyan-500 focus:outline-none transition-colors"
             />
           </div>
 
@@ -181,10 +181,10 @@ export default function ExplorePage() {
             <select
               value={selectedProvider}
               onChange={(e) => setSelectedProvider(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#0E131F] px-3.5 py-2.5 text-xs text-zinc-300 focus:border-cyan-500 focus:outline-none"
+              className="w-full h-11 rounded-xl border border-white/10 bg-[#0E131F] px-3.5 text-xs text-zinc-300 focus:border-cyan-500 focus:outline-none cursor-pointer"
             >
               {PROVIDER_OPTIONS.map((p) => (
-                <option key={p.id} value={p.id}>
+                <option key={p.id} value={p.id} className="bg-[#0E131F] text-white">
                   {p.icon} {p.name}
                 </option>
               ))}
@@ -196,12 +196,12 @@ export default function ExplorePage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="w-full rounded-xl border border-white/10 bg-[#0E131F] px-3.5 py-2.5 text-xs text-zinc-300 focus:border-cyan-500 focus:outline-none"
+              className="w-full h-11 rounded-xl border border-white/10 bg-[#0E131F] px-3.5 text-xs text-zinc-300 focus:border-cyan-500 focus:outline-none cursor-pointer"
             >
-              <option value="discount">Highest Discount %</option>
-              <option value="cheapest">Lowest Price ($)</option>
-              <option value="quota">Highest Available Quota</option>
-              <option value="expiring">Expiring Soonest</option>
+              <option value="discount" className="bg-[#0E131F] text-white">Highest Discount %</option>
+              <option value="cheapest" className="bg-[#0E131F] text-white">Lowest Price ($)</option>
+              <option value="quota" className="bg-[#0E131F] text-white">Highest Available Quota</option>
+              <option value="expiring" className="bg-[#0E131F] text-white">Expiring Soonest</option>
             </select>
           </div>
 

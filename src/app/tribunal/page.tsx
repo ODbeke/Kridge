@@ -87,7 +87,7 @@ export default function TribunalPage() {
 
         <button
           onClick={() => setFilingModalOpen(true)}
-          className="flex items-center space-x-2 rounded-xl border border-rose-500/40 bg-rose-950/20 px-5 py-2.5 text-xs font-bold text-rose-300 hover:bg-rose-950/40 transition-all self-start sm:self-auto"
+          className="flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-950/20 px-5 py-2.5 text-xs font-bold text-rose-300 hover:bg-rose-950/40 transition-all self-start sm:self-auto hover:scale-105"
         >
           <ShieldAlert className="h-3.5 w-3.5 text-rose-400" />
           <span>File New Dispute ($1.00 Bond)</span>

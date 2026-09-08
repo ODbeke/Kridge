@@ -61,7 +61,7 @@ export default function PlaygroundPage() {
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Proxy Playground & Key Console</h1>
           <p className="text-zinc-400 text-sm mt-1">Test prompt execution in real-time, inspect token stream deduction, and export SDK snippets.</p>
         </div>
-        <Link href="/tribunal" className="flex items-center space-x-2 rounded-xl border border-rose-500/40 bg-rose-950/20 px-4 py-2.5 text-xs font-bold text-rose-300 hover:bg-rose-950/40 transition-all self-start sm:self-auto">
+        <Link href="/tribunal" className="flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-950/20 px-4 py-2.5 text-xs font-bold text-rose-300 hover:bg-rose-950/40 transition-all self-start sm:self-auto">
           <ShieldAlert className="h-3.5 w-3.5 text-rose-400" /><span>File Dispute on GenLayer</span>
         </Link>
       </div>
