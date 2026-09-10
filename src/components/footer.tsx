@@ -1,73 +1,106 @@
 import React from "react";
 import Link from "next/link";
-import { Cpu, ShieldCheck, Zap, Award, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="border-t border-white/[0.08] bg-black text-zinc-400 text-xs">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-          
-          <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="text-base font-extrabold text-white tracking-wider">KRIDGE</span>
-              <span className="text-[10px] font-mono text-zinc-500 uppercase">AI API Credit Market</span>
+    <footer className="bg-black text-zinc-400 font-sans border-t border-white/[0.08]">
+      
+      {/* Top Banner (Logo + Nav + CTAs) */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-b border-white/[0.08]">
+        <div className="py-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <Link href="/" className="flex items-center gap-3 shrink-0">
+            <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center p-1.5">
+              <img src="/assets/logo.svg" alt="Kridge" className="w-full h-full object-contain" />
             </div>
-            <p className="text-zinc-400 max-w-md leading-relaxed text-xs">
-              Decentralized AI API credit marketplace & public compute faucet. Powered by 
-              <strong className="text-zinc-200 font-medium"> GenLayer Smart Contracts</strong> for validator key health checks,
-              dispute arbitration, and cross-chain settlement.
-            </p>
-            <div className="flex flex-wrap items-center gap-2.5 pt-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400 border border-emerald-500/20">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                GenLayer Validators: Live
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-medium text-blue-400 border border-blue-500/20">
-                Hyperlane Interchain: Ready
-              </span>
+            <span className="text-white text-xl font-black tracking-tight">Kridge</span>
+          </Link>
+
+          <nav className="hidden md:flex items-center gap-8 text-sm text-zinc-400 font-medium">
+            <Link href="/explore" className="hover:text-white transition-colors">Marketplace</Link>
+            <Link href="/sell" className="hover:text-white transition-colors">List Quota</Link>
+            <Link href="/playground" className="hover:text-white transition-colors">Playground</Link>
+            <Link href="/tribunal" className="hover:text-white transition-colors">AI Tribunal</Link>
+          </nav>
+
+          <div className="flex items-center gap-3 shrink-0">
+             <Link href="/explore" className="px-5 py-2.5 rounded-full border border-white/10 text-zinc-300 hover:text-white hover:bg-white/5 transition-colors text-sm font-semibold">
+               Explore Quotas
+             </Link>
+             <Link href="/sell" className="px-5 py-2.5 rounded-full bg-white text-black hover:bg-zinc-200 transition-colors text-sm font-bold">
+               List Quota
+             </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Links Section */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+        
+        {/* Secondary Logo (per reference image) */}
+        <div className="mb-12">
+          <Link href="/" className="inline-flex items-center gap-3">
+            <div className="h-7 w-7 bg-white rounded-lg flex items-center justify-center p-1">
+              <img src="/assets/logo.svg" alt="Kridge" className="w-full h-full object-contain" />
             </div>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-white uppercase text-[11px] tracking-wider mb-3">Protocol</h4>
-            <ul className="space-y-2">
-              <li><Link href="/explore" className="hover:text-cyan-400 transition-colors">Explore Marketplace</Link></li>
-              <li><Link href="/sell" className="hover:text-cyan-400 transition-colors">Rent or Donate Quota</Link></li>
-              <li><Link href="/playground" className="hover:text-cyan-400 transition-colors">Interactive Proxy Playground</Link></li>
-              <li><Link href="/tribunal" className="hover:text-cyan-400 transition-colors">GenLayer AI Tribunal</Link></li>
-              <li><Link href="/impact" className="hover:text-cyan-400 transition-colors">Impact & Badges</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-white uppercase text-[11px] tracking-wider mb-3">Hackathon & Tech</h4>
-            <ul className="space-y-2">
-              <li><Link href="/agentic" className="hover:text-cyan-400 transition-colors">Agentic Economy Hub (x402)</Link></li>
-              <li><Link href="/bridge" className="hover:text-cyan-400 transition-colors">Hyperlane Cross-Chain</Link></li>
-              <li>
-                <a href="https://github.com/ODbeke/Kridge" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-cyan-400 transition-colors">
-                  <ExternalLink className="h-3.5 w-3.5" /> GitHub Repository
-                </a>
-              </li>
-              <li>
-                <a href="https://genlayer.com" target="_blank" rel="noreferrer" className="hover:text-purple-400 transition-colors">
-                  GenLayer Intelligent Contracts
-                </a>
-              </li>
-            </ul>
-          </div>
-
+            <span className="text-white text-lg font-bold tracking-tight">Kridge</span>
+          </Link>
         </div>
 
-        <div className="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-zinc-500 text-[11px]">
-            © {new Date().getFullYear()} Kridge Protocol. Built for the GenLayer Hackathon.
-          </p>
-          <div className="flex items-center gap-6 text-[11px] text-zinc-500">
-            <span>5% Marketplace Protocol Take Rate</span>
-            <span>$1.00 Anti-Spam Bond Protection</span>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+          
+          <div>
+            <h4 className="font-semibold text-white text-sm mb-6">Product</h4>
+            <ul className="space-y-4 text-[13px] text-zinc-400">
+              <li><Link href="/explore" className="hover:text-white transition-colors">Marketplace</Link></li>
+              <li><Link href="/sell" className="hover:text-white transition-colors">List Quota</Link></li>
+              <li><Link href="/playground" className="hover:text-white transition-colors">Playground</Link></li>
+            </ul>
           </div>
+
+          <div>
+            <h4 className="font-semibold text-white text-sm mb-6">Protocol</h4>
+            <ul className="space-y-4 text-[13px] text-zinc-400">
+              <li><Link href="/tribunal" className="hover:text-white transition-colors">AI Tribunal</Link></li>
+              <li><Link href="/agentic" className="hover:text-white transition-colors">Agent Hub</Link></li>
+              <li><Link href="/bridge" className="hover:text-white transition-colors">Bridge</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-white text-sm mb-6">Resources</h4>
+            <ul className="space-y-4 text-[13px] text-zinc-400">
+              <li><a href="https://github.com/ODbeke/Kridge" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1.5">GitHub <ExternalLink className="h-3 w-3" /></a></li>
+              <li><a href="https://genlayer.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">GenLayer Docs</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-white text-sm mb-6">Legal</h4>
+            <ul className="space-y-4 text-[13px] text-zinc-400">
+              <li><Link href="#" className="hover:text-white transition-colors">Terms of service</Link></li>
+              <li><Link href="#" className="hover:text-white transition-colors">Privacy policy</Link></li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Pills and Copyright */}
+        <div className="mt-20 flex flex-col gap-10">
+          <div className="flex flex-wrap items-center gap-4">
+             <span className="px-5 py-2.5 rounded-full border border-white/10 bg-transparent hover:bg-white/5 transition-colors text-xs font-medium text-zinc-300 cursor-default">
+               GenLayer Validated
+             </span>
+             <span className="px-5 py-2.5 rounded-full border border-white/10 bg-transparent hover:bg-white/5 transition-colors text-xs font-medium text-zinc-300 cursor-default">
+               Hyperlane Interchain
+             </span>
+             <span className="px-5 py-2.5 rounded-full border border-white/10 bg-transparent hover:bg-white/5 transition-colors text-xs font-medium text-zinc-300 cursor-default">
+               Agentic Economy Ready
+             </span>
+          </div>
+
+          <p className="text-zinc-500 text-[13px]">
+            © {new Date().getFullYear()} Kridge Protocol. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
