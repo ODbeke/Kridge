@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@config "../../tailwind.config.js";
 
 /* Custom Cyber Glow Gradients */
 .glow-cyan {
