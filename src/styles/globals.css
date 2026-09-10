@@ -10,6 +10,14 @@
   background-size: 24px 24px;
 }
 
+/* Luminous Neo-Marketplace Light Theme */
+.luminous-canvas {
+  background-color: #F8F9FE;
+  background-image: radial-gradient(rgba(124, 58, 237, 0.18) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+
+
 .glow-cyan {
   box-shadow: 0 0 35px -5px rgba(0, 242, 254, 0.25);
 }
