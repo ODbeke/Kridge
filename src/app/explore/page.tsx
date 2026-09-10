@@ -20,35 +20,28 @@ import {
   ExternalLink,
   ChevronDown,
   ArrowUpRight,
-  SlidersHorizontal,
-  X
+  X,
+  Wallet,
+  CheckCircle2
 } from "lucide-react";
 import { useKridgeStore } from "@/lib/store";
 import { KridgeListing, SupportedChain } from "@/lib/types";
-import { formatCurrency, formatTokens, formatTimeRemaining } from "@/lib/utils";
+import { formatCurrency, formatTokens, formatTimeRemaining, formatAddress } from "@/lib/utils";
 
-// Provider metadata with official SVGs, colors & luxury styling
+// Provider metadata with clean badges & brand colors
 const PROVIDERS: Record<
   string,
   {
     name: string;
     shortName: string;
-    badgeBg: string;
-    badgeText: string;
-    badgeBorder: string;
-    cardBorderHover: string;
-    glowGradient: string;
+    tagClass: string;
     icon: (props: { className?: string }) => React.ReactNode;
   }
 > = {
   anthropic: {
     name: "Anthropic Claude",
     shortName: "Anthropic",
-    badgeBg: "bg-amber-500/10",
-    badgeText: "text-amber-400",
-    badgeBorder: "border-amber-500/30",
-    cardBorderHover: "hover:border-amber-500/40 hover:shadow-amber-500/10",
-    glowGradient: "from-amber-500/15 via-transparent to-transparent",
+    tagClass: "bg-amber-500/10 text-amber-300 border-amber-500/30",
     icon: ({ className = "h-4 w-4" }) => (
       <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
         <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" />
@@ -58,11 +51,7 @@ const PROVIDERS: Record<
   openai: {
     name: "OpenAI",
     shortName: "OpenAI",
-    badgeBg: "bg-emerald-500/10",
-    badgeText: "text-emerald-400",
-    badgeBorder: "border-emerald-500/30",
-    cardBorderHover: "hover:border-emerald-500/40 hover:shadow-emerald-500/10",
-    glowGradient: "from-emerald-500/15 via-transparent to-transparent",
+    tagClass: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
     icon: ({ className = "h-4 w-4" }) => (
       <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
         <path d="M20.5 9.5c-.3-1.8-1.5-3.3-3.2-4-1-.4-2-.4-3-.1-.6-.8-1.4-1.4-2.4-1.8-2-.7-4.2-.3-5.8 1.1-.9.8-1.5 1.8-1.7 3-1.6.4-3 1.5-3.7 3-1 2-.7 4.3.7 6 .3.4.7.7 1.1 1 .1 1 .5 1.9 1.2 2.7 1.4 1.6 3.5 2.3 5.6 1.9 1-.2 1.9-.7 2.6-1.4.9.5 1.9.7 2.9.6 2.1-.2 3.9-1.6 4.6-3.6.4-1.1.4-2.3 0-3.4 1.3-.7 2.2-2 2.4-3.5.3-2.1-.8-4.2-2.7-5.1zM12 14.5c-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5 2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5z" />
@@ -72,11 +61,7 @@ const PROVIDERS: Record<
   gemini: {
     name: "Google Gemini",
     shortName: "Gemini",
-    badgeBg: "bg-blue-500/10",
-    badgeText: "text-blue-400",
-    badgeBorder: "border-blue-500/30",
-    cardBorderHover: "hover:border-blue-500/40 hover:shadow-blue-500/10",
-    glowGradient: "from-blue-500/15 via-transparent to-transparent",
+    tagClass: "bg-blue-500/10 text-blue-300 border-blue-500/30",
     icon: ({ className = "h-4 w-4" }) => (
       <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
         <path d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
@@ -86,11 +71,7 @@ const PROVIDERS: Record<
   groq: {
     name: "Groq LPUs",
     shortName: "Groq",
-    badgeBg: "bg-orange-500/10",
-    badgeText: "text-orange-400",
-    badgeBorder: "border-orange-500/30",
-    cardBorderHover: "hover:border-orange-500/40 hover:shadow-orange-500/10",
-    glowGradient: "from-orange-500/15 via-transparent to-transparent",
+    tagClass: "bg-orange-500/10 text-orange-300 border-orange-500/30",
     icon: ({ className = "h-4 w-4" }) => (
       <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
         <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" />
@@ -100,11 +81,7 @@ const PROVIDERS: Record<
   deepseek: {
     name: "DeepSeek",
     shortName: "DeepSeek",
-    badgeBg: "bg-cyan-500/10",
-    badgeText: "text-cyan-400",
-    badgeBorder: "border-cyan-500/30",
-    cardBorderHover: "hover:border-cyan-500/40 hover:shadow-cyan-500/10",
-    glowGradient: "from-cyan-500/15 via-transparent to-transparent",
+    tagClass: "bg-cyan-500/10 text-cyan-300 border-cyan-500/30",
     icon: ({ className = "h-4 w-4" }) => (
       <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
         <path d="M4 14C4 8.5 8.5 4 14 4C19.5 4 24 8.5 24 14C24 19.5 19.5 24 14 24C8.5 24 4 19.5 4 14ZM14 6C9.6 6 6 9.6 6 14C6 18.4 9.6 22 14 22C18.4 22 22 18.4 22 14C22 9.6 18.4 6 14 6ZM2 14C2 12.3 2.4 10.7 3.1 9.3L1.3 8.3C0.5 10 0 11.9 0 14C0 16.1 0.5 18 1.3 19.7L3.1 18.7C2.4 17.3 2 15.7 2 14Z" />
@@ -113,11 +90,11 @@ const PROVIDERS: Record<
   },
 };
 
-const CHAIN_LABELS: Record<SupportedChain, { name: string; dot: string; bg: string; text: string }> = {
-  genlayer: { name: "GenLayer Native", dot: "bg-purple-400", bg: "bg-purple-500/10", text: "text-purple-300" },
-  base: { name: "Base", dot: "bg-blue-400", bg: "bg-blue-500/10", text: "text-blue-300" },
-  zksync: { name: "zkSync Era", dot: "bg-emerald-400", bg: "bg-emerald-500/10", text: "text-emerald-300" },
-  solana: { name: "Solana", dot: "bg-violet-400", bg: "bg-violet-500/10", text: "text-violet-300" },
+const CHAIN_LABELS: Record<SupportedChain, { name: string; dot: string }> = {
+  genlayer: { name: "GenLayer", dot: "bg-purple-400" },
+  base: { name: "Base", dot: "bg-blue-400" },
+  zksync: { name: "zkSync Era", dot: "bg-emerald-400" },
+  solana: { name: "Solana", dot: "bg-violet-400" },
 };
 
 function formatModelTitle(raw: string): string {
@@ -130,7 +107,7 @@ function formatModelTitle(raw: string): string {
 }
 
 export default function ExplorePage() {
-  const { listings, rentListing } = useKridgeStore();
+  const { listings, rentListing, wallet } = useKridgeStore();
   const [selectedType, setSelectedType] = useState<"ALL" | "RENT" | "DONATION">("ALL");
   const [selectedProvider, setSelectedProvider] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -173,6 +150,14 @@ export default function ExplorePage() {
       });
   }, [listings, selectedType, selectedProvider, searchQuery, sortBy]);
 
+  const activeChainBalance = wallet.chainBalances?.[wallet.chain] || {
+    name: "Base",
+    symbol: "ETH",
+    nativeAmount: 0.052,
+    usdValue: wallet.balanceUsd,
+    icon: "🔵"
+  };
+
   const handleCheckout = (listing: KridgeListing) => {
     try {
       const session = rentListing(listing.id, 48);
@@ -199,331 +184,344 @@ export default function ExplorePage() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 dot-grid-bg">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-7 dot-grid-bg">
       
-      {/* 1. Page Hero Banner & Action */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 rounded-full bg-purple-500/10 border border-purple-500/20 px-3.5 py-1 text-xs font-mono text-purple-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>GENLAYER INTELLIGENT ESCROW SETTLEMENT</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            AI Model & Compute Marketplace
-          </h1>
-          <p className="text-zinc-400 text-sm max-w-2xl leading-relaxed">
-            Rent surplus enterprise subscription API credits at up to 75% discount, or claim free community grants. All transactions are secured by GenLayer smart contract escrow.
-          </p>
-        </div>
-
-        <Link
-          href="/sell"
-          className="inline-flex items-center gap-2 rounded-2xl bg-white hover:bg-zinc-200 text-black px-6 py-3.5 text-xs font-bold shadow-xl shadow-white/10 hover:scale-[1.02] transition-all self-start md:self-auto shrink-0"
-        >
-          <span>+ List Your Credits</span>
-          <ArrowRight className="h-3.5 w-3.5 text-black" />
-        </Link>
-      </div>
-
-      {/* 2. Structured Command & Filter Toolbar */}
-      <div className="rounded-3xl border border-white/10 bg-[#0C1018]/90 p-5 space-y-4 shadow-2xl backdrop-blur-2xl">
+      {/* 2-Column Structured Dashboard Layout (Matching the Reference Architecture) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
         
-        {/* Row 1: Search Input + Segmented Category Controls + Sort Dropdown */}
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+        {/* =========================================================================
+            LEFT COLUMN: Service Marketplace Filters + Connected Wallet Box
+           ========================================================================= */}
+        <aside className="lg:col-span-4 xl:col-span-3.5 space-y-5">
           
-          {/* Search Input Bar with explicit comfortable padding */}
-          <div className="relative flex-1">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center text-zinc-400">
-              <Search className="h-4 w-4" />
+          {/* 1. Category & Type Filter Card */}
+          <div className="rounded-3xl border border-white/10 bg-[#0C1018]/90 p-5 space-y-4 shadow-xl backdrop-blur-2xl">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-white font-bold text-sm">
+                <Zap className="h-4 w-4 text-purple-400" />
+                <span>Service Marketplace</span>
+              </div>
+              <p className="text-[11px] text-zinc-400">
+                Filter registered AI compute capabilities on-chain
+              </p>
             </div>
-            <input
-              type="text"
-              placeholder="Search models, providers, tags (e.g. Claude 3.5, GPT-4o, Coding, 750 T/s)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-12 rounded-2xl border border-white/10 bg-black/50 pl-11 pr-10 text-xs text-white placeholder:text-zinc-500 focus:border-purple-500/60 focus:bg-black/80 focus:outline-none transition-all font-mono"
-            />
-            {searchQuery && (
+
+            {/* Category Filter Vertical Stack (Pill Style) */}
+            <div className="space-y-1.5 pt-1">
               <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-lg bg-white/10 flex items-center justify-center text-xs text-zinc-400 hover:text-white hover:bg-white/20 transition-colors"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Segmented Category Filter Tabs */}
-          <div className="flex items-center p-1 rounded-2xl bg-black/50 border border-white/10 shrink-0">
-            <button
-              onClick={() => setSelectedType("ALL")}
-              className={`rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
-                selectedType === "ALL"
-                  ? "bg-white text-black shadow-md font-bold scale-[1.02]"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              All ({listings.length})
-            </button>
-            <button
-              onClick={() => setSelectedType("RENT")}
-              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
-                selectedType === "RENT"
-                  ? "bg-amber-500 text-black shadow-md font-bold scale-[1.02]"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              <Flame className="h-3.5 w-3.5" />
-              <span>Discounted</span>
-            </button>
-            <button
-              onClick={() => setSelectedType("DONATION")}
-              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
-                selectedType === "DONATION"
-                  ? "bg-emerald-500 text-black shadow-md font-bold scale-[1.02]"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              <HeartHandshake className="h-3.5 w-3.5" />
-              <span>Grants</span>
-            </button>
-          </div>
-
-          {/* Sorter Selector */}
-          <div className="relative shrink-0 min-w-[170px]">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="w-full h-12 rounded-2xl border border-white/10 bg-black/50 px-4 pr-9 text-xs text-zinc-300 focus:border-purple-500/60 focus:outline-none cursor-pointer font-mono appearance-none"
-            >
-              <option value="discount" className="bg-[#0E1118] text-white">Highest Discount</option>
-              <option value="cheapest" className="bg-[#0E1118] text-white">Lowest Price ($)</option>
-              <option value="quota" className="bg-[#0E1118] text-white">Largest Quota</option>
-              <option value="expiring" className="bg-[#0E1118] text-white">Expiring Soonest</option>
-            </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-          </div>
-
-        </div>
-
-        {/* Row 2: Tactile Provider Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-white/5">
-          <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mr-1 hidden sm:inline">
-            Provider:
-          </span>
-          <button
-            onClick={() => setSelectedProvider("all")}
-            className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-mono transition-all duration-200 ${
-              selectedProvider === "all"
-                ? "bg-white text-black font-bold shadow-md shadow-white/10 scale-[1.02]"
-                : "bg-white/[0.04] text-zinc-400 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
-            }`}
-          >
-            <Globe2 className="h-3.5 w-3.5" />
-            <span>All Providers</span>
-          </button>
-
-          {Object.entries(PROVIDERS).map(([key, p]) => {
-            const Icon = p.icon;
-            const isSelected = selectedProvider === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setSelectedProvider(key)}
-                className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-mono transition-all duration-200 ${
-                  isSelected
-                    ? "bg-white text-black font-bold shadow-md shadow-white/10 scale-[1.02]"
-                    : "bg-white/[0.04] text-zinc-400 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+                onClick={() => setSelectedType("ALL")}
+                className={`w-full py-2.5 px-4 rounded-2xl text-xs font-mono font-bold tracking-wider transition-all text-left flex items-center justify-between ${
+                  selectedType === "ALL"
+                    ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30 scale-[1.02]"
+                    : "bg-black/40 border border-white/10 text-zinc-400 hover:border-white/20 hover:text-white"
                 }`}
               >
-                <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-black" : p.badgeText}`} />
-                <span>{p.name}</span>
+                <span>ALL CAPABILITIES</span>
+                <span className="text-[10px] opacity-75">({listings.length})</span>
               </button>
-            );
-          })}
-        </div>
+
+              <button
+                onClick={() => setSelectedType("RENT")}
+                className={`w-full py-2.5 px-4 rounded-2xl text-xs font-mono font-bold tracking-wider transition-all text-left flex items-center justify-between ${
+                  selectedType === "RENT"
+                    ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30 scale-[1.02]"
+                    : "bg-black/40 border border-white/10 text-zinc-400 hover:border-white/20 hover:text-white"
+                }`}
+              >
+                <span>DISCOUNTED QUOTAS</span>
+                <span className="text-[10px] opacity-75">
+                  ({listings.filter((l) => l.listingType === "RENT").length})
+                </span>
+              </button>
+
+              <button
+                onClick={() => setSelectedType("DONATION")}
+                className={`w-full py-2.5 px-4 rounded-2xl text-xs font-mono font-bold tracking-wider transition-all text-left flex items-center justify-between ${
+                  selectedType === "DONATION"
+                    ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30 scale-[1.02]"
+                    : "bg-black/40 border border-white/10 text-zinc-400 hover:border-white/20 hover:text-white"
+                }`}
+              >
+                <span>COMMUNITY GRANTS</span>
+                <span className="text-[10px] opacity-75">
+                  ({listings.filter((l) => l.listingType === "DONATION").length})
+                </span>
+              </button>
+            </div>
+
+            {/* Provider Filter Sub-stack */}
+            <div className="border-t border-white/10 pt-3 space-y-2">
+              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block font-semibold">
+                AI Model Cluster
+              </span>
+              <div className="space-y-1">
+                <button
+                  onClick={() => setSelectedProvider("all")}
+                  className={`w-full py-2 px-3.5 rounded-xl text-xs font-mono transition-all text-left flex items-center gap-2 ${
+                    selectedProvider === "all"
+                      ? "bg-white/15 text-white border border-white/30 font-bold"
+                      : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Globe2 className="h-3.5 w-3.5" />
+                  <span>All Providers</span>
+                </button>
+
+                {Object.entries(PROVIDERS).map(([key, p]) => {
+                  const Icon = p.icon;
+                  const isSelected = selectedProvider === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setSelectedProvider(key)}
+                      className={`w-full py-2 px-3.5 rounded-xl text-xs font-mono transition-all text-left flex items-center justify-between ${
+                        isSelected
+                          ? "bg-white/15 text-white border border-white/30 font-bold"
+                          : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-3.5 w-3.5" />
+                        <span>{p.name}</span>
+                      </div>
+                      {isSelected && <Check className="h-3 w-3 text-emerald-400" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+
+          {/* 2. Connected Wallet & Quick Actions Card */}
+          <div className="rounded-3xl border border-white/10 bg-[#0C1018]/90 p-5 space-y-4 shadow-xl backdrop-blur-2xl font-mono">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-white">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>CONNECTED WALLET</span>
+              </div>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
+                {activeChainBalance.name.toUpperCase()}
+              </span>
+            </div>
+
+            <div className="space-y-2 p-3.5 rounded-2xl bg-black/50 border border-white/5 text-xs">
+              <div className="flex justify-between text-zinc-400">
+                <span>Burner Wallet:</span>
+                <span className="text-white font-bold">{formatAddress(wallet.address)}</span>
+              </div>
+              <div className="flex justify-between text-zinc-400">
+                <span>Active Balance:</span>
+                <span className="text-emerald-400 font-bold">
+                  {activeChainBalance.nativeAmount} {activeChainBalance.symbol} (${activeChainBalance.usdValue.toFixed(2)})
+                </span>
+              </div>
+            </div>
+
+            <Link
+              href="/sell"
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold py-3 shadow-lg shadow-purple-600/30 transition-all hover:scale-[1.02]"
+            >
+              <span>+ LIST SERVICE // SELLER</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+
+            <div className="border-t border-white/10 pt-2 flex items-center gap-1.5 text-[10px] text-zinc-500">
+              <ShieldCheck className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+              <span>Off-chain vouchers backed by GenLayer Escrow</span>
+            </div>
+          </div>
+
+        </aside>
+
+        {/* =========================================================================
+            RIGHT COLUMN: Header Title, Search/Sort Bar + Structured Cards Grid
+           ========================================================================= */}
+        <main className="lg:col-span-8 xl:col-span-8.5 space-y-6">
+          
+          {/* Header Title & Subtitle */}
+          <div className="space-y-1">
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              On-Chain Registered Capabilities ({filteredListings.length})
+            </h2>
+            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+              Autonomous capability endpoints queryable via off-chain signed vouchers backed by GenLayer Escrow
+            </p>
+          </div>
+
+          {/* Search & Sort Command Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search capability endpoints (e.g. Claude 3.5, GPT-4o, Coding, 750 T/s)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-11 rounded-2xl border border-white/10 bg-black/40 pl-11 pr-10 text-xs text-white placeholder:text-zinc-500 focus:border-purple-500/60 focus:bg-black/60 focus:outline-none transition-all font-mono"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="relative shrink-0 min-w-[170px]">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="w-full h-11 rounded-2xl border border-white/10 bg-black/40 px-4 pr-9 text-xs text-zinc-300 focus:border-purple-500/60 focus:outline-none cursor-pointer font-mono appearance-none"
+              >
+                <option value="discount" className="bg-[#0E1118] text-white">Highest Discount</option>
+                <option value="cheapest" className="bg-[#0E1118] text-white">Lowest Price</option>
+                <option value="quota" className="bg-[#0E1118] text-white">Largest Capacity</option>
+                <option value="expiring" className="bg-[#0E1118] text-white">Expiring Soonest</option>
+              </select>
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Structured Cards Grid (Matching Reference Anatomy) */}
+          {filteredListings.length === 0 ? (
+            <div className="rounded-3xl border border-white/10 bg-[#0C1018]/80 p-12 text-center space-y-4 shadow-xl">
+              <p className="text-zinc-400 text-sm">No capabilities match your active filters.</p>
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedProvider("all");
+                  setSelectedType("ALL");
+                }}
+                className="rounded-2xl bg-white/10 hover:bg-white/20 px-5 py-2 text-xs text-white transition-colors font-mono"
+              >
+                Reset Filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {filteredListings.map((item) => {
+                const isDonation = item.listingType === "DONATION";
+                const providerInfo = PROVIDERS[item.provider] || PROVIDERS.anthropic;
+                const chainInfo = CHAIN_LABELS[item.sellerChain] || CHAIN_LABELS.genlayer;
+                const quotaPct = Math.min(100, Math.round((item.remainingTokens / item.quotaTokens) * 100));
+
+                return (
+                  <div
+                    key={item.id}
+                    className="group rounded-3xl border border-white/10 bg-[#0C1018]/90 hover:border-purple-500/40 p-6 flex flex-col justify-between shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl space-y-4"
+                  >
+                    
+                    <div className="space-y-3.5">
+                      
+                      {/* Top Row: Provider Pill Tag + Status (ONLINE) */}
+                      <div className="flex items-center justify-between">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border ${providerInfo.tagClass}`}>
+                          {providerInfo.shortName}
+                        </span>
+
+                        <div className="flex items-center gap-2">
+                          {isDonation ? (
+                            <span className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-emerald-400">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              <span>FREE FAUCET</span>
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-emerald-400">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                              <span>ONLINE ({item.discountPct}% OFF)</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Title & Description */}
+                      <div className="space-y-1">
+                        <h3 className="text-xl font-bold text-white group-hover:text-purple-300 transition-colors tracking-tight">
+                          {formatModelTitle(item.modelFamily)}
+                        </h3>
+                        <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
+                          {item.description || "High-speed API quota providing automated reasoning, extraction, and generation."}
+                        </p>
+                      </div>
+
+                      {/* 3-Metric Recessed Dashboard Box (Exact Match to Reference) */}
+                      <div className="rounded-2xl bg-black/50 border border-white/5 p-3.5 grid grid-cols-3 text-center divide-x divide-white/10 font-mono text-xs">
+                        <div className="space-y-0.5 px-1">
+                          <div className="text-[9px] uppercase tracking-wider text-purple-300 font-semibold">
+                            CAPACITY
+                          </div>
+                          <div className="font-bold text-white text-xs">
+                            {formatTokens(item.remainingTokens)}
+                          </div>
+                        </div>
+
+                        <div className="space-y-0.5 px-1">
+                          <div className="text-[9px] uppercase tracking-wider text-purple-300 font-semibold">
+                            SUCCESS
+                          </div>
+                          <div className="font-bold text-white text-xs">
+                            {Math.round(item.verificationScore * 100)}%
+                          </div>
+                        </div>
+
+                        <div className="space-y-0.5 px-1">
+                          <div className="text-[9px] uppercase tracking-wider text-purple-300 font-semibold">
+                            EXPIRES
+                          </div>
+                          <div className="font-bold text-white text-xs">
+                            {formatTimeRemaining(item.expiryTimestamp)}
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Footer Row: Price / Call + Action Button */}
+                    <div className="border-t border-white/10 pt-4 flex items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[9px] font-mono text-purple-300 uppercase tracking-wider block font-semibold">
+                          {isDonation ? "PUBLIC GRANT" : "PRICE / QUOTA"}
+                        </span>
+                        <div className="flex items-baseline gap-1.5 mt-0.5 font-mono">
+                          <span className={`text-lg font-black ${
+                            isDonation ? "text-emerald-400" : "text-emerald-400"
+                          }`}>
+                            {isDonation ? "0.00 GEN" : `${formatCurrency(item.priceUsd)}`}
+                          </span>
+                          {!isDonation && item.retailValueUsd > 0 && (
+                            <span className="text-[11px] text-zinc-500 line-through">
+                              {formatCurrency(item.retailValueUsd)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setActiveListing(item)}
+                        className="rounded-2xl bg-purple-600 hover:bg-purple-500 text-white px-4 py-2.5 text-xs font-bold font-mono shadow-lg shadow-purple-600/30 transition-all hover:scale-105 flex items-center gap-1.5 shrink-0"
+                      >
+                        <span>{isDonation ? "Claim Faucet" : "Rent Sub-Key"}</span>
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+        </main>
 
       </div>
 
-      {/* 3. Luxury Rounded-3xl Card Grid */}
-      {filteredListings.length === 0 ? (
-        <div className="rounded-3xl border border-white/10 bg-[#0C1018]/80 p-16 text-center space-y-4 shadow-xl backdrop-blur-xl">
-          <p className="text-zinc-400 text-sm">No models found matching your search and filter criteria.</p>
-          <button
-            onClick={() => {
-              setSearchQuery("");
-              setSelectedProvider("all");
-              setSelectedType("ALL");
-            }}
-            className="rounded-2xl bg-white/10 hover:bg-white/20 px-5 py-2.5 text-xs text-white transition-colors font-mono"
-          >
-            Reset Filters
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
-          {filteredListings.map((item) => {
-            const isDonation = item.listingType === "DONATION";
-            const providerInfo = PROVIDERS[item.provider] || PROVIDERS.anthropic;
-            const chainInfo = CHAIN_LABELS[item.sellerChain] || CHAIN_LABELS.genlayer;
-            const ProviderIcon = providerInfo.icon;
-            const quotaPct = Math.min(100, Math.round((item.remainingTokens / item.quotaTokens) * 100));
-
-            return (
-              <div
-                key={item.id}
-                className={`group relative rounded-[28px] border border-white/10 bg-gradient-to-b from-[#121724]/95 via-[#0D121D]/95 to-[#080B12]/98 hover:border-white/25 p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 shadow-2xl hover:-translate-y-1.5 hover:shadow-cyan-500/5 backdrop-blur-2xl overflow-hidden ${providerInfo.cardBorderHover}`}
-              >
-                {/* Subtle Ambient Radial Glow matching provider identity */}
-                <div className={`absolute -top-16 -right-16 w-40 h-40 rounded-full bg-gradient-to-br ${providerInfo.glowGradient} blur-2xl pointer-events-none opacity-40 group-hover:opacity-80 transition-opacity`} />
-                
-                {/* Top Subtle Border Accent Line */}
-                <div className={`absolute top-0 inset-x-8 h-[2px] rounded-full ${
-                  isDonation ? "bg-emerald-400" : item.provider === "anthropic" ? "bg-amber-400" : item.provider === "openai" ? "bg-emerald-400" : item.provider === "groq" ? "bg-orange-400" : "bg-cyan-400"
-                } opacity-50 group-hover:opacity-100 transition-opacity`} />
-
-                <div className="space-y-5 pt-1 relative z-10">
-                  
-                  {/* Card Header: Brand Avatar Capsule & Discount/Faucet Badge */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-11 w-11 rounded-2xl border ${providerInfo.badgeBorder} ${providerInfo.badgeBg} flex items-center justify-center shadow-inner shrink-0`}>
-                        <ProviderIcon className={`h-5 w-5 ${providerInfo.badgeText}`} />
-                      </div>
-                      <div className="space-y-0.5">
-                        <div className="text-xs font-bold text-white uppercase tracking-wider">
-                          {providerInfo.name}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-mono">
-                          <span className={`h-2 w-2 rounded-full ${chainInfo.dot} shadow-sm`} />
-                          <span>{chainInfo.name}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {isDonation ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-3.5 py-1 text-xs font-mono font-bold text-emerald-300 shadow-lg shadow-emerald-500/10">
-                        <HeartHandshake className="h-3.5 w-3.5 text-emerald-400" />
-                        <span>FREE GRANT</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-3.5 py-1 text-xs font-mono font-bold text-amber-300 shadow-lg shadow-amber-500/10">
-                        <Flame className="h-3.5 w-3.5 text-amber-400" />
-                        <span>{item.discountPct}% OFF</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Model Title & Context Description */}
-                  <div className="space-y-1.5">
-                    <h3 className="text-2xl font-black text-white group-hover:text-cyan-300 transition-colors tracking-tight">
-                      {formatModelTitle(item.modelFamily)}
-                    </h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
-                      {item.description || "High-throughput model quota verified by GenLayer intelligent escrow oracles."}
-                    </p>
-                  </div>
-
-                  {/* Capability Micro-Chips */}
-                  {item.tags && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {item.tags.map((tag, i) => (
-                        <span
-                          key={i}
-                          className="rounded-xl bg-white/[0.04] border border-white/[0.08] px-2.5 py-1 text-[10px] text-zinc-300 font-mono flex items-center gap-1"
-                        >
-                          <span className="h-1 w-1 rounded-full bg-zinc-500" />
-                          <span>{tag}</span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Recessed Dashboard Quota Meter */}
-                  <div className="space-y-2.5 rounded-2xl bg-black/60 border border-white/5 p-4 font-mono text-xs shadow-inner">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-400 font-medium">Available Quota</span>
-                      <span className="text-white font-bold text-sm tracking-tight">{formatTokens(item.remainingTokens)} Tokens</span>
-                    </div>
-                    
-                    {/* Glowing Multi-color Progress Track */}
-                    <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden p-[1px]">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          isDonation 
-                            ? "bg-gradient-to-r from-emerald-400 to-teal-300 shadow-md shadow-emerald-400/40" 
-                            : "bg-gradient-to-r from-cyan-400 to-blue-500 shadow-md shadow-cyan-400/40"
-                        }`}
-                        style={{ width: `${quotaPct}%` }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-0.5">
-                      <span>{quotaPct}% remaining of {formatTokens(item.quotaTokens)}</span>
-                      <span className="flex items-center gap-1 text-zinc-300">
-                        <Clock className="h-3 w-3 text-zinc-500" />
-                        <span>{formatTimeRemaining(item.expiryTimestamp)}</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* GenLayer Intelligent Security Verification Strip */}
-                  <div className="flex items-center justify-between text-[11px] font-mono px-1">
-                    <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                      <ShieldCheck className="h-4 w-4" />
-                      <span>GenLayer Probed ({Math.round(item.verificationScore * 100)}%)</span>
-                    </span>
-                    <span className="flex items-center gap-1.5 text-zinc-500">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                      <span>Pinged {item.lastVerifiedMinutesAgo}m ago</span>
-                    </span>
-                  </div>
-
-                </div>
-
-                {/* Card Pricing & CTA Action Footer */}
-                <div className="border-t border-white/10 pt-5 mt-6 flex items-center justify-between gap-3 relative z-10">
-                  <div>
-                    <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block font-medium">
-                      {isDonation ? "PUBLIC GRANT" : "SETTLEMENT PRICE"}
-                    </span>
-                    <div className="flex items-baseline gap-2 mt-0.5">
-                      <span className={`text-2xl font-black font-mono tracking-tight ${
-                        isDonation ? "text-emerald-400" : "text-white"
-                      }`}>
-                        {isDonation ? "FREE ($0.00)" : formatCurrency(item.priceUsd)}
-                      </span>
-                      {!isDonation && item.retailValueUsd > 0 && (
-                        <span className="text-xs text-zinc-500 line-through font-mono">
-                          {formatCurrency(item.retailValueUsd)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setActiveListing(item)}
-                    className={`rounded-2xl px-5 py-3 text-xs font-bold font-mono transition-all duration-200 flex items-center gap-2 shadow-xl ${
-                      isDonation
-                        ? "bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-black shadow-emerald-500/20 hover:scale-[1.03] active:scale-[0.98]"
-                        : "bg-white hover:bg-zinc-200 text-black shadow-white/10 hover:scale-[1.03] active:scale-[0.98]"
-                    }`}
-                  >
-                    <span>{isDonation ? "Claim Faucet" : "Rent Sub-Key"}</span>
-                    <ArrowUpRight className="h-4 w-4" />
-                  </button>
-                </div>
-
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* 4. Escrow Checkout Modal */}
+      {/* Checkout Modal */}
       {activeListing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-[28px] border border-white/15 bg-[#0D111A] p-7 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-lg rounded-3xl border border-white/15 bg-[#0D111A] p-7 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
             
             <div className="flex items-start justify-between border-b border-white/10 pb-4">
               <div>
@@ -579,7 +577,7 @@ export default function ExplorePage() {
               </button>
               <button
                 onClick={() => handleCheckout(activeListing)}
-                className="rounded-2xl bg-white hover:bg-zinc-200 px-6 py-3 text-xs font-bold font-mono text-black shadow-xl transition-all hover:scale-[1.02]"
+                className="rounded-2xl bg-purple-600 hover:bg-purple-500 px-6 py-3 text-xs font-bold font-mono text-white shadow-xl shadow-purple-600/30 transition-all hover:scale-[1.02]"
               >
                 {activeListing.listingType === "DONATION"
                   ? "Confirm Free Claim"
@@ -591,10 +589,10 @@ export default function ExplorePage() {
         </div>
       )}
 
-      {/* 5. Post-Checkout Virtual Key Delivery Dialog */}
+      {/* Post-Checkout Virtual Key Delivery Dialog */}
       {createdSession && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-lg p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-xl rounded-[28px] border border-purple-500/30 bg-[#0D111A] p-7 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-xl rounded-3xl border border-purple-500/30 bg-[#0D111A] p-7 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
             
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <div className="flex items-center gap-3">
@@ -715,7 +713,7 @@ const res = await client.chat.completions.create({
             <div className="flex items-center justify-between border-t border-white/10 pt-4">
               <Link
                 href="/playground"
-                className="flex items-center gap-2 rounded-2xl bg-white hover:bg-zinc-200 text-black px-5 py-3 text-xs font-bold font-mono transition-all shadow-md hover:scale-[1.02]"
+                className="flex items-center gap-2 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white px-5 py-3 text-xs font-bold font-mono transition-all shadow-md hover:scale-[1.02]"
               >
                 <Zap className="h-3.5 w-3.5" />
                 <span>Test in Live Playground</span>
