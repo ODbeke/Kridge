@@ -90,16 +90,6 @@ const PROVIDERS: Record<
   },
 };
 
-const CAPABILITY_FILTERS = [
-  { id: "ALL", label: "ALL", tag: "ALL" },
-  { id: "MODERATION", label: "MODERATION", tag: "MODERATION" },
-  { id: "SUMMARIZATION", label: "SUMMARIZATION", tag: "SUMMARIZATION" },
-  { id: "CODING", label: "CODE GENERATION", tag: "Coding" },
-  { id: "REASONING", label: "REASONING", tag: "Reasoning" },
-  { id: "VISION", label: "VISION // MULTIMODAL", tag: "Vision" },
-  { id: "TRANSLATION", label: "TRANSLATION", tag: "Translation" },
-];
-
 function formatModelTitle(raw: string): string {
   if (raw === "claude-3-5-sonnet") return "Claude 3.5 Sonnet";
   if (raw === "gpt-4o") return "GPT-4o Omnimodal";
@@ -109,23 +99,9 @@ function formatModelTitle(raw: string): string {
   return raw.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function getPrimaryTag(listing: KridgeListing): string {
-  if (listing.tags && listing.tags.length > 0) {
-    const t = listing.tags[0].toUpperCase();
-    if (t.includes("FREE")) return "PUBLIC GRANT";
-    if (t.includes("500") || t.includes("SPEED")) return "LOW LATENCY";
-    return t;
-  }
-  if (listing.provider === "anthropic") return "SUMMARIZATION";
-  if (listing.provider === "openai") return "MODERATION";
-  if (listing.provider === "gemini") return "MULTIMODAL";
-  if (listing.provider === "groq") return "TRANSLATION";
-  return "REASONING";
-}
-
 export default function ExplorePage() {
   const { listings, rentListing, wallet } = useKridgeStore();
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [selectedType, setSelectedType] = useState<"ALL" | "RENT" | "DONATION">("ALL");
   const [selectedProvider, setSelectedProvider] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"discount" | "cheapest" | "quota" | "expiring">("discount");
@@ -153,14 +129,8 @@ export default function ExplorePage() {
   const filteredListings = useMemo(() => {
     return listings
       .filter((l) => {
-        // Category Filter
-        if (selectedCategory !== "ALL") {
-          const matchTag = l.tags?.some((t) => t.toLowerCase().includes(selectedCategory.toLowerCase()));
-          const matchDesc = l.description?.toLowerCase().includes(selectedCategory.toLowerCase());
-          const matchFamily = l.modelFamily.toLowerCase().includes(selectedCategory.toLowerCase());
-          const isCategoryMatch = matchTag || matchDesc || matchFamily;
-          if (!isCategoryMatch) return false;
-        }
+        // Quota Type Filter (Rent vs Donation)
+        if (selectedType !== "ALL" && l.listingType !== selectedType) return false;
 
         // Provider Filter
         if (selectedProvider !== "all" && l.provider !== selectedProvider) return false;
@@ -184,7 +154,7 @@ export default function ExplorePage() {
         if (sortBy === "expiring") return a.expiryTimestamp - b.expiryTimestamp;
         return 0;
       });
-  }, [listings, selectedCategory, selectedProvider, searchQuery, sortBy]);
+  }, [listings, selectedType, selectedProvider, searchQuery, sortBy]);
 
   const handleFaucetRequest = () => {
     setGenBalance((prev) => prev + 20);
@@ -240,46 +210,64 @@ export default function ExplorePage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* =========================================================================
-              LEFT COLUMN: Service Marketplace Filter Card + GENLAYERS WALLET Card
+              LEFT COLUMN: AI Model Clusters Card + GENLAYERS WALLET Card
              ========================================================================= */}
           <aside className="lg:col-span-4 space-y-6">
             
-            {/* 1. Service Marketplace Filter Card */}
+            {/* 1. AI Model Clusters & Quota Types Filter Card */}
             <div className="bg-white rounded-3xl p-7 border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-6">
+              
+              {/* Header */}
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 text-slate-900 font-bold text-base tracking-tight">
                   <span className="text-amber-500">⚡</span>
-                  <span>Service Marketplace</span>
+                  <span>AI Model Clusters</span>
                 </div>
                 <p className="text-xs text-slate-500 leading-normal">
-                  Filter registered agent capabilities on-chain
+                  Filter on-chain API quotas by upstream AI provider
                 </p>
               </div>
 
-              {/* Vertical Stack of Category Pill Buttons */}
+              {/* Quota Type Filter Buttons */}
               <div className="space-y-2 pt-1">
-                {CAPABILITY_FILTERS.map((cat) => {
-                  const isActive = selectedCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`w-full py-2.5 px-5 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
-                        isActive
-                          ? "bg-[#6E3FF3] text-white shadow-md shadow-purple-500/25 scale-[1.01]"
-                          : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
-                      }`}
-                    >
-                      {cat.label}
-                    </button>
-                  );
-                })}
+                <button
+                  onClick={() => setSelectedType("ALL")}
+                  className={`w-full py-2.5 px-5 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
+                    selectedType === "ALL"
+                      ? "bg-[#6E3FF3] text-white shadow-md shadow-purple-500/25 scale-[1.01]"
+                      : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  ALL QUOTAS ({listings.length})
+                </button>
+
+                <button
+                  onClick={() => setSelectedType("RENT")}
+                  className={`w-full py-2.5 px-5 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
+                    selectedType === "RENT"
+                      ? "bg-[#6E3FF3] text-white shadow-md shadow-purple-500/25 scale-[1.01]"
+                      : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  DISCOUNTED SUB-KEYS ({listings.filter((l) => l.listingType === "RENT").length})
+                </button>
+
+                <button
+                  onClick={() => setSelectedType("DONATION")}
+                  className={`w-full py-2.5 px-5 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
+                    selectedType === "DONATION"
+                      ? "bg-[#6E3FF3] text-white shadow-md shadow-purple-500/25 scale-[1.01]"
+                      : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  COMMUNITY FAUCETS ({listings.filter((l) => l.listingType === "DONATION").length})
+                </button>
               </div>
 
               {/* Provider Sub-Filter */}
               <div className="border-t border-slate-100 pt-5 space-y-3">
                 <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold block">
-                  AI Model Cluster
+                  Select AI Provider
                 </span>
                 <div className="space-y-1.5">
                   <button
@@ -487,12 +475,12 @@ export default function ExplorePage() {
             {/* 2-Column Structured Card Grid */}
             {filteredListings.length === 0 ? (
               <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center space-y-4 shadow-sm">
-                <p className="text-slate-500 text-sm font-sans">No capabilities match your active filters.</p>
+                <p className="text-slate-500 text-sm font-sans">No API quotas match your active filters.</p>
                 <button
                   onClick={() => {
                     setSearchQuery("");
                     setSelectedProvider("all");
-                    setSelectedCategory("ALL");
+                    setSelectedType("ALL");
                   }}
                   className="rounded-full bg-slate-900 hover:bg-slate-800 px-6 py-2.5 text-xs text-white transition-colors font-mono"
                 >
@@ -503,7 +491,7 @@ export default function ExplorePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredListings.map((item) => {
                   const isDonation = item.listingType === "DONATION";
-                  const primaryTag = getPrimaryTag(item);
+                  const providerInfo = PROVIDERS[item.provider] || PROVIDERS.anthropic;
 
                   return (
                     <div
@@ -513,10 +501,10 @@ export default function ExplorePage() {
                       
                       <div className="space-y-4">
                         
-                        {/* Top Row: Category Pill Tag + Status (ONLINE) */}
+                        {/* Top Row: Provider Brand Tag + Status (ONLINE) */}
                         <div className="flex items-center justify-between gap-3">
-                          <span className="px-3.5 py-1.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#F3EEFF] border border-[#DDD0FA] text-[#6E3FF3]">
-                            {primaryTag}
+                          <span className={`px-3.5 py-1.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border ${providerInfo.tagClass}`}>
+                            {isDonation ? `${providerInfo.shortName} • FAUCET` : providerInfo.shortName}
                           </span>
 
                           <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-600 shrink-0">
