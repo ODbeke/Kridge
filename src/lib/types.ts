@@ -75,9 +75,18 @@ export interface DonorProfile {
   rank?: number;
 }
 
+export interface ChainBalanceInfo {
+  name: string;
+  symbol: string;
+  nativeAmount: number;
+  usdValue: number;
+  icon: string;
+}
+
 export interface WalletState {
   isConnected: boolean;
   address: string;
   chain: SupportedChain;
   balanceUsd: number;
+  chainBalances: Record<SupportedChain, ChainBalanceInfo>;
 }

@@ -1,9 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { KridgeListing, UserRentalSession, DisputeItem, DonorProfile, SupportedChain, BadgeTier, ListingType } from "./types";
+import { KridgeListing, UserRentalSession, DisputeItem, DonorProfile, SupportedChain, BadgeTier, ListingType, ChainBalanceInfo, WalletState } from "./types";
 import { INITIAL_LISTINGS, INITIAL_DISPUTES, INITIAL_DONORS } from "./mock-data";
 import { getTierFromRescued } from "./utils";
+
+export const INITIAL_CHAIN_BALANCES: Record<SupportedChain, ChainBalanceInfo> = {
+  base: { name: "Base", symbol: "ETH", nativeAmount: 0.052, usdValue: 145.50, icon: "🔵" },
+  zksync: { name: "zkSync Era", symbol: "ETH", nativeAmount: 0.115, usdValue: 320.80, icon: "⚡" },
+  solana: { name: "Solana", symbol: "SOL", nativeAmount: 0.58, usdValue: 84.20, icon: "🟣" },
+  genlayer: { name: "GenLayer", symbol: "GEN", nativeAmount: 450.0, usdValue: 225.00, icon: "🧠" },
+};
 
 const STORAGE_KEYS = {
   LISTINGS: "kridge_listings_v1",
@@ -18,13 +25,15 @@ export function useKridgeStore() {
   const [rentals, setRentals] = useState<UserRentalSession[]>([]);
   const [disputes, setDisputes] = useState<DisputeItem[]>(INITIAL_DISPUTES);
   const [donors, setDonors] = useState<DonorProfile[]>(INITIAL_DONORS);
-  const [wallet, setWallet] = useState({
+  const [wallet, setWallet] = useState<WalletState>({
     isConnected: true,
     address: "0xAgent_Charlie_77b9A",
     chain: "base" as SupportedChain,
-    balanceUsd: 145.50
+    balanceUsd: 145.50,
+    chainBalances: INITIAL_CHAIN_BALANCES,
   });
   const [isLoaded, setIsLoaded] = useState(false);
+
 
   useEffect(() => {
     try {
@@ -267,8 +276,14 @@ export function useKridgeStore() {
   };
 
   const switchChain = (chain: SupportedChain) => {
-    setWallet((prev) => ({ ...prev, chain }));
+    const chainInfo = INITIAL_CHAIN_BALANCES[chain] || INITIAL_CHAIN_BALANCES.base;
+    setWallet((prev) => ({
+      ...prev,
+      chain,
+      balanceUsd: chainInfo.usdValue,
+    }));
   };
+
 
   return {
     isLoaded,
