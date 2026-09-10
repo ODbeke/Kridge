@@ -96,6 +96,7 @@ const MARKETPLACE_CATEGORIES = [
   { id: "DONATION", label: "COMMUNITY GRANTS" },
   { id: "REASONING", label: "REASONING // CODING" },
   { id: "MULTIMODAL", label: "MULTIMODAL // VISION" },
+  { id: "HIGH_THROUGHPUT", label: "HIGH-THROUGHPUT LPUS" },
 ];
 
 function formatModelTitle(raw: string): string {
@@ -146,6 +147,10 @@ export default function ExplorePage() {
         if (selectedCategory === "MULTIMODAL") {
           const match = l.tags?.some((t) => t.toLowerCase().includes("multimodal") || t.toLowerCase().includes("vision"));
           if (!match && !l.modelFamily.includes("gpt-4o") && !l.modelFamily.includes("gemini")) return false;
+        }
+        if (selectedCategory === "HIGH_THROUGHPUT") {
+          const match = l.tags?.some((t) => t.toLowerCase().includes("groq") || t.toLowerCase().includes("tokens/sec") || t.toLowerCase().includes("speed"));
+          if (!match && l.provider !== "groq") return false;
         }
 
         // Provider Filter
@@ -213,40 +218,40 @@ export default function ExplorePage() {
     <div className="min-h-screen luminous-canvas text-slate-900 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         
-        {/* 2-Column Responsive Dashboard Layout (Matching Reference Architecture) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* 2-Column Responsive Dashboard Layout */}
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
           
           {/* =========================================================================
-              LEFT COLUMN: 2 Structured Clean Cards (Exact Match to Reference)
+              LEFT COLUMN: 2 Structured Crisp Cards (Fixed Width Container)
              ========================================================================= */}
-          <aside className="lg:col-span-4 space-y-6">
+          <aside className="w-full lg:w-[320px] shrink-0 space-y-6">
             
             {/* Card 1: Service Marketplace Category Filters */}
-            <div className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.025)] space-y-5">
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.03)] space-y-5">
               
               {/* Header */}
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-slate-900 font-bold text-base tracking-tight">
+                <div className="flex items-center gap-2 text-slate-900 font-bold text-base tracking-tight font-sans">
                   <span className="text-amber-500 text-sm">⚡</span>
                   <span>Service Marketplace</span>
                 </div>
-                <p className="text-xs text-slate-500 leading-normal">
+                <p className="text-xs text-slate-500 font-sans leading-normal">
                   Filter registered agent capabilities on-chain
                 </p>
               </div>
 
               {/* Stack of Pill Buttons */}
-              <div className="space-y-2.5 pt-1">
+              <div className="space-y-2 pt-1">
                 {MARKETPLACE_CATEGORIES.map((cat) => {
                   const isActive = selectedCategory === cat.id;
                   return (
                     <button
                       key={cat.id}
                       onClick={() => setSelectedCategory(cat.id)}
-                      className={`w-full py-2.5 px-5 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
+                      className={`w-full py-2.5 px-4 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
                         isActive
-                          ? "bg-[#6E3FF3] text-white shadow-md shadow-purple-500/25 scale-[1.01]"
-                          : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
+                          ? "bg-[#6E3FF3] text-white shadow-md shadow-purple-500/20 scale-[1.01]"
+                          : "bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
                       }`}
                     >
                       {cat.label}
@@ -258,7 +263,7 @@ export default function ExplorePage() {
             </div>
 
             {/* Card 2: Wallet & Spend Limit Guardrails */}
-            <div className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.025)] space-y-5 font-mono text-xs">
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.03)] space-y-4.5 font-mono text-xs">
               
               {/* Top Row: Brand & Status Tag */}
               <div className="flex items-center justify-between">
@@ -266,14 +271,14 @@ export default function ExplorePage() {
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span>GENLAYERS WALLET</span>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-[#F0EBFF] text-[#6E3FF3] border border-[#DDD0FA]">
                   STUDIONET
                 </span>
               </div>
 
               {/* Wallet Address & Balance Readout */}
-              <div className="space-y-1.5 py-1">
-                <div className="flex items-center justify-between text-slate-600">
+              <div className="space-y-2 py-1">
+                <div className="flex items-center justify-between text-slate-500">
                   <span>Burner Wallet:</span>
                   <button
                     onClick={copyBurner}
@@ -288,9 +293,9 @@ export default function ExplorePage() {
                     )}
                   </button>
                 </div>
-                <div className="flex items-center justify-between text-slate-600">
+                <div className="flex items-center justify-between text-slate-500">
                   <span>GEN Balance:</span>
-                  <span className="font-black text-slate-900 text-sm">
+                  <span className="font-extrabold text-emerald-600 text-sm">
                     {genBalance.toFixed(2)} GEN
                   </span>
                 </div>
@@ -299,22 +304,22 @@ export default function ExplorePage() {
               {/* Request Faucet Button */}
               <button
                 onClick={handleFaucetRequest}
-                className="w-full py-3 px-5 rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white font-mono font-bold text-xs tracking-wider shadow-md shadow-purple-500/25 transition-all active:scale-[0.98] text-center block"
+                className="w-full py-2.5 px-4 rounded-full bg-[#6E3FF3] hover:bg-[#5D32D8] text-white font-mono font-bold text-xs uppercase tracking-wider shadow-md shadow-purple-500/20 transition-all active:scale-[0.98] text-center block"
               >
                 {faucetClaimed ? "✓ CLAIMED 20 GEN!" : "REQUEST FAUCET (20 GEN)"}
               </button>
 
-              {/* SPEND LIMIT GUARDRAILS Section (Exact Match to Reference) */}
+              {/* SPEND LIMIT GUARDRAILS Section */}
               <div className="space-y-2 pt-3 border-t border-slate-100">
                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
                   SPEND LIMIT GUARDRAILS
                 </span>
 
-                <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="grid grid-cols-2 gap-2.5 pt-0.5">
                   
                   {/* Guardrail Box 1: MAX / CALL */}
                   <div className="space-y-1">
-                    <label className="text-[9px] text-slate-400 font-semibold uppercase block">
+                    <label className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">
                       MAX / CALL
                     </label>
                     <div className="bg-[#F8FAFD] border border-slate-200/90 rounded-xl px-3 py-2 flex items-center justify-between">
@@ -324,13 +329,13 @@ export default function ExplorePage() {
                         onChange={(e) => setMaxPerCall(e.target.value)}
                         className="w-12 bg-transparent text-xs font-black text-slate-900 focus:outline-none"
                       />
-                      <span className="text-[10px] text-slate-500 font-semibold">GEN</span>
+                      <span className="text-[10px] text-slate-500 font-bold">GEN</span>
                     </div>
                   </div>
 
                   {/* Guardrail Box 2: SESSION CAP */}
                   <div className="space-y-1">
-                    <label className="text-[9px] text-slate-400 font-semibold uppercase block">
+                    <label className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">
                       SESSION CAP
                     </label>
                     <div className="bg-[#F8FAFD] border border-slate-200/90 rounded-xl px-3 py-2 flex items-center justify-between">
@@ -340,7 +345,7 @@ export default function ExplorePage() {
                         onChange={(e) => setSessionCap(e.target.value)}
                         className="w-12 bg-transparent text-xs font-black text-slate-900 focus:outline-none"
                       />
-                      <span className="text-[10px] text-slate-500 font-semibold">GEN</span>
+                      <span className="text-[10px] text-slate-500 font-bold">GEN</span>
                     </div>
                   </div>
 
@@ -348,8 +353,8 @@ export default function ExplorePage() {
               </div>
 
               {/* Security Footnote */}
-              <div className="pt-2 flex items-center gap-1.5 text-[10px] text-slate-400">
-                <ShieldCheck className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+              <div className="pt-2 flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
+                <ShieldCheck className="h-3.5 w-3.5 text-[#6E3FF3] shrink-0" />
                 <span>Off-chain vouchers backed by GenLayer Escrow</span>
               </div>
 
@@ -360,7 +365,7 @@ export default function ExplorePage() {
           {/* =========================================================================
               RIGHT COLUMN: Main Capabilities Section + Structured Cards Grid
              ========================================================================= */}
-          <main className="lg:col-span-8 space-y-6">
+          <main className="flex-1 min-w-0 space-y-6">
             
             {/* Header: Title & Subtitle */}
             <div className="space-y-1">
@@ -378,7 +383,7 @@ export default function ExplorePage() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search capability endpoints (e.g. Claude 3.5, GPT-4o, Coding, 750 T/s)..."
+                  placeholder="Search capability endpoints (e.g. Claude 3.5, GPT-4o, Coding, Groq LPUs)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full h-11 rounded-2xl border border-slate-200 bg-white pl-11 pr-10 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#6E3FF3] focus:outline-none focus:ring-1 focus:ring-[#6E3FF3] shadow-sm transition-all font-mono"
@@ -408,9 +413,9 @@ export default function ExplorePage() {
               </div>
             </div>
 
-            {/* 2-Column Structured Card Grid (Exact Match to Reference Anatomy) */}
+            {/* 2-Column Structured Card Grid */}
             {filteredListings.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center space-y-4 shadow-sm">
+              <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center space-y-4 shadow-sm">
                 <p className="text-slate-500 text-sm font-sans">No capabilities match your active filters.</p>
                 <button
                   onClick={() => {
@@ -418,7 +423,7 @@ export default function ExplorePage() {
                     setSelectedCategory("ALL");
                     setSelectedProvider("all");
                   }}
-                  className="rounded-full bg-slate-900 hover:bg-slate-800 px-6 py-2.5 text-xs text-white transition-colors font-mono"
+                  className="rounded-full bg-[#6E3FF3] hover:bg-[#5D32D8] px-6 py-2.5 text-xs text-white transition-colors font-mono font-bold shadow-md shadow-purple-500/20"
                 >
                   Reset Filters
                 </button>
@@ -432,7 +437,7 @@ export default function ExplorePage() {
                   return (
                     <div
                       key={item.id}
-                      className="group bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.025)] hover:border-purple-300 hover:shadow-lg transition-all duration-200 flex flex-col justify-between"
+                      className="group bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.03)] hover:border-purple-300 hover:shadow-lg transition-all duration-200 flex flex-col justify-between"
                     >
                       
                       <div className="space-y-3.5">
@@ -440,10 +445,10 @@ export default function ExplorePage() {
                         {/* Top Row: Provider / Category Pill Tag + Status (ONLINE) */}
                         <div className="flex items-center justify-between gap-3">
                           <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#F3EEFF] border border-[#DDD0FA] text-[#6E3FF3]">
-                            {isDonation ? "PUBLIC GRANT" : providerInfo.shortName}
+                            {isDonation ? "COMMUNITY GRANT" : providerInfo.shortName}
                           </span>
 
-                          <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-600 shrink-0">
+                          <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-600 shrink-0">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             <span>
                               {isDonation
@@ -458,20 +463,20 @@ export default function ExplorePage() {
                           <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-[#6E3FF3] transition-colors tracking-tight font-sans">
                             {formatModelTitle(item.modelFamily)}
                           </h3>
-                          <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 font-sans">
+                          <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 font-sans min-h-[32px]">
                             {item.description || "High-speed LLM providing automated reasoning, extraction, and cognitive analysis."}
                           </p>
                         </div>
 
                         {/* Recessed 3-Metric Dashboard Box */}
-                        <div className="bg-[#F8FAFD] border border-slate-200/70 rounded-xl p-3.5 my-3 grid grid-cols-3 text-center divide-x divide-slate-200 font-mono text-xs">
+                        <div className="bg-[#F8FAFD] border border-slate-200/80 rounded-2xl p-3.5 my-3 grid grid-cols-3 text-center divide-x divide-slate-200 font-mono text-xs">
                           
                           {/* Col 1: CAPACITY */}
                           <div className="space-y-0.5 px-1">
                             <div className="text-[9px] uppercase tracking-wider text-[#6E3FF3] font-bold">
                               CAPACITY
                             </div>
-                            <div className="font-black text-slate-900 text-xs sm:text-sm">
+                            <div className="font-black text-slate-900 text-xs sm:text-sm mt-0.5">
                               {formatTokens(item.remainingTokens)}
                             </div>
                           </div>
@@ -481,7 +486,7 @@ export default function ExplorePage() {
                             <div className="text-[9px] uppercase tracking-wider text-[#6E3FF3] font-bold">
                               SUCCESS
                             </div>
-                            <div className="font-black text-slate-900 text-xs sm:text-sm">
+                            <div className="font-black text-slate-900 text-xs sm:text-sm mt-0.5">
                               {Math.round(item.verificationScore * 100)}%
                             </div>
                           </div>
@@ -491,7 +496,7 @@ export default function ExplorePage() {
                             <div className="text-[9px] uppercase tracking-wider text-[#6E3FF3] font-bold">
                               EXPIRES
                             </div>
-                            <div className="font-black text-slate-900 text-xs sm:text-sm">
+                            <div className="font-black text-slate-900 text-xs sm:text-sm mt-0.5">
                               {formatTimeRemaining(item.expiryTimestamp)}
                             </div>
                           </div>
@@ -507,7 +512,7 @@ export default function ExplorePage() {
                             {isDonation ? "PUBLIC GRANT" : "PRICE / QUOTA"}
                           </span>
                           <div className="flex items-baseline gap-1.5 mt-0.5 font-mono">
-                            <span className="text-base sm:text-lg font-black text-[#059669]">
+                            <span className="text-base sm:text-lg font-black text-emerald-600">
                               {isDonation ? "0.00 GEN" : `${formatCurrency(item.priceUsd)}`}
                             </span>
                             {!isDonation && item.retailValueUsd > 0 && (
@@ -520,7 +525,7 @@ export default function ExplorePage() {
 
                         <button
                           onClick={() => setActiveListing(item)}
-                          className="rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white px-4 py-2 text-xs font-bold font-mono shadow-md shadow-purple-500/25 transition-all hover:scale-105 flex items-center gap-1.5 shrink-0"
+                          className="rounded-full bg-[#6E3FF3] hover:bg-[#5D32D8] text-white px-4 sm:px-5 py-2 text-xs font-bold font-mono shadow-md shadow-purple-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 shrink-0"
                         >
                           <span>{isDonation ? "Claim Faucet" : "Rent Sub-Key"}</span>
                           <ArrowUpRight className="h-3.5 w-3.5" />
@@ -539,70 +544,79 @@ export default function ExplorePage() {
 
       </div>
 
-      {/* Checkout Modal */}
+      {/* Checkout Modal (Fully Contained, Zero Overflow, Generous Insets) */}
       {activeListing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-7 sm:p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200 text-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-7 sm:p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-150 text-slate-900 box-border overflow-hidden">
             
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
-              <div>
-                <span className="text-[10px] font-mono uppercase text-[#6E3FF3] font-bold">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4 gap-4">
+              <div className="space-y-1 min-w-0">
+                <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#F3EEFF] border border-[#DDD0FA] text-[#6E3FF3] inline-block">
                   {activeListing.listingType === "DONATION" ? "COMMUNITY FAUCET CLAIM" : "GENLAYER ESCROW CHECKOUT"}
                 </span>
-                <h3 className="text-2xl font-black text-slate-900 mt-1 tracking-tight font-sans">
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-sans truncate">
                   {formatModelTitle(activeListing.modelFamily)}
                 </h3>
               </div>
               <button
                 onClick={() => setActiveListing(null)}
-                className="text-slate-400 hover:text-slate-700 text-xs px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"
+                className="text-slate-400 hover:text-slate-700 text-xs px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors shrink-0"
               >
                 ✕
               </button>
             </div>
 
+            {/* Receipt Summary Card */}
             <div className="space-y-4 font-mono text-xs">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                <div className="flex justify-between text-slate-600">
-                  <span>PROVIDER & CLUSTER:</span>
-                  <span className="text-slate-900 font-bold uppercase">{activeListing.provider}</span>
+              <div className="p-5 rounded-2xl bg-[#F8FAFD] border border-slate-200/80 space-y-3">
+                <div className="flex items-center justify-between gap-4 text-slate-600">
+                  <span className="shrink-0 text-slate-500 font-bold">PROVIDER & CLUSTER:</span>
+                  <span className="text-slate-900 font-bold uppercase text-right truncate">{activeListing.provider}</span>
                 </div>
-                <div className="flex justify-between text-slate-600">
-                  <span>RESERVOIR CAPACITY:</span>
-                  <span className="text-slate-900 font-bold">{formatTokens(activeListing.remainingTokens)} Tokens</span>
+                <div className="flex items-center justify-between gap-4 text-slate-600">
+                  <span className="shrink-0 text-slate-500 font-bold">RESERVOIR CAPACITY:</span>
+                  <span className="text-slate-900 font-bold text-right truncate">{formatTokens(activeListing.remainingTokens)} Tokens</span>
                 </div>
-                <div className="flex justify-between text-slate-600">
-                  <span>SETTLEMENT ROUTE:</span>
-                  <span className="text-[#6E3FF3] font-bold">GenLayer Intelligent Contract → {activeListing.sellerChain.toUpperCase()}</span>
+                <div className="flex items-center justify-between gap-4 text-slate-600">
+                  <span className="shrink-0 text-slate-500 font-bold">SETTLEMENT ROUTE:</span>
+                  <span className="text-[#6E3FF3] font-bold text-right truncate text-[11px]">
+                    GenLayer Escrow → {activeListing.sellerChain.toUpperCase()}
+                  </span>
                 </div>
-                <div className="border-t border-slate-200 pt-3 flex justify-between text-slate-800">
-                  <span className="font-bold">TOTAL AMOUNT DUE:</span>
-                  <span className={`font-black text-lg ${activeListing.priceUsd === 0 ? "text-[#059669]" : "text-slate-900"}`}>
+                <div className="border-t border-slate-200/80 pt-3 flex items-center justify-between text-slate-900">
+                  <span className="font-bold text-xs uppercase">TOTAL AMOUNT DUE:</span>
+                  <span className={`font-black text-xl ${activeListing.priceUsd === 0 ? "text-emerald-600" : "text-emerald-600"}`}>
                     {activeListing.priceUsd === 0 ? "FREE ($0.00)" : formatCurrency(activeListing.priceUsd)}
                   </span>
                 </div>
               </div>
 
-              <p className="text-[11px] text-slate-500 leading-relaxed font-sans">
-                🔒 Payment is held securely in GenLayer escrow. You will receive an ephemeral sub-key immediately. 
-                If the seller revokes access or quota drops below threshold, GenLayer validators issue an automated refund.
-              </p>
+              {/* Escrow Guarantee Notice */}
+              <div className="bg-[#F5F0FF] border border-[#DDD0FA] rounded-2xl p-4 flex items-start gap-3 text-xs text-[#3E1B96] leading-relaxed font-sans">
+                <ShieldCheck className="h-4 w-4 text-[#6E3FF3] shrink-0 mt-0.5" />
+                <span>
+                  Payment is secured in a GenLayer Intelligent Escrow. You will receive an ephemeral sub-key immediately. 
+                  If the seller revokes access or quota drops below threshold, GenLayer validators issue an automated refund.
+                </span>
+              </div>
             </div>
 
+            {/* Modal Actions */}
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setActiveListing(null)}
-                className="rounded-full border border-slate-200 px-5 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                className="rounded-full border border-slate-200 px-5 py-2.5 text-xs font-semibold font-mono text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleCheckout(activeListing)}
-                className="rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] px-6 py-2.5 text-xs font-bold font-mono text-white shadow-md shadow-purple-500/25 transition-all hover:scale-[1.02]"
+                className="rounded-full bg-[#6E3FF3] hover:bg-[#5D32D8] px-6 py-2.5 text-xs font-bold font-mono text-white shadow-md shadow-purple-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 {activeListing.listingType === "DONATION"
-                  ? "Confirm Free Claim"
-                  : `Pay ${formatCurrency(activeListing.priceUsd)} & Activate`}
+                  ? "Confirm Free Claim ↗"
+                  : `Pay ${formatCurrency(activeListing.priceUsd)} & Activate ↗`}
               </button>
             </div>
 
@@ -612,24 +626,24 @@ export default function ExplorePage() {
 
       {/* Post-Checkout Virtual Key Delivery Dialog */}
       {createdSession && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-7 sm:p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200 text-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="relative w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-7 sm:p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-150 text-slate-900 box-border overflow-hidden">
             
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-11 w-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200 shadow-sm shrink-0">
                   <Check className="h-5 w-5" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 tracking-tight font-sans">Capacity Activated!</h3>
-                  <p className="text-[11px] text-slate-500 font-mono">
+                <div className="min-w-0">
+                  <h3 className="text-xl font-bold text-slate-900 tracking-tight font-sans truncate">Capacity Activated!</h3>
+                  <p className="text-[11px] text-slate-500 font-mono truncate">
                     GenLayer Escrow Locked • Ephemeral Sub-Key Generated
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setCreatedSession(null)}
-                className="text-slate-400 hover:text-slate-700 text-xs px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"
+                className="text-slate-400 hover:text-slate-700 text-xs px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors shrink-0"
               >
                 ✕
               </button>
@@ -639,14 +653,14 @@ export default function ExplorePage() {
               
               {/* Virtual Key Box */}
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
+                <label className="text-[10px] text-slate-500 uppercase tracking-wider font-bold block">
                   YOUR EPHEMERAL VIRTUAL KEY
                 </label>
-                <div className="flex items-center gap-2 rounded-2xl border border-purple-200 bg-purple-50/50 px-4 py-3 text-slate-900">
-                  <span className="flex-1 truncate text-purple-700 font-bold font-mono">{createdSession.subKey}</span>
+                <div className="flex items-center gap-2 rounded-2xl border border-[#DDD0FA] bg-[#F5F0FF] px-4 py-3 text-slate-900">
+                  <span className="flex-1 truncate text-[#6E3FF3] font-bold font-mono text-xs">{createdSession.subKey}</span>
                   <button
                     onClick={() => copyToClipboard(createdSession.subKey, "key")}
-                    className="flex items-center gap-1.5 rounded-xl bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white px-3.5 py-1.5 text-xs transition-colors shrink-0 shadow-sm"
+                    className="flex items-center gap-1.5 rounded-xl bg-[#6E3FF3] hover:bg-[#5D32D8] text-white px-3.5 py-1.5 text-xs font-bold transition-colors shrink-0 shadow-sm"
                   >
                     {copiedKey ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                     <span>{copiedKey ? "Copied" : "Copy"}</span>
@@ -656,14 +670,14 @@ export default function ExplorePage() {
 
               {/* Proxy Base URL */}
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
+                <label className="text-[10px] text-slate-500 uppercase tracking-wider font-bold block">
                   PROXY BASE URL (OPENAI SDK COMPATIBLE)
                 </label>
                 <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700">
-                  <span className="flex-1 truncate font-mono">http://localhost:3000/api/proxy/v1</span>
+                  <span className="flex-1 truncate font-mono text-xs">http://localhost:3000/api/proxy/v1</span>
                   <button
                     onClick={() => copyToClipboard("http://localhost:3000/api/proxy/v1", "url")}
-                    className="flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 px-3.5 py-1.5 text-xs text-slate-700 shrink-0"
+                    className="flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 px-3.5 py-1.5 text-xs text-slate-700 font-bold shrink-0"
                   >
                     {copiedUrl ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                     <span>{copiedUrl ? "Copied" : "Copy"}</span>
@@ -737,18 +751,18 @@ const res = await client.chat.completions.create({
 
             </div>
 
-            <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+            <div className="flex items-center justify-between border-t border-slate-100 pt-4 gap-3">
               <Link
                 href="/playground"
-                className="flex items-center gap-2 rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white px-5 py-2.5 text-xs font-bold font-mono transition-all shadow-md hover:scale-[1.02]"
+                className="flex items-center gap-2 rounded-full bg-[#6E3FF3] hover:bg-[#5D32D8] text-white px-5 py-2.5 text-xs font-bold font-mono transition-all shadow-md hover:scale-[1.02]"
               >
                 <Zap className="h-3.5 w-3.5" />
-                <span>Test in Live Playground</span>
+                <span>Test in Live Playground ↗</span>
               </Link>
 
               <button
                 onClick={() => setCreatedSession(null)}
-                className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                className="rounded-full border border-slate-200 px-5 py-2.5 text-xs font-semibold font-mono text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
               >
                 Close
               </button>
