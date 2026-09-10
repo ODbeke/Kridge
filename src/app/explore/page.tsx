@@ -242,11 +242,11 @@ export default function ExplorePage() {
           {/* =========================================================================
               LEFT COLUMN: Service Marketplace Filter Card + GENLAYERS WALLET Card
              ========================================================================= */}
-          <aside className="lg:col-span-4 xl:col-span-3.5 space-y-6">
+          <aside className="lg:col-span-4 space-y-6">
             
-            {/* 1. Service Marketplace Filter Card (Exact Match to Reference) */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-5">
-              <div className="space-y-1">
+            {/* 1. Service Marketplace Filter Card */}
+            <div className="bg-white rounded-3xl p-7 border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-6">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-2 text-slate-900 font-bold text-base tracking-tight">
                   <span className="text-amber-500">⚡</span>
                   <span>Service Marketplace</span>
@@ -264,7 +264,7 @@ export default function ExplorePage() {
                     <button
                       key={cat.id}
                       onClick={() => setSelectedCategory(cat.id)}
-                      className={`w-full py-2.5 px-4 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
+                      className={`w-full py-2.5 px-5 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
                         isActive
                           ? "bg-[#6E3FF3] text-white shadow-md shadow-purple-500/25 scale-[1.01]"
                           : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
@@ -277,16 +277,16 @@ export default function ExplorePage() {
               </div>
 
               {/* Provider Sub-Filter */}
-              <div className="border-t border-slate-100 pt-4 space-y-2.5">
+              <div className="border-t border-slate-100 pt-5 space-y-3">
                 <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold block">
                   AI Model Cluster
                 </span>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <button
                     onClick={() => setSelectedProvider("all")}
-                    className={`w-full py-2 px-3 rounded-xl text-xs font-mono transition-colors text-left flex items-center justify-between ${
+                    className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-mono transition-colors text-left flex items-center justify-between ${
                       selectedProvider === "all"
-                        ? "bg-slate-900 text-white font-bold"
+                        ? "bg-slate-900 text-white font-bold shadow-sm"
                         : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                     }`}
                   >
@@ -304,9 +304,9 @@ export default function ExplorePage() {
                       <button
                         key={key}
                         onClick={() => setSelectedProvider(key)}
-                        className={`w-full py-2 px-3 rounded-xl text-xs font-mono transition-colors text-left flex items-center justify-between ${
+                        className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-mono transition-colors text-left flex items-center justify-between ${
                           isSelected
-                            ? "bg-slate-900 text-white font-bold"
+                            ? "bg-slate-900 text-white font-bold shadow-sm"
                             : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                         }`}
                       >
@@ -323,8 +323,8 @@ export default function ExplorePage() {
 
             </div>
 
-            {/* 2. GENLAYERS WALLET Card (Exact Match to Reference) */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-4 font-mono text-xs">
+            {/* 2. GENLAYERS WALLET Card */}
+            <div className="bg-white rounded-3xl p-7 border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-5 font-mono text-xs">
               
               {/* Header */}
               <div className="flex items-center justify-between">
@@ -337,26 +337,26 @@ export default function ExplorePage() {
                 </span>
               </div>
 
-              {/* Wallet Info */}
-              <div className="space-y-1.5 py-1">
+              {/* Wallet Info Box */}
+              <div className="bg-[#F8FAFD] border border-slate-200/80 rounded-2xl p-4 space-y-2.5">
                 <div className="flex items-center justify-between text-slate-600">
                   <span>Burner Wallet:</span>
                   <button
                     onClick={copyBurner}
-                    className="flex items-center gap-1 font-bold text-slate-900 hover:text-[#6E3FF3] transition-colors"
+                    className="flex items-center gap-1.5 font-bold text-slate-900 hover:text-[#6E3FF3] transition-colors"
                     title="Click to copy burner wallet address"
                   >
                     <span>{formatAddress(wallet.address)}</span>
                     {copiedBurner ? (
-                      <Check className="h-3 w-3 text-emerald-600" />
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
                     ) : (
-                      <Copy className="h-3 w-3 text-slate-400" />
+                      <Copy className="h-3.5 w-3.5 text-slate-400" />
                     )}
                   </button>
                 </div>
                 <div className="flex items-center justify-between text-slate-600">
                   <span>GEN Balance:</span>
-                  <span className="font-black text-slate-900">
+                  <span className="font-black text-slate-900 text-sm">
                     {genBalance.toFixed(2)} GEN
                   </span>
                 </div>
@@ -365,13 +365,13 @@ export default function ExplorePage() {
               {/* Request Faucet Button */}
               <button
                 onClick={handleFaucetRequest}
-                className="w-full py-3 px-4 rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white font-mono font-bold text-xs tracking-wider shadow-md shadow-purple-500/25 transition-all active:scale-[0.98] text-center block"
+                className="w-full py-3.5 px-5 rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white font-mono font-bold text-xs tracking-wider shadow-md shadow-purple-500/25 transition-all active:scale-[0.98] text-center block"
               >
                 {faucetClaimed ? "✓ CLAIMED 20 GEN!" : "REQUEST FAUCET (20 GEN)"}
               </button>
 
               {/* Escrow Deposit Controls */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
+              <div className="space-y-2.5 pt-2 border-t border-slate-100">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600 font-semibold">Escrow Deposit:</span>
                   <span className="font-bold text-purple-700">{escrowDeposit.toFixed(2)} GEN</span>
@@ -384,12 +384,12 @@ export default function ExplorePage() {
                     min="0.01"
                     value={depositInput}
                     onChange={(e) => setDepositInput(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#6E3FF3]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#6E3FF3]"
                     placeholder="0.05"
                   />
                   <button
                     onClick={handleDeposit}
-                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider transition-colors shrink-0"
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider transition-colors shrink-0"
                   >
                     DEPOSIT
                   </button>
@@ -397,7 +397,7 @@ export default function ExplorePage() {
               </div>
 
               {/* Pre-Auth Allowance Controls */}
-              <div className="space-y-1.5 pt-2 border-t border-slate-100">
+              <div className="space-y-2 pt-2 border-t border-slate-100">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
                   PRE-AUTH ALLOWANCE:
                 </span>
@@ -406,7 +406,7 @@ export default function ExplorePage() {
                     type="text"
                     value={preAuthAddress}
                     onChange={(e) => setPreAuthAddress(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#6E3FF3]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#6E3FF3]"
                     placeholder="Seller wallet address 0x..."
                   />
                   <button
@@ -416,7 +416,7 @@ export default function ExplorePage() {
                         setPreAuthAddress("");
                       }
                     }}
-                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider transition-colors shrink-0"
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider transition-colors shrink-0"
                   >
                     APPROVE
                   </button>
@@ -436,10 +436,10 @@ export default function ExplorePage() {
           {/* =========================================================================
               RIGHT COLUMN: Main Capabilities Section + 2-Column Card Grid
              ========================================================================= */}
-          <main className="lg:col-span-8 xl:col-span-8.5 space-y-6">
+          <main className="lg:col-span-8 space-y-6">
             
             {/* Header: Title & Subtitle */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-sans">
                 On-Chain Registered Capabilities ({filteredListings.length})
               </h1>
@@ -486,7 +486,7 @@ export default function ExplorePage() {
 
             {/* 2-Column Structured Card Grid */}
             {filteredListings.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center space-y-4 shadow-sm">
+              <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center space-y-4 shadow-sm">
                 <p className="text-slate-500 text-sm font-sans">No capabilities match your active filters.</p>
                 <button
                   onClick={() => {
@@ -494,13 +494,13 @@ export default function ExplorePage() {
                     setSelectedProvider("all");
                     setSelectedCategory("ALL");
                   }}
-                  className="rounded-full bg-slate-900 hover:bg-slate-800 px-5 py-2 text-xs text-white transition-colors font-mono"
+                  className="rounded-full bg-slate-900 hover:bg-slate-800 px-6 py-2.5 text-xs text-white transition-colors font-mono"
                 >
                   Reset Filters
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredListings.map((item) => {
                   const isDonation = item.listingType === "DONATION";
                   const primaryTag = getPrimaryTag(item);
@@ -508,18 +508,18 @@ export default function ExplorePage() {
                   return (
                     <div
                       key={item.id}
-                      className="group bg-white rounded-2xl p-6 border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] hover:border-purple-300 hover:shadow-xl transition-all duration-200 flex flex-col justify-between space-y-4"
+                      className="group bg-white rounded-3xl p-7 sm:p-8 border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] hover:border-purple-300 hover:shadow-xl transition-all duration-200 flex flex-col justify-between"
                     >
                       
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         
                         {/* Top Row: Category Pill Tag + Status (ONLINE) */}
-                        <div className="flex items-center justify-between">
-                          <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#F3EEFF] border border-[#DDD0FA] text-[#6E3FF3]">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="px-3.5 py-1.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#F3EEFF] border border-[#DDD0FA] text-[#6E3FF3]">
                             {primaryTag}
                           </span>
 
-                          <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-600">
+                          <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-600 shrink-0">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             <span>
                               {isDonation
@@ -530,8 +530,8 @@ export default function ExplorePage() {
                         </div>
 
                         {/* Title & Description */}
-                        <div className="space-y-1">
-                          <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-[#6E3FF3] transition-colors tracking-tight font-sans">
+                        <div className="space-y-1.5 pt-1">
+                          <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#6E3FF3] transition-colors tracking-tight font-sans">
                             {formatModelTitle(item.modelFamily)}
                           </h3>
                           <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 font-sans">
@@ -539,35 +539,35 @@ export default function ExplorePage() {
                           </p>
                         </div>
 
-                        {/* 3-Metric Recessed Dashboard Box (Exact Match to Reference) */}
-                        <div className="bg-[#F8FAFD] border border-slate-200/60 rounded-xl p-3.5 my-3 grid grid-cols-3 text-center divide-x divide-slate-200 font-mono text-xs">
+                        {/* 3-Metric Recessed Dashboard Box */}
+                        <div className="bg-[#F8FAFD] border border-slate-200/80 rounded-2xl p-4 my-4 grid grid-cols-3 text-center divide-x divide-slate-200/80 font-mono text-xs">
                           
                           {/* Col 1: RATING / CAPACITY */}
-                          <div className="space-y-0.5 px-1">
-                            <div className="text-[9px] uppercase tracking-wider text-[#6E3FF3] font-bold">
+                          <div className="space-y-1 px-1.5">
+                            <div className="text-[10px] uppercase tracking-wider text-[#6E3FF3] font-bold">
                               CAPACITY
                             </div>
-                            <div className="font-black text-slate-900 text-xs sm:text-sm">
+                            <div className="font-black text-slate-900 text-sm">
                               {formatTokens(item.remainingTokens)}
                             </div>
                           </div>
 
                           {/* Col 2: SUCCESS */}
-                          <div className="space-y-0.5 px-1">
-                            <div className="text-[9px] uppercase tracking-wider text-[#6E3FF3] font-bold">
+                          <div className="space-y-1 px-1.5">
+                            <div className="text-[10px] uppercase tracking-wider text-[#6E3FF3] font-bold">
                               SUCCESS
                             </div>
-                            <div className="font-black text-slate-900 text-xs sm:text-sm">
+                            <div className="font-black text-slate-900 text-sm">
                               {Math.round(item.verificationScore * 100)}%
                             </div>
                           </div>
 
                           {/* Col 3: CALLS / EXPIRES */}
-                          <div className="space-y-0.5 px-1">
-                            <div className="text-[9px] uppercase tracking-wider text-[#6E3FF3] font-bold">
+                          <div className="space-y-1 px-1.5">
+                            <div className="text-[10px] uppercase tracking-wider text-[#6E3FF3] font-bold">
                               EXPIRES
                             </div>
-                            <div className="font-black text-slate-900 text-xs sm:text-sm">
+                            <div className="font-black text-slate-900 text-sm">
                               {formatTimeRemaining(item.expiryTimestamp)}
                             </div>
                           </div>
@@ -577,17 +577,17 @@ export default function ExplorePage() {
                       </div>
 
                       {/* Footer Row: Price / Call + Action Button */}
-                      <div className="border-t border-slate-100 pt-4 flex items-center justify-between gap-3">
+                      <div className="border-t border-slate-100 pt-5 mt-3 flex items-center justify-between gap-4">
                         <div>
-                          <span className="text-[9px] font-mono text-[#6E3FF3] uppercase tracking-wider block font-bold">
+                          <span className="text-[10px] font-mono text-[#6E3FF3] uppercase tracking-wider block font-bold">
                             {isDonation ? "PUBLIC GRANT" : "PRICE / QUOTA"}
                           </span>
-                          <div className="flex items-baseline gap-1.5 mt-0.5 font-mono">
-                            <span className="text-lg font-black text-[#059669]">
+                          <div className="flex items-baseline gap-2 mt-0.5 font-mono">
+                            <span className="text-xl font-black text-[#059669]">
                               {isDonation ? "0.00 GEN" : `${formatCurrency(item.priceUsd)}`}
                             </span>
                             {!isDonation && item.retailValueUsd > 0 && (
-                              <span className="text-[11px] text-slate-400 line-through">
+                              <span className="text-xs text-slate-400 line-through">
                                 {formatCurrency(item.retailValueUsd)}
                               </span>
                             )}
@@ -596,7 +596,7 @@ export default function ExplorePage() {
 
                         <button
                           onClick={() => setActiveListing(item)}
-                          className="rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white px-4 py-2 text-xs font-bold font-mono shadow-md shadow-purple-500/25 transition-all hover:scale-105 flex items-center gap-1.5 shrink-0"
+                          className="rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white px-5 py-2.5 text-xs font-bold font-mono shadow-md shadow-purple-500/25 transition-all hover:scale-105 flex items-center gap-1.5 shrink-0"
                         >
                           <span>{isDonation ? "Claim Faucet" : "Rent Sub-Key"}</span>
                           <ArrowUpRight className="h-3.5 w-3.5" />
@@ -618,7 +618,7 @@ export default function ExplorePage() {
       {/* Checkout Modal */}
       {activeListing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-7 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200 text-slate-900">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-7 sm:p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200 text-slate-900">
             
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
               <div>
@@ -689,7 +689,7 @@ export default function ExplorePage() {
       {/* Post-Checkout Virtual Key Delivery Dialog */}
       {createdSession && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-7 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200 text-slate-900">
+          <div className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-7 sm:p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200 text-slate-900">
             
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-3">
