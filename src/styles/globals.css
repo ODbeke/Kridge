@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@source "../app";
+@source "../components";
+@source "../lib";
+@source "..";
 
 /* Custom Cyber Glow Gradients */
 .dot-grid-bg {
