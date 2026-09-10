@@ -90,6 +90,14 @@ const PROVIDERS: Record<
   },
 };
 
+const MARKETPLACE_CATEGORIES = [
+  { id: "ALL", label: "ALL" },
+  { id: "RENT", label: "DISCOUNTED QUOTAS" },
+  { id: "DONATION", label: "COMMUNITY GRANTS" },
+  { id: "REASONING", label: "REASONING // CODING" },
+  { id: "MULTIMODAL", label: "MULTIMODAL // VISION" },
+];
+
 function formatModelTitle(raw: string): string {
   if (raw === "claude-3-5-sonnet") return "Claude 3.5 Sonnet";
   if (raw === "gpt-4o") return "GPT-4o Omnimodal";
@@ -101,16 +109,15 @@ function formatModelTitle(raw: string): string {
 
 export default function ExplorePage() {
   const { listings, rentListing, wallet } = useKridgeStore();
-  const [selectedType, setSelectedType] = useState<"ALL" | "RENT" | "DONATION">("ALL");
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [selectedProvider, setSelectedProvider] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"discount" | "cheapest" | "quota" | "expiring">("discount");
 
-  // Interactive Escrow & Faucet State
+  // Spend Limit Guardrails & Faucet State
+  const [maxPerCall, setMaxPerCall] = useState<string>("0.05");
+  const [sessionCap, setSessionCap] = useState<string>("2.50");
   const [genBalance, setGenBalance] = useState<number>(57.50);
-  const [escrowDeposit, setEscrowDeposit] = useState<number>(2.50);
-  const [depositInput, setDepositInput] = useState<string>("0.05");
-  const [preAuthAddress, setPreAuthAddress] = useState<string>("");
   const [faucetClaimed, setFaucetClaimed] = useState<boolean>(false);
   const [copiedBurner, setCopiedBurner] = useState<boolean>(false);
 
@@ -129,8 +136,17 @@ export default function ExplorePage() {
   const filteredListings = useMemo(() => {
     return listings
       .filter((l) => {
-        // Quota Type Filter (Rent vs Donation)
-        if (selectedType !== "ALL" && l.listingType !== selectedType) return false;
+        // Category Filter
+        if (selectedCategory === "RENT" && l.listingType !== "RENT") return false;
+        if (selectedCategory === "DONATION" && l.listingType !== "DONATION") return false;
+        if (selectedCategory === "REASONING") {
+          const match = l.tags?.some((t) => t.toLowerCase().includes("reasoning") || t.toLowerCase().includes("coding"));
+          if (!match && !l.modelFamily.includes("claude") && !l.modelFamily.includes("deepseek")) return false;
+        }
+        if (selectedCategory === "MULTIMODAL") {
+          const match = l.tags?.some((t) => t.toLowerCase().includes("multimodal") || t.toLowerCase().includes("vision"));
+          if (!match && !l.modelFamily.includes("gpt-4o") && !l.modelFamily.includes("gemini")) return false;
+        }
 
         // Provider Filter
         if (selectedProvider !== "all" && l.provider !== selectedProvider) return false;
@@ -154,21 +170,12 @@ export default function ExplorePage() {
         if (sortBy === "expiring") return a.expiryTimestamp - b.expiryTimestamp;
         return 0;
       });
-  }, [listings, selectedType, selectedProvider, searchQuery, sortBy]);
+  }, [listings, selectedCategory, selectedProvider, searchQuery, sortBy]);
 
   const handleFaucetRequest = () => {
     setGenBalance((prev) => prev + 20);
     setFaucetClaimed(true);
     setTimeout(() => setFaucetClaimed(false), 3000);
-  };
-
-  const handleDeposit = () => {
-    const val = parseFloat(depositInput);
-    if (!isNaN(val) && val > 0 && val <= genBalance) {
-      setGenBalance((prev) => +(prev - val).toFixed(2));
-      setEscrowDeposit((prev) => +(prev + val).toFixed(2));
-      setDepositInput("0.05");
-    }
   };
 
   const copyBurner = () => {
@@ -206,115 +213,54 @@ export default function ExplorePage() {
     <div className="min-h-screen luminous-canvas text-slate-900 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         
-        {/* 2-Column Responsive Dashboard Layout */}
+        {/* 2-Column Responsive Dashboard Layout (Matching Reference Architecture) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* =========================================================================
-              LEFT COLUMN: AI Model Clusters Card + GENLAYERS WALLET Card
+              LEFT COLUMN: 2 Structured Clean Cards (Exact Match to Reference)
              ========================================================================= */}
           <aside className="lg:col-span-4 space-y-6">
             
-            {/* 1. AI Model Clusters & Quota Types Filter Card */}
-            <div className="bg-white rounded-3xl p-7 border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-6">
+            {/* Card 1: Service Marketplace Category Filters */}
+            <div className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.025)] space-y-5">
               
               {/* Header */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2 text-slate-900 font-bold text-base tracking-tight">
-                  <span className="text-amber-500">⚡</span>
-                  <span>AI Model Clusters</span>
+                  <span className="text-amber-500 text-sm">⚡</span>
+                  <span>Service Marketplace</span>
                 </div>
                 <p className="text-xs text-slate-500 leading-normal">
-                  Filter on-chain API quotas by upstream AI provider
+                  Filter registered agent capabilities on-chain
                 </p>
               </div>
 
-              {/* Quota Type Filter Buttons */}
-              <div className="space-y-2 pt-1">
-                <button
-                  onClick={() => setSelectedType("ALL")}
-                  className={`w-full py-2.5 px-5 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
-                    selectedType === "ALL"
-                      ? "bg-[#6E3FF3] text-white shadow-md shadow-purple-500/25 scale-[1.01]"
-                      : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
-                  }`}
-                >
-                  ALL QUOTAS ({listings.length})
-                </button>
-
-                <button
-                  onClick={() => setSelectedType("RENT")}
-                  className={`w-full py-2.5 px-5 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
-                    selectedType === "RENT"
-                      ? "bg-[#6E3FF3] text-white shadow-md shadow-purple-500/25 scale-[1.01]"
-                      : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
-                  }`}
-                >
-                  DISCOUNTED SUB-KEYS ({listings.filter((l) => l.listingType === "RENT").length})
-                </button>
-
-                <button
-                  onClick={() => setSelectedType("DONATION")}
-                  className={`w-full py-2.5 px-5 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
-                    selectedType === "DONATION"
-                      ? "bg-[#6E3FF3] text-white shadow-md shadow-purple-500/25 scale-[1.01]"
-                      : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
-                  }`}
-                >
-                  COMMUNITY FAUCETS ({listings.filter((l) => l.listingType === "DONATION").length})
-                </button>
-              </div>
-
-              {/* Provider Sub-Filter */}
-              <div className="border-t border-slate-100 pt-5 space-y-3">
-                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold block">
-                  Select AI Provider
-                </span>
-                <div className="space-y-1.5">
-                  <button
-                    onClick={() => setSelectedProvider("all")}
-                    className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-mono transition-colors text-left flex items-center justify-between ${
-                      selectedProvider === "all"
-                        ? "bg-slate-900 text-white font-bold shadow-sm"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Globe2 className="h-3.5 w-3.5" />
-                      <span>All Providers</span>
-                    </div>
-                    {selectedProvider === "all" && <Check className="h-3.5 w-3.5 text-emerald-400" />}
-                  </button>
-
-                  {Object.entries(PROVIDERS).map(([key, p]) => {
-                    const Icon = p.icon;
-                    const isSelected = selectedProvider === key;
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => setSelectedProvider(key)}
-                        className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-mono transition-colors text-left flex items-center justify-between ${
-                          isSelected
-                            ? "bg-slate-900 text-white font-bold shadow-sm"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-3.5 w-3.5" />
-                          <span>{p.name}</span>
-                        </div>
-                        {isSelected && <Check className="h-3.5 w-3.5 text-emerald-400" />}
-                      </button>
-                    );
-                  })}
-                </div>
+              {/* Stack of Pill Buttons */}
+              <div className="space-y-2.5 pt-1">
+                {MARKETPLACE_CATEGORIES.map((cat) => {
+                  const isActive = selectedCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`w-full py-2.5 px-5 rounded-full text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 text-center block ${
+                        isActive
+                          ? "bg-[#6E3FF3] text-white shadow-md shadow-purple-500/25 scale-[1.01]"
+                          : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  );
+                })}
               </div>
 
             </div>
 
-            {/* 2. GENLAYERS WALLET Card */}
-            <div className="bg-white rounded-3xl p-7 border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-5 font-mono text-xs">
+            {/* Card 2: Wallet & Spend Limit Guardrails */}
+            <div className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.025)] space-y-5 font-mono text-xs">
               
-              {/* Header */}
+              {/* Top Row: Brand & Status Tag */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 font-bold text-slate-900 text-xs tracking-wider">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -325,8 +271,8 @@ export default function ExplorePage() {
                 </span>
               </div>
 
-              {/* Wallet Info Box */}
-              <div className="bg-[#F8FAFD] border border-slate-200/80 rounded-2xl p-4 space-y-2.5">
+              {/* Wallet Address & Balance Readout */}
+              <div className="space-y-1.5 py-1">
                 <div className="flex items-center justify-between text-slate-600">
                   <span>Burner Wallet:</span>
                   <button
@@ -353,65 +299,55 @@ export default function ExplorePage() {
               {/* Request Faucet Button */}
               <button
                 onClick={handleFaucetRequest}
-                className="w-full py-3.5 px-5 rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white font-mono font-bold text-xs tracking-wider shadow-md shadow-purple-500/25 transition-all active:scale-[0.98] text-center block"
+                className="w-full py-3 px-5 rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white font-mono font-bold text-xs tracking-wider shadow-md shadow-purple-500/25 transition-all active:scale-[0.98] text-center block"
               >
                 {faucetClaimed ? "✓ CLAIMED 20 GEN!" : "REQUEST FAUCET (20 GEN)"}
               </button>
 
-              {/* Escrow Deposit Controls */}
-              <div className="space-y-2.5 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-600 font-semibold">Escrow Deposit:</span>
-                  <span className="font-bold text-purple-700">{escrowDeposit.toFixed(2)} GEN</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    value={depositInput}
-                    onChange={(e) => setDepositInput(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#6E3FF3]"
-                    placeholder="0.05"
-                  />
-                  <button
-                    onClick={handleDeposit}
-                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider transition-colors shrink-0"
-                  >
-                    DEPOSIT
-                  </button>
-                </div>
-              </div>
-
-              {/* Pre-Auth Allowance Controls */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-                  PRE-AUTH ALLOWANCE:
+              {/* SPEND LIMIT GUARDRAILS Section (Exact Match to Reference) */}
+              <div className="space-y-2 pt-3 border-t border-slate-100">
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
+                  SPEND LIMIT GUARDRAILS
                 </span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={preAuthAddress}
-                    onChange={(e) => setPreAuthAddress(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#6E3FF3]"
-                    placeholder="Seller wallet address 0x..."
-                  />
-                  <button
-                    onClick={() => {
-                      if (preAuthAddress.trim()) {
-                        alert("Pre-auth allowance approved for " + formatAddress(preAuthAddress));
-                        setPreAuthAddress("");
-                      }
-                    }}
-                    className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider transition-colors shrink-0"
-                  >
-                    APPROVE
-                  </button>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  
+                  {/* Guardrail Box 1: MAX / CALL */}
+                  <div className="space-y-1">
+                    <label className="text-[9px] text-slate-400 font-semibold uppercase block">
+                      MAX / CALL
+                    </label>
+                    <div className="bg-[#F8FAFD] border border-slate-200/90 rounded-xl px-3 py-2 flex items-center justify-between">
+                      <input
+                        type="text"
+                        value={maxPerCall}
+                        onChange={(e) => setMaxPerCall(e.target.value)}
+                        className="w-12 bg-transparent text-xs font-black text-slate-900 focus:outline-none"
+                      />
+                      <span className="text-[10px] text-slate-500 font-semibold">GEN</span>
+                    </div>
+                  </div>
+
+                  {/* Guardrail Box 2: SESSION CAP */}
+                  <div className="space-y-1">
+                    <label className="text-[9px] text-slate-400 font-semibold uppercase block">
+                      SESSION CAP
+                    </label>
+                    <div className="bg-[#F8FAFD] border border-slate-200/90 rounded-xl px-3 py-2 flex items-center justify-between">
+                      <input
+                        type="text"
+                        value={sessionCap}
+                        onChange={(e) => setSessionCap(e.target.value)}
+                        className="w-12 bg-transparent text-xs font-black text-slate-900 focus:outline-none"
+                      />
+                      <span className="text-[10px] text-slate-500 font-semibold">GEN</span>
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
-              {/* Trust Badge */}
+              {/* Security Footnote */}
               <div className="pt-2 flex items-center gap-1.5 text-[10px] text-slate-400">
                 <ShieldCheck className="h-3.5 w-3.5 text-purple-600 shrink-0" />
                 <span>Off-chain vouchers backed by GenLayer Escrow</span>
@@ -422,12 +358,12 @@ export default function ExplorePage() {
           </aside>
 
           {/* =========================================================================
-              RIGHT COLUMN: Main Capabilities Section + 2-Column Card Grid
+              RIGHT COLUMN: Main Capabilities Section + Structured Cards Grid
              ========================================================================= */}
           <main className="lg:col-span-8 space-y-6">
             
             {/* Header: Title & Subtitle */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-sans">
                 On-Chain Registered Capabilities ({filteredListings.length})
               </h1>
@@ -472,15 +408,15 @@ export default function ExplorePage() {
               </div>
             </div>
 
-            {/* 2-Column Structured Card Grid */}
+            {/* 2-Column Structured Card Grid (Exact Match to Reference Anatomy) */}
             {filteredListings.length === 0 ? (
-              <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center space-y-4 shadow-sm">
-                <p className="text-slate-500 text-sm font-sans">No API quotas match your active filters.</p>
+              <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center space-y-4 shadow-sm">
+                <p className="text-slate-500 text-sm font-sans">No capabilities match your active filters.</p>
                 <button
                   onClick={() => {
                     setSearchQuery("");
+                    setSelectedCategory("ALL");
                     setSelectedProvider("all");
-                    setSelectedType("ALL");
                   }}
                   className="rounded-full bg-slate-900 hover:bg-slate-800 px-6 py-2.5 text-xs text-white transition-colors font-mono"
                 >
@@ -496,15 +432,15 @@ export default function ExplorePage() {
                   return (
                     <div
                       key={item.id}
-                      className="group bg-white rounded-3xl p-7 sm:p-8 border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] hover:border-purple-300 hover:shadow-xl transition-all duration-200 flex flex-col justify-between"
+                      className="group bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.025)] hover:border-purple-300 hover:shadow-lg transition-all duration-200 flex flex-col justify-between"
                     >
                       
-                      <div className="space-y-4">
+                      <div className="space-y-3.5">
                         
-                        {/* Top Row: Provider Brand Tag + Status (ONLINE) */}
+                        {/* Top Row: Provider / Category Pill Tag + Status (ONLINE) */}
                         <div className="flex items-center justify-between gap-3">
-                          <span className={`px-3.5 py-1.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border ${providerInfo.tagClass}`}>
-                            {isDonation ? `${providerInfo.shortName} • FAUCET` : providerInfo.shortName}
+                          <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#F3EEFF] border border-[#DDD0FA] text-[#6E3FF3]">
+                            {isDonation ? "PUBLIC GRANT" : providerInfo.shortName}
                           </span>
 
                           <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-600 shrink-0">
@@ -518,44 +454,44 @@ export default function ExplorePage() {
                         </div>
 
                         {/* Title & Description */}
-                        <div className="space-y-1.5 pt-1">
-                          <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#6E3FF3] transition-colors tracking-tight font-sans">
+                        <div className="space-y-1">
+                          <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-[#6E3FF3] transition-colors tracking-tight font-sans">
                             {formatModelTitle(item.modelFamily)}
                           </h3>
                           <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 font-sans">
-                            {item.description || "High-speed LLM providing automated text summarization, extraction, and cognitive analysis."}
+                            {item.description || "High-speed LLM providing automated reasoning, extraction, and cognitive analysis."}
                           </p>
                         </div>
 
-                        {/* 3-Metric Recessed Dashboard Box */}
-                        <div className="bg-[#F8FAFD] border border-slate-200/80 rounded-2xl p-4 my-4 grid grid-cols-3 text-center divide-x divide-slate-200/80 font-mono text-xs">
+                        {/* Recessed 3-Metric Dashboard Box */}
+                        <div className="bg-[#F8FAFD] border border-slate-200/70 rounded-xl p-3.5 my-3 grid grid-cols-3 text-center divide-x divide-slate-200 font-mono text-xs">
                           
-                          {/* Col 1: RATING / CAPACITY */}
-                          <div className="space-y-1 px-1.5">
-                            <div className="text-[10px] uppercase tracking-wider text-[#6E3FF3] font-bold">
+                          {/* Col 1: CAPACITY */}
+                          <div className="space-y-0.5 px-1">
+                            <div className="text-[9px] uppercase tracking-wider text-[#6E3FF3] font-bold">
                               CAPACITY
                             </div>
-                            <div className="font-black text-slate-900 text-sm">
+                            <div className="font-black text-slate-900 text-xs sm:text-sm">
                               {formatTokens(item.remainingTokens)}
                             </div>
                           </div>
 
                           {/* Col 2: SUCCESS */}
-                          <div className="space-y-1 px-1.5">
-                            <div className="text-[10px] uppercase tracking-wider text-[#6E3FF3] font-bold">
+                          <div className="space-y-0.5 px-1">
+                            <div className="text-[9px] uppercase tracking-wider text-[#6E3FF3] font-bold">
                               SUCCESS
                             </div>
-                            <div className="font-black text-slate-900 text-sm">
+                            <div className="font-black text-slate-900 text-xs sm:text-sm">
                               {Math.round(item.verificationScore * 100)}%
                             </div>
                           </div>
 
-                          {/* Col 3: CALLS / EXPIRES */}
-                          <div className="space-y-1 px-1.5">
-                            <div className="text-[10px] uppercase tracking-wider text-[#6E3FF3] font-bold">
+                          {/* Col 3: EXPIRES */}
+                          <div className="space-y-0.5 px-1">
+                            <div className="text-[9px] uppercase tracking-wider text-[#6E3FF3] font-bold">
                               EXPIRES
                             </div>
-                            <div className="font-black text-slate-900 text-sm">
+                            <div className="font-black text-slate-900 text-xs sm:text-sm">
                               {formatTimeRemaining(item.expiryTimestamp)}
                             </div>
                           </div>
@@ -565,13 +501,13 @@ export default function ExplorePage() {
                       </div>
 
                       {/* Footer Row: Price / Call + Action Button */}
-                      <div className="border-t border-slate-100 pt-5 mt-3 flex items-center justify-between gap-4">
+                      <div className="border-t border-slate-100 pt-4 mt-2 flex items-center justify-between gap-3">
                         <div>
-                          <span className="text-[10px] font-mono text-[#6E3FF3] uppercase tracking-wider block font-bold">
+                          <span className="text-[9px] font-mono text-[#6E3FF3] uppercase tracking-wider block font-bold">
                             {isDonation ? "PUBLIC GRANT" : "PRICE / QUOTA"}
                           </span>
-                          <div className="flex items-baseline gap-2 mt-0.5 font-mono">
-                            <span className="text-xl font-black text-[#059669]">
+                          <div className="flex items-baseline gap-1.5 mt-0.5 font-mono">
+                            <span className="text-base sm:text-lg font-black text-[#059669]">
                               {isDonation ? "0.00 GEN" : `${formatCurrency(item.priceUsd)}`}
                             </span>
                             {!isDonation && item.retailValueUsd > 0 && (
@@ -584,7 +520,7 @@ export default function ExplorePage() {
 
                         <button
                           onClick={() => setActiveListing(item)}
-                          className="rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white px-5 py-2.5 text-xs font-bold font-mono shadow-md shadow-purple-500/25 transition-all hover:scale-105 flex items-center gap-1.5 shrink-0"
+                          className="rounded-full bg-[#6E3FF3] hover:bg-[#5E2DE3] text-white px-4 py-2 text-xs font-bold font-mono shadow-md shadow-purple-500/25 transition-all hover:scale-105 flex items-center gap-1.5 shrink-0"
                         >
                           <span>{isDonation ? "Claim Faucet" : "Rent Sub-Key"}</span>
                           <ArrowUpRight className="h-3.5 w-3.5" />
