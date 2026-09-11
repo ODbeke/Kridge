@@ -280,103 +280,103 @@ export default function LandingPage() {
       </div>
 
       {/* =========================================================================
-          4. Architecture & Build Showcase (Spacious, Minimalist, Judge-Ready)
+          4. Architecture & Build Showcase (Josh Taylor-Inspired Layout)
          ========================================================================= */}
-      <section className="relative z-10 bg-[#06080D] border-t border-white/10 text-white font-sans pt-28 pb-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
+      <section className="relative z-10 bg-[#F5F4F0] text-neutral-900 font-sans py-28 sm:py-36 border-t border-black/10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
           
-          {/* Section Header: Centered, Clean, Spacious */}
-          <div className="text-center max-w-3xl mx-auto space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono font-medium">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>GENLAYER INTELLIGENT ARCHITECTURE</span>
-            </div>
-            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-              Decentralized AI Escrow Powered by GenLayer
+          {/* Top Tag & Big Statement */}
+          <div className="text-center max-w-3xl mx-auto space-y-6">
+            <span className="text-xs font-semibold tracking-widest text-neutral-500 uppercase font-mono">
+              KRIDGE PROTOCOL ARCHITECTURE
+            </span>
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-neutral-900 leading-[1.15]">
+              We build intelligent escrow, AI consensus &amp; ephemeral credentials that solve billion-dollar compute problems.
             </h2>
-            <p className="text-zinc-400 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
-              Traditional smart contracts cannot verify off-chain API keys or read error logs. 
-              Kridge uses GenLayer intelligent contracts to make AI subscription sharing safe, trustless, and autonomous.
-            </p>
           </div>
 
-          {/* 3 Clear, Spaced Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* 3-Card Grid Matching Reference Exactly */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             
-            {/* Card 1 */}
-            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-8 sm:p-10 space-y-6 hover:border-purple-500/30 transition-all group shadow-xl">
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-                <Activity className="w-6 h-6" />
+            {/* Card 1: GenLayer */}
+            <div className="bg-white rounded-2xl p-6 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-black/[0.06] flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-sm tracking-tight text-neutral-900">
+                    <span className="text-purple-600 font-black text-base">⬡</span>
+                    <span className="uppercase font-extrabold tracking-wider text-xs">GENLAYER</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-neutral-400">gl.get_web_data</span>
+                </div>
+                <div className="text-xs text-neutral-500 mt-1 font-medium">
+                  Autonomous Key Probing
+                </div>
               </div>
-              <div className="space-y-2">
-                <span className="text-xs font-mono text-purple-400 font-semibold tracking-wider uppercase">01 / Pre-Payment</span>
-                <h3 className="text-xl font-bold text-white tracking-tight">Live Web Probing</h3>
-              </div>
-              <p className="text-sm text-zinc-400 leading-relaxed">
-                Validators execute <code className="text-purple-300 font-mono text-xs bg-purple-500/10 px-1.5 py-0.5 rounded">gl.get_web_data()</code> directly against OpenAI, Anthropic, or DeepSeek before funds lock, proving the key is active and funded.
+              <p className="text-xs text-neutral-600 leading-relaxed">
+                Validators make live HTTP requests directly against upstream AI providers before funds lock, verifying active quota and remaining tokens trustlessly.
               </p>
             </div>
 
-            {/* Card 2 */}
-            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-8 sm:p-10 space-y-6 hover:border-cyan-500/30 transition-all group shadow-xl">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                <ShieldCheck className="w-6 h-6" />
+            {/* Card 2: Security Proxy */}
+            <div className="bg-white rounded-2xl p-6 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-black/[0.06] flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-sm tracking-tight text-neutral-900">
+                    <span className="text-cyan-600 font-black text-base">🛡</span>
+                    <span className="uppercase font-extrabold tracking-wider text-xs">SECURITY PROXY</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-neutral-400">OpenAI SDK v1</span>
+                </div>
+                <div className="text-xs text-neutral-500 mt-1 font-medium">
+                  Ephemeral Sub-Key Gateway
+                </div>
               </div>
-              <div className="space-y-2">
-                <span className="text-xs font-mono text-cyan-400 font-semibold tracking-wider uppercase">02 / Zero-Trust Access</span>
-                <h3 className="text-xl font-bold text-white tracking-tight">Ephemeral Proxy</h3>
-              </div>
-              <p className="text-sm text-zinc-400 leading-relaxed">
-                Master seller keys are never exposed. Kridge generates rate-limited virtual sub-keys routed through an OpenAI SDK-compatible reverse proxy with automated budget caps.
+              <p className="text-xs text-neutral-600 leading-relaxed">
+                Generates rate-limited virtual sub-keys with automatic spend caps. Master seller credentials remain 100% encrypted and never touch the client.
               </p>
             </div>
 
-            {/* Card 3 */}
-            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-8 sm:p-10 space-y-6 hover:border-emerald-500/30 transition-all group shadow-xl">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                <Scale className="w-6 h-6" />
+            {/* Card 3: AI Tribunal */}
+            <div className="bg-white rounded-2xl p-6 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-black/[0.06] flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-sm tracking-tight text-neutral-900">
+                    <span className="text-emerald-600 font-black text-base">⚖</span>
+                    <span className="uppercase font-extrabold tracking-wider text-xs">AI TRIBUNAL</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-neutral-400">gl.exec_prompt</span>
+                </div>
+                <div className="text-xs text-neutral-500 mt-1 font-medium">
+                  Optimistic Democracy Arbitration
+                </div>
               </div>
-              <div className="space-y-2">
-                <span className="text-xs font-mono text-emerald-400 font-semibold tracking-wider uppercase">03 / Arbitration</span>
-                <h3 className="text-xl font-bold text-white tracking-tight">AI Dispute Tribunal</h3>
-              </div>
-              <p className="text-sm text-zinc-400 leading-relaxed">
-                If upstream authentication fails, GenLayer validators analyze error logs using <code className="text-emerald-300 font-mono text-xs bg-emerald-500/10 px-1.5 py-0.5 rounded">gl.exec_prompt()</code> to refund the buyer and slash the seller&apos;s anti-spam bond.
+              <p className="text-xs text-neutral-600 leading-relaxed">
+                When upstream auth or rate limits fail, AI validators ingest gateway audit logs to autonomously refund buyers and slash fraudulent seller bonds.
               </p>
             </div>
 
           </div>
 
-          {/* Quick DApp Explorer Banner */}
-          <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-purple-950/20 via-black to-cyan-950/20 p-8 sm:p-12 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="space-y-1.5 text-center md:text-left">
-              <h4 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Inspect the protocol in action
-              </h4>
-              <p className="text-sm text-zinc-400">
-                Test virtual sub-keys in the live playground or run a simulated dispute trial.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
-              <Link
-                href="/explore"
-                className="px-5 py-2.5 rounded-full bg-white text-black font-bold text-xs hover:bg-zinc-200 transition-colors shadow-sm"
-              >
-                Marketplace →
-              </Link>
-              <Link
-                href="/playground"
-                className="px-5 py-2.5 rounded-full border border-white/15 text-zinc-200 hover:text-white hover:bg-white/5 font-semibold text-xs transition-colors"
-              >
-                Live Playground
-              </Link>
-              <Link
-                href="/tribunal"
-                className="px-5 py-2.5 rounded-full border border-white/15 text-zinc-200 hover:text-white hover:bg-white/5 font-semibold text-xs transition-colors"
-              >
-                AI Tribunal
-              </Link>
-            </div>
+          {/* Clean Minimal CTAs */}
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+            <Link
+              href="/explore"
+              className="px-6 py-2.5 rounded-full bg-neutral-900 text-white font-semibold text-xs hover:bg-neutral-800 transition-colors shadow-sm"
+            >
+              Browse Marketplace →
+            </Link>
+            <Link
+              href="/playground"
+              className="px-6 py-2.5 rounded-full bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors"
+            >
+              Test in Playground
+            </Link>
+            <Link
+              href="/tribunal"
+              className="px-6 py-2.5 rounded-full bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors"
+            >
+              Simulate AI Tribunal
+            </Link>
           </div>
 
         </div>
