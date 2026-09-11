@@ -280,18 +280,18 @@ export default function LandingPage() {
       </div>
 
       {/* =========================================================================
-          4. Architecture & Build Showcase (Josh Taylor-Inspired Layout)
+          4. Architecture & Build Showcase (Balanced, Elegant Designer Layout)
          ========================================================================= */}
-      <section className="relative z-10 bg-[#F5F4F0] text-neutral-900 font-sans py-28 sm:py-36 border-t border-black/10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+      <section className="relative z-10 bg-[#F5F4F0] text-neutral-900 font-sans py-20 sm:py-24 border-t border-black/10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          {/* Top Tag & Big Statement */}
-          <div className="text-center max-w-3xl mx-auto space-y-6">
-            <span className="text-xs font-semibold tracking-widest text-neutral-500 uppercase font-mono">
+          {/* Top Tag & Balanced Headline */}
+          <div className="text-center max-w-2xl mx-auto space-y-3 mb-10">
+            <span className="text-[11px] font-semibold tracking-widest text-neutral-400 uppercase font-mono">
               KRIDGE PROTOCOL ARCHITECTURE
             </span>
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-neutral-900 leading-[1.15]">
-              We build intelligent escrow, AI consensus &amp; ephemeral credentials that solve billion-dollar compute problems.
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-neutral-900 leading-snug">
+              We build intelligent escrow &amp; AI consensus that solve the compute waste problem.
             </h2>
           </div>
 
@@ -299,14 +299,14 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             
             {/* Card 1: GenLayer */}
-            <div className="bg-white rounded-2xl p-6 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-black/[0.06] flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-black/[0.07] flex flex-col justify-between space-y-3 hover:shadow-md transition-shadow">
               <div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-sm tracking-tight text-neutral-900">
-                    <span className="text-purple-600 font-black text-base">⬡</span>
-                    <span className="uppercase font-extrabold tracking-wider text-xs">GENLAYER</span>
+                  <div className="flex items-center gap-2 font-bold text-xs tracking-wider uppercase text-neutral-900">
+                    <span className="text-purple-600 text-sm font-black">⬡</span>
+                    <span>GENLAYER</span>
                   </div>
-                  <span className="text-[11px] font-mono text-neutral-400">gl.get_web_data</span>
+                  <span className="text-[10px] font-mono text-neutral-400">gl.get_web_data</span>
                 </div>
                 <div className="text-xs text-neutral-500 mt-1 font-medium">
                   Autonomous Key Probing
@@ -318,14 +318,14 @@ export default function LandingPage() {
             </div>
 
             {/* Card 2: Security Proxy */}
-            <div className="bg-white rounded-2xl p-6 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-black/[0.06] flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-black/[0.07] flex flex-col justify-between space-y-3 hover:shadow-md transition-shadow">
               <div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-sm tracking-tight text-neutral-900">
-                    <span className="text-cyan-600 font-black text-base">🛡</span>
-                    <span className="uppercase font-extrabold tracking-wider text-xs">SECURITY PROXY</span>
+                  <div className="flex items-center gap-2 font-bold text-xs tracking-wider uppercase text-neutral-900">
+                    <span className="text-cyan-600 text-sm font-black">🛡</span>
+                    <span>SECURITY PROXY</span>
                   </div>
-                  <span className="text-[11px] font-mono text-neutral-400">OpenAI SDK v1</span>
+                  <span className="text-[10px] font-mono text-neutral-400">OpenAI SDK v1</span>
                 </div>
                 <div className="text-xs text-neutral-500 mt-1 font-medium">
                   Ephemeral Sub-Key Gateway
@@ -337,14 +337,14 @@ export default function LandingPage() {
             </div>
 
             {/* Card 3: AI Tribunal */}
-            <div className="bg-white rounded-2xl p-6 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-black/[0.06] flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-black/[0.07] flex flex-col justify-between space-y-3 hover:shadow-md transition-shadow">
               <div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-sm tracking-tight text-neutral-900">
-                    <span className="text-emerald-600 font-black text-base">⚖</span>
-                    <span className="uppercase font-extrabold tracking-wider text-xs">AI TRIBUNAL</span>
+                  <div className="flex items-center gap-2 font-bold text-xs tracking-wider uppercase text-neutral-900">
+                    <span className="text-emerald-600 text-sm font-black">⚖</span>
+                    <span>AI TRIBUNAL</span>
                   </div>
-                  <span className="text-[11px] font-mono text-neutral-400">gl.exec_prompt</span>
+                  <span className="text-[10px] font-mono text-neutral-400">gl.exec_prompt</span>
                 </div>
                 <div className="text-xs text-neutral-500 mt-1 font-medium">
                   Optimistic Democracy Arbitration
@@ -358,22 +358,22 @@ export default function LandingPage() {
           </div>
 
           {/* Clean Minimal CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
             <Link
               href="/explore"
-              className="px-6 py-2.5 rounded-full bg-neutral-900 text-white font-semibold text-xs hover:bg-neutral-800 transition-colors shadow-sm"
+              className="px-5 py-2.5 rounded-full bg-neutral-900 text-white font-semibold text-xs hover:bg-neutral-800 transition-colors shadow-sm"
             >
               Browse Marketplace →
             </Link>
             <Link
               href="/playground"
-              className="px-6 py-2.5 rounded-full bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors"
+              className="px-5 py-2.5 rounded-full bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors"
             >
               Test in Playground
             </Link>
             <Link
               href="/tribunal"
-              className="px-6 py-2.5 rounded-full bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors"
+              className="px-5 py-2.5 rounded-full bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors"
             >
               Simulate AI Tribunal
             </Link>
