@@ -23,8 +23,11 @@ import {
   Globe2,
   Lock,
   PlusCircle,
-  Play
+  Play,
+  Activity,
+  Terminal
 } from "lucide-react";
+import { Footer } from "@/components/footer";
 import { useKridgeStore } from "@/lib/store";
 import { formatCurrency, formatTokens } from "@/lib/utils";
 
@@ -238,8 +241,8 @@ export default function LandingPage() {
           </div>
         </main>
 
-        {/* 3. Stats Footer (Bottom of Hero Viewport) */}
-        <footer className="stats">
+        {/* 3. Stats Bar (Bottom of Hero Viewport) */}
+        <div className="stats">
           <div className="stats-grid">
             <Link href="/explore" className="stat-item anim" style={{ "--d": "0.48s" } as React.CSSProperties}>
               <span className="stat-icon">&lt;</span>
@@ -273,8 +276,248 @@ export default function LandingPage() {
               </div>
             </Link>
           </div>
-        </footer>
+        </div>
       </div>
+
+      {/* =========================================================================
+          4. Deep Architecture & Hackathon Build Showcase (Scrollable Section)
+         ========================================================================= */}
+      <div className="relative z-10 bg-[#05070B] border-t border-white/10 text-white font-sans">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 space-y-28">
+
+          {/* Section A: The Problem & GenLayer Breakthrough */}
+          <div className="space-y-12">
+            <div className="max-w-3xl space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-mono font-medium">
+                <Cpu className="w-3.5 h-3.5" />
+                <span>GENLAYER HACKATHON CORE INNOVATION</span>
+              </div>
+              <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+                Why Traditional Blockchains Failed at AI Compute Escrow
+              </h2>
+              <p className="text-zinc-400 text-base sm:text-lg leading-relaxed">
+                Over <span className="text-zinc-200 font-semibold">53% of enterprise AI subscriptions expire unused</span> every month. Yet prior to GenLayer, a decentralized secondary compute market was impossible to build.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+              {/* The Old EVM Limitation */}
+              <div className="p-8 rounded-3xl border border-red-500/20 bg-gradient-to-b from-red-950/10 to-black/40 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+                    <X className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white">Traditional EVM Smart Contracts</h3>
+                </div>
+                <ul className="space-y-3 text-sm text-zinc-400">
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-red-400 mt-1 shrink-0">•</span>
+                    <span><strong>Strictly Deterministic:</strong> Cannot make outbound HTTP requests to verify if an API key is alive or out of quota.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-red-400 mt-1 shrink-0">•</span>
+                    <span><strong>Blind to Off-Chain State:</strong> Cannot parse HTTP 429 rate-limit headers or upstream OpenAI/Anthropic error payloads.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-red-400 mt-1 shrink-0">•</span>
+                    <span><strong>No Subjective Arbitration:</strong> If a buyer claims a key was revoked, EVM cannot judge who was at fault without centralized oracles.</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* The GenLayer Intelligent Solution */}
+              <div className="p-8 rounded-3xl border border-purple-500/30 bg-gradient-to-b from-purple-950/20 to-black/40 space-y-4 shadow-xl shadow-purple-950/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white">GenLayer Intelligent Contracts</h3>
+                </div>
+                <ul className="space-y-3 text-sm text-zinc-300">
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-emerald-400 mt-1 shrink-0">✓</span>
+                    <span><strong>Autonomous Probing (<code className="text-purple-300 font-mono text-xs">gl.get_web_data</code>):</strong> Validators ping provider endpoints directly before escrow lock to guarantee authentic quota.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-emerald-400 mt-1 shrink-0">✓</span>
+                    <span><strong>AI Dispute Consensus (<code className="text-purple-300 font-mono text-xs">gl.exec_prompt</code>):</strong> Validators use LLM reasoning to evaluate gateway audit logs under Optimistic Democracy.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-emerald-400 mt-1 shrink-0">✓</span>
+                    <span><strong>Slashing & Refunds:</strong> Automatic slashing of the seller&apos;s $1.00 anti-spam bond if quota is revoked, protecting buyers 100% on-chain.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Section B: 3-Step Trustless Escrow Lifecycle */}
+          <div className="space-y-12">
+            <div className="text-center max-w-3xl mx-auto space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-medium">
+                <Layers className="w-3.5 h-3.5" />
+                <span>TRUSTLESS ESCROW ARCHITECTURE</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+                How Kridge Powers Safe AI Quota Sharing
+              </h2>
+              <p className="text-zinc-400 text-sm sm:text-base">
+                Zero master key exposure. Ephemeral session sub-keys. Decentralized validation at every hop.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Step 1 */}
+              <div className="p-8 rounded-3xl border border-white/10 bg-white/[0.02] space-y-5 hover:border-cyan-500/30 transition-all group">
+                <div className="flex items-center justify-between">
+                  <span className="text-4xl font-black text-white/20 group-hover:text-cyan-400/40 transition-colors font-mono">01</span>
+                  <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-cyan-400">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white">Virtualize & Bond</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">
+                  The seller inputs their surplus quota. Kridge generates an isolated virtual sub-key with spend caps and expiration. The seller locks a <strong>$1.00 anti-spam bond</strong> into the GenLayer escrow contract.
+                </p>
+                <div className="p-3 rounded-2xl bg-black/60 border border-white/5 text-[11px] font-mono text-zinc-400">
+                  Escrow Contract: <span className="text-cyan-300">0x7a89...GenLayer</span>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="p-8 rounded-3xl border border-white/10 bg-white/[0.02] space-y-5 hover:border-purple-500/30 transition-all group">
+                <div className="flex items-center justify-between">
+                  <span className="text-4xl font-black text-white/20 group-hover:text-purple-400/40 transition-colors font-mono">02</span>
+                  <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-purple-400">
+                    <Activity className="w-5 h-5" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white">Validator Web Probe</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">
+                  Before a buyer pays, GenLayer validators trigger <code>gl.get_web_data</code> to probe OpenAI, Anthropic, or DeepSeek directly. Only verified, funded quota enters the public marketplace.
+                </p>
+                <div className="p-3 rounded-2xl bg-black/60 border border-white/5 text-[11px] font-mono text-zinc-400">
+                  Consensus: <span className="text-purple-300">gl.get_web_data() Verified</span>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="p-8 rounded-3xl border border-white/10 bg-white/[0.02] space-y-5 hover:border-emerald-500/30 transition-all group">
+                <div className="flex items-center justify-between">
+                  <span className="text-4xl font-black text-white/20 group-hover:text-emerald-400/40 transition-colors font-mono">03</span>
+                  <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400">
+                    <Scale className="w-5 h-5" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white">AI Dispute Tribunal</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">
+                  If a key fails upstream, the buyer triggers an on-chain dispute. GenLayer validators analyze reverse-proxy audit signatures with <code>gl.exec_prompt</code> to refund buyers and slash fraudsters.
+                </p>
+                <div className="p-3 rounded-2xl bg-black/60 border border-white/5 text-[11px] font-mono text-zinc-400">
+                  Arbitration: <span className="text-emerald-300">Optimistic Democracy</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section C: Full-Stack Tech Matrix */}
+          <div className="space-y-12">
+            <div className="max-w-3xl space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium">
+                <Terminal className="w-3.5 h-3.5" />
+                <span>COMPLETE TECH STACK</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+                Engineered for Autonomous Agents & Developers
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Feature 1 */}
+              <div className="p-6 rounded-3xl border border-white/10 bg-white/[0.02] space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                  <Cpu className="w-4 h-4" />
+                </div>
+                <h4 className="font-bold text-white text-base">GenLayer Intelligent Contracts</h4>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  Native Python intelligent contracts handling validator quorum, multi-sig escrow deposits, and anti-spam bond slashes.
+                </p>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="p-6 rounded-3xl border border-white/10 bg-white/[0.02] space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <h4 className="font-bold text-white text-base">Zero-Trust Reverse Proxy</h4>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  High-throughput OpenAI SDK drop-in endpoint. Virtual keys are authenticated without ever leaking raw provider credentials.
+                </p>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="p-6 rounded-3xl border border-white/10 bg-white/[0.02] space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <Globe2 className="w-4 h-4" />
+                </div>
+                <h4 className="font-bold text-white text-base">Hyperlane Cross-Chain</h4>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  Enables multi-chain settlement. Pay natively from Base, zkSync Era, or Solana, settled automatically into GenLayer escrow.
+                </p>
+              </div>
+
+              {/* Feature 4 */}
+              <div className="p-6 rounded-3xl border border-white/10 bg-white/[0.02] space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <h4 className="font-bold text-white text-base">x402 Agentic Protocol</h4>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  HTTP 402 machine-to-machine payment protocol allowing autonomous AI agents to purchase prompt tokens on the fly without human intervention.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Section D: Quick Action Launchpad */}
+          <div className="p-8 sm:p-12 rounded-3xl border border-white/15 bg-gradient-to-r from-purple-950/30 via-black to-cyan-950/30 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="space-y-2 text-center md:text-left">
+              <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Ready to explore the live protocol?
+              </h3>
+              <p className="text-sm text-zinc-400">
+                Browse active subscription listings or run live inference in the proxy playground.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-4 shrink-0">
+              <Link
+                href="/explore"
+                className="px-6 py-3 rounded-full bg-white text-black font-bold text-sm hover:bg-zinc-200 transition-colors shadow-lg"
+              >
+                Browse Marketplace
+              </Link>
+              <Link
+                href="/playground"
+                className="px-6 py-3 rounded-full border border-white/20 text-white font-semibold text-sm hover:bg-white/10 transition-colors"
+              >
+                Test in Playground
+              </Link>
+              <Link
+                href="/tribunal"
+                className="px-6 py-3 rounded-full border border-purple-500/40 text-purple-300 font-semibold text-sm hover:bg-purple-500/10 transition-colors"
+              >
+                AI Tribunal
+              </Link>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* =========================================================================
+          5. Minimalist Gladia-Style Footer (Positioned cleanly at landing page bottom)
+         ========================================================================= */}
+      <Footer />
 
       {/* Interactive Web3 Sign In Modal */}
       {walletModalOpen && (
