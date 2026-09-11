@@ -23,11 +23,8 @@ import {
   Globe2,
   Lock,
   PlusCircle,
-  Play,
-  Activity,
-  Terminal
+  Play
 } from "lucide-react";
-import { Footer } from "@/components/footer";
 import { useKridgeStore } from "@/lib/store";
 import { formatCurrency, formatTokens } from "@/lib/utils";
 
@@ -241,8 +238,8 @@ export default function LandingPage() {
           </div>
         </main>
 
-        {/* 3. Stats Bar (Bottom of Hero Viewport) */}
-        <div className="stats">
+        {/* 3. Stats Footer (Bottom of Hero Viewport) */}
+        <footer className="stats">
           <div className="stats-grid">
             <Link href="/explore" className="stat-item anim" style={{ "--d": "0.48s" } as React.CSSProperties}>
               <span className="stat-icon">&lt;</span>
@@ -276,116 +273,8 @@ export default function LandingPage() {
               </div>
             </Link>
           </div>
-        </div>
+        </footer>
       </div>
-
-      {/* =========================================================================
-          4. Architecture & Build Showcase (Balanced, Elegant Designer Layout)
-         ========================================================================= */}
-      <section className="relative z-10 bg-[#F5F4F0] text-neutral-900 font-sans py-20 sm:py-24 border-t border-black/10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          {/* Top Tag & Balanced Headline */}
-          <div className="text-center max-w-2xl mx-auto space-y-3 mb-10">
-            <span className="text-[11px] font-semibold tracking-widest text-neutral-400 uppercase font-mono">
-              KRIDGE PROTOCOL ARCHITECTURE
-            </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-neutral-900 leading-snug">
-              We build intelligent escrow &amp; AI consensus that solve the compute waste problem.
-            </h2>
-          </div>
-
-          {/* 3-Card Grid Matching Reference Exactly */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            
-            {/* Card 1: GenLayer */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-black/[0.07] flex flex-col justify-between space-y-3 hover:shadow-md transition-shadow">
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-xs tracking-wider uppercase text-neutral-900">
-                    <span className="text-purple-600 text-sm font-black">⬡</span>
-                    <span>GENLAYER</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-neutral-400">gl.get_web_data</span>
-                </div>
-                <div className="text-xs text-neutral-500 mt-1 font-medium">
-                  Autonomous Key Probing
-                </div>
-              </div>
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                Validators make live HTTP requests directly against upstream AI providers before funds lock, verifying active quota and remaining tokens trustlessly.
-              </p>
-            </div>
-
-            {/* Card 2: Security Proxy */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-black/[0.07] flex flex-col justify-between space-y-3 hover:shadow-md transition-shadow">
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-xs tracking-wider uppercase text-neutral-900">
-                    <span className="text-cyan-600 text-sm font-black">🛡</span>
-                    <span>SECURITY PROXY</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-neutral-400">OpenAI SDK v1</span>
-                </div>
-                <div className="text-xs text-neutral-500 mt-1 font-medium">
-                  Ephemeral Sub-Key Gateway
-                </div>
-              </div>
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                Generates rate-limited virtual sub-keys with automatic spend caps. Master seller credentials remain 100% encrypted and never touch the client.
-              </p>
-            </div>
-
-            {/* Card 3: AI Tribunal */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-black/[0.07] flex flex-col justify-between space-y-3 hover:shadow-md transition-shadow">
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-xs tracking-wider uppercase text-neutral-900">
-                    <span className="text-emerald-600 text-sm font-black">⚖</span>
-                    <span>AI TRIBUNAL</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-neutral-400">gl.exec_prompt</span>
-                </div>
-                <div className="text-xs text-neutral-500 mt-1 font-medium">
-                  Optimistic Democracy Arbitration
-                </div>
-              </div>
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                When upstream auth or rate limits fail, AI validators ingest gateway audit logs to autonomously refund buyers and slash fraudulent seller bonds.
-              </p>
-            </div>
-
-          </div>
-
-          {/* Clean Minimal CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
-            <Link
-              href="/explore"
-              className="px-5 py-2.5 rounded-full bg-neutral-900 text-white font-semibold text-xs hover:bg-neutral-800 transition-colors shadow-sm"
-            >
-              Browse Marketplace →
-            </Link>
-            <Link
-              href="/playground"
-              className="px-5 py-2.5 rounded-full bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors"
-            >
-              Test in Playground
-            </Link>
-            <Link
-              href="/tribunal"
-              className="px-5 py-2.5 rounded-full bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors"
-            >
-              Simulate AI Tribunal
-            </Link>
-          </div>
-
-        </div>
-      </section>
-
-      {/* =========================================================================
-          5. Minimalist Gladia-Style Footer (Positioned cleanly at landing page bottom)
-         ========================================================================= */}
-      <Footer />
 
       {/* Interactive Web3 Sign In Modal */}
       {walletModalOpen && (

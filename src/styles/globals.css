@@ -167,7 +167,7 @@ body.menu-open {
 }
 
 
-/* Hero Viewport (Top Region of Landing Page) */
+/* Single Viewport Page (3 Vertical Regions) */
 .page {
   position: relative;
   z-index: 2;
@@ -176,9 +176,12 @@ body.menu-open {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
   padding: clamp(14px, 2.5vh, 26px) clamp(16px, 3vw, 32px) clamp(28px, 5.5vh, 56px);
+  overflow: hidden;
   box-sizing: border-box;
 }
 
