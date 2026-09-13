@@ -35,10 +35,11 @@ const NAV_LINKS = [
   { href: "/bridge", label: "Bridge", icon: Globe2 },
 ];
 
-const AVAILABLE_CHAINS: Array<{ id: SupportedChain; name: string; icon: string; nativeSymbol: string }> = [
-  { id: "base", name: "Base", icon: "🔵", nativeSymbol: "ETH" },
-  { id: "zksync", name: "zkSync Era", icon: "⚡", nativeSymbol: "ETH" },
-  { id: "solana", name: "Solana", icon: "🟣", nativeSymbol: "SOL" },
+const AVAILABLE_CHAINS: Array<{ id: SupportedChain; name: string; nativeSymbol: string }> = [
+  { id: "base", name: "Base", nativeSymbol: "ETH" },
+  { id: "genlayer", name: "GenLayer", nativeSymbol: "GEN" },
+  { id: "zksync", name: "zkSync Era", nativeSymbol: "ETH" },
+  { id: "solana", name: "Solana", nativeSymbol: "SOL" },
 ];
 
 export function Navbar() {
@@ -72,7 +73,7 @@ export function Navbar() {
     symbol: activeChain.nativeSymbol,
     nativeAmount: 0.052,
     usdValue: wallet.balanceUsd,
-    icon: activeChain.icon,
+    icon: "",
   };
 
   const copyAddress = () => {
@@ -154,7 +155,6 @@ export function Navbar() {
               className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/20 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-all shadow-sm"
               title="Switch Connected Network"
             >
-              <span className="text-sm">{activeChain.icon}</span>
               <span className="hidden sm:inline font-mono text-xs text-white">{activeChain.name}</span>
               <ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform duration-200 ${chainMenuOpen ? "rotate-180" : ""}`} />
             </button>
@@ -182,7 +182,6 @@ export function Navbar() {
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
-                        <span className="text-sm">{c.icon}</span>
                         <div>
                           <div className={isSelected ? "text-black font-bold" : "text-white"}>{c.name}</div>
                           {cBal && (
@@ -254,7 +253,6 @@ export function Navbar() {
                           }`}
                         >
                           <span className="flex items-center gap-1.5 text-zinc-300">
-                            <span>{c.icon}</span>
                             <span>{c.name}</span>
                             {isCurrent && <span className="text-[9px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded-md font-bold">Active</span>}
                           </span>

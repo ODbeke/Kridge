@@ -25,7 +25,6 @@ const CHAIN_CONFIGS: Record<
     rpcUrls: string[];
     nativeCurrency: { name: string; symbol: string; decimals: number };
     blockExplorerUrls: string[];
-    icon: string;
     isEvm: boolean;
     status: "active" | "disabled";
   }
@@ -37,7 +36,6 @@ const CHAIN_CONFIGS: Record<
     rpcUrls: ["https://sepolia.base.org"],
     nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
     blockExplorerUrls: ["https://sepolia.basescan.org"],
-    icon: "🔵",
     isEvm: true,
     status: "active",
   },
@@ -48,7 +46,6 @@ const CHAIN_CONFIGS: Record<
     rpcUrls: ["https://testnet.genlayer.network"],
     nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
     blockExplorerUrls: ["https://scan.genlayer.network"],
-    icon: "🧠",
     isEvm: true,
     status: "active",
   },
@@ -59,7 +56,6 @@ const CHAIN_CONFIGS: Record<
     rpcUrls: ["https://sepolia.era.zksync.dev"],
     nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
     blockExplorerUrls: ["https://sepolia.explorer.zksync.io"],
-    icon: "⚡",
     isEvm: true,
     status: "disabled",
   },
@@ -70,7 +66,6 @@ const CHAIN_CONFIGS: Record<
     rpcUrls: ["https://api.devnet.solana.com"],
     nativeCurrency: { name: "SOL", symbol: "SOL", decimals: 9 },
     blockExplorerUrls: ["https://solscan.io?cluster=devnet"],
-    icon: "🟣",
     isEvm: false,
     status: "disabled",
   },
@@ -357,8 +352,8 @@ export default function ExploreAppPage() {
           {/* Network Switcher Dropdown */}
           <div style={{ position: "relative" }}>
             <button
-              className="btn-terminal"
               onClick={() => setIsNetworkDropdownOpen(!isNetworkDropdownOpen)}
+              className="btn-terminal"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -369,13 +364,12 @@ export default function ExploreAppPage() {
                 cursor: "pointer",
               }}
             >
-              <span>{CHAIN_CONFIGS[wallet.chain]?.icon || "🔵"}</span>
               <span>{CHAIN_CONFIGS[wallet.chain]?.chainName || "Base"}</span>
               <span style={{ fontSize: "9px", opacity: 0.7 }}>▼</span>
             </button>
 
             {isNetworkDropdownOpen && (
-              <div className="wallet-dropdown" style={{ minWidth: "190px" }}>
+              <div className="wallet-dropdown" style={{ minWidth: "180px" }}>
                 <div
                   style={{
                     padding: "4px 8px",
@@ -418,10 +412,7 @@ export default function ExploreAppPage() {
                         opacity: isDisabled ? 0.38 : 1,
                       }}
                     >
-                      <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span>{cfg.icon}</span>
-                        <span style={{ fontWeight: isSelected ? "700" : "500" }}>{cfg.chainName}</span>
-                      </span>
+                      <span style={{ fontWeight: isSelected ? "700" : "500" }}>{cfg.chainName}</span>
                       {isSelected && (
                         <span style={{ color: "#2a8a4a", fontWeight: "bold", fontSize: "12px" }}>
                           ✓
@@ -767,10 +758,10 @@ export default function ExploreAppPage() {
                         }}
                       >
                         <span>
-                          {CHAIN_CONFIGS[wallet.chain]?.icon} {CHAIN_CONFIGS[wallet.chain]?.chainName}
+                          {CHAIN_CONFIGS[wallet.chain]?.chainName || "Base"}
                         </span>
                         <span style={{ color: "#7c3aed" }}>──(Hyperlane)──▶</span>
-                        <span>🧠 GenLayer Escrow</span>
+                        <span>GenLayer Escrow</span>
                       </span>
                     </div>
 
