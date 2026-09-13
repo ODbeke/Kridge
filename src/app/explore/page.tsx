@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useKridgeStore } from "@/lib/store";
-import { KridgeListing, ProviderId, ListingType } from "@/lib/types";
+import { KridgeListing, ProviderId, ListingType, SupportedChain } from "@/lib/types";
 import { formatCurrency, formatTokens, formatTimeRemaining } from "@/lib/utils";
 
 const MODEL_PROVIDERS = [
@@ -16,13 +16,71 @@ const MODEL_PROVIDERS = [
   { id: "community", label: "Community Grants" },
 ];
 
+const CHAIN_CONFIGS: Record<
+  SupportedChain,
+  {
+    chainIdHex: string;
+    chainName: string;
+    networkTag: string;
+    rpcUrls: string[];
+    nativeCurrency: { name: string; symbol: string; decimals: number };
+    blockExplorerUrls: string[];
+    icon: string;
+    isEvm: boolean;
+  }
+> = {
+  base: {
+    chainIdHex: "0x14a34", // 84532 Base Sepolia
+    chainName: "Base",
+    networkTag: "BASE_SEPOLIA",
+    rpcUrls: ["https://sepolia.base.org"],
+    nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+    blockExplorerUrls: ["https://sepolia.basescan.org"],
+    icon: "🔵",
+    isEvm: true,
+  },
+  zksync: {
+    chainIdHex: "0x12c", // 300 zkSync Sepolia
+    chainName: "zkSync Era",
+    networkTag: "ZKSYNC_SEPOLIA",
+    rpcUrls: ["https://sepolia.era.zksync.dev"],
+    nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+    blockExplorerUrls: ["https://sepolia.explorer.zksync.io"],
+    icon: "⚡",
+    isEvm: true,
+  },
+  genlayer: {
+    chainIdHex: "0xa179", // GenLayer Testnet
+    chainName: "GenLayer",
+    networkTag: "GENLAYER_TESTNET",
+    rpcUrls: ["https://testnet.genlayer.network"],
+    nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
+    blockExplorerUrls: ["https://scan.genlayer.network"],
+    icon: "🧠",
+    isEvm: true,
+  },
+  solana: {
+    chainIdHex: "solana",
+    chainName: "Solana",
+    networkTag: "SOLANA_DEVNET",
+    rpcUrls: ["https://api.devnet.solana.com"],
+    nativeCurrency: { name: "SOL", symbol: "SOL", decimals: 9 },
+    blockExplorerUrls: ["https://solscan.io?cluster=devnet"],
+    icon: "🟣",
+    isEvm: false,
+  },
+};
+
 export default function ExploreAppPage() {
-  const { listings, rentListing, addListing, wallet } = useKridgeStore();
+  const { listings, rentListing, addListing, wallet, switchChain } = useKridgeStore();
 
   // Navigation & View Mode
   const [viewMode, setViewMode] = useState<"buyer" | "seller">("buyer");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedListing, setSelectedListing] = useState<KridgeListing | null>(null);
+
+  // Network Switcher State
+  const [isNetworkDropdownOpen, setIsNetworkDropdownOpen] = useState(false);
 
   // Rental Modal State
   const [rentedSubKey, setRentedSubKey] = useState<string | null>(null);
@@ -86,6 +144,74 @@ export default function ExploreAppPage() {
       setTimeout(() => setCopiedKey(null), 2000);
     }
   };
+
+  // Switch network in connected browser wallet (e.g. MetaMask) & Kridge Store
+  const switchNetworkInWallet = async (targetChain: SupportedChain) => {
+    switchChain(targetChain);
+    setIsNetworkDropdownOpen(false);
+
+    const config = CHAIN_CONFIGS[targetChain];
+
+    if (typeof window !== "undefined" && (window as any).ethereum && config.isEvm) {
+      try {
+        await (window as any).ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: config.chainIdHex }],
+        });
+      } catch (switchError: any) {
+        // Error 4902 indicates that the chain has not been added to MetaMask
+        if (switchError?.code === 4902 || switchError?.data?.originalError?.code === 4902) {
+          try {
+            await (window as any).ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [
+                {
+                  chainId: config.chainIdHex,
+                  chainName: config.chainName,
+                  rpcUrls: config.rpcUrls,
+                  nativeCurrency: config.nativeCurrency,
+                  blockExplorerUrls: config.blockExplorerUrls,
+                },
+              ],
+            });
+          } catch (addError) {
+            console.error("Failed to add network to wallet:", addError);
+          }
+        } else {
+          console.error("Failed to switch network in wallet:", switchError);
+        }
+      }
+    } else if (targetChain === "solana" && typeof window !== "undefined" && (window as any).solana) {
+      try {
+        if ((window as any).solana?.isPhantom) {
+          await (window as any).solana.connect({ onlyIfTrusted: true });
+        }
+      } catch {
+        console.log("Solana active in Kridge state.");
+      }
+    }
+  };
+
+  // Sync state if user switches network directly inside their wallet extension
+  useEffect(() => {
+    if (typeof window === "undefined" || !(window as any).ethereum) return;
+
+    const handleChainChanged = (chainIdHex: string) => {
+      const hex = chainIdHex.toLowerCase();
+      if (hex === "0x14a34" || hex === "0x2105") {
+        switchChain("base");
+      } else if (hex === "0x12c" || hex === "0x144") {
+        switchChain("zksync");
+      } else if (hex === "0xa179") {
+        switchChain("genlayer");
+      }
+    };
+
+    (window as any).ethereum.on?.("chainChanged", handleChainChanged);
+    return () => {
+      (window as any).ethereum.removeListener?.("chainChanged", handleChainChanged);
+    };
+  }, [switchChain]);
 
   const handleConnectWallet = async () => {
     if (typeof window !== "undefined" && (window as any).ethereum) {
@@ -222,6 +348,79 @@ export default function ExploreAppPage() {
 
         {/* Navigation Action Buttons */}
         <div className="nav-actions">
+          {/* Network Switcher Dropdown */}
+          <div style={{ position: "relative" }}>
+            <button
+              className="btn-terminal"
+              onClick={() => setIsNetworkDropdownOpen(!isNetworkDropdownOpen)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "11px",
+                letterSpacing: "0.05em",
+                borderColor: "var(--accent-cyan)",
+                cursor: "pointer",
+              }}
+            >
+              <span>{CHAIN_CONFIGS[wallet.chain]?.icon || "🔵"}</span>
+              <span>{CHAIN_CONFIGS[wallet.chain]?.chainName || "Base"}</span>
+              <span style={{ fontSize: "9px", opacity: 0.7 }}>▼</span>
+            </button>
+
+            {isNetworkDropdownOpen && (
+              <div className="wallet-dropdown" style={{ minWidth: "210px" }}>
+                <div
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: "9px",
+                    fontFamily: "var(--font-accent)",
+                    color: "#7c3aed",
+                    fontWeight: "bold",
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  CONNECTED NETWORK
+                </div>
+                <hr className="dropdown-divider" />
+                {Object.entries(CHAIN_CONFIGS).map(([key, cfg]) => {
+                  const isSelected = wallet.chain === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => switchNetworkInWallet(key as SupportedChain)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        padding: "6px 8px",
+                        borderRadius: "6px",
+                        border: isSelected ? "1px solid #7c3aed" : "1px solid transparent",
+                        background: isSelected ? "rgba(124, 58, 237, 0.08)" : "transparent",
+                        color: "#000000",
+                        fontFamily: "var(--font-accent)",
+                        fontSize: "11px",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span>{cfg.icon}</span>
+                        <span style={{ fontWeight: isSelected ? "700" : "500" }}>{cfg.chainName}</span>
+                      </span>
+                      {isSelected && (
+                        <span style={{ color: "#2a8a4a", fontWeight: "bold", fontSize: "12px" }}>
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Wallet Dropdown */}
           <div style={{ position: "relative" }}>
             {walletAddress ? (
@@ -309,9 +508,58 @@ export default function ExploreAppPage() {
                 <div className="wallet-card-header">
                   <span className="pulse-dot active-glow"></span>
                   <span className="wallet-card-title">ESCROW WALLET</span>
-                  <span className="wallet-card-net">GENLAYER_ESCROW</span>
+                  <span className="wallet-card-net">
+                    {CHAIN_CONFIGS[wallet.chain]?.networkTag || "BASE_SEPOLIA"}
+                  </span>
                 </div>
                 <div className="wallet-card-body">
+                  {/* Dynamic Native Chain Balance */}
+                  {wallet.chainBalances?.[wallet.chain] && (
+                    <div
+                      style={{
+                        marginBottom: "14px",
+                        padding: "8px 12px",
+                        background: "#f7f5fc",
+                        border: "1px solid #e2dbf3",
+                        borderRadius: "8px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "9px",
+                          fontFamily: "var(--font-accent)",
+                          color: "#7c3aed",
+                          fontWeight: "bold",
+                          letterSpacing: "0.06em",
+                        }}
+                      >
+                        CHAIN NATIVE BALANCE
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "var(--font-accent)",
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#000000",
+                          marginTop: "2px",
+                        }}
+                      >
+                        {wallet.chainBalances[wallet.chain].nativeAmount}{" "}
+                        {wallet.chainBalances[wallet.chain].symbol}
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: "normal",
+                            color: "#71717a",
+                            marginLeft: "6px",
+                          }}
+                        >
+                          (${wallet.chainBalances[wallet.chain].usdValue.toFixed(2)})
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="compact-policy-section">
                     <div
                       style={{
@@ -522,6 +770,39 @@ export default function ExploreAppPage() {
                           {formatTimeRemaining(selectedListing.expiryTimestamp)}
                         </span>
                       </div>
+                    </div>
+
+                    {/* Cross-Chain Payment Route */}
+                    <div
+                      style={{
+                        padding: "8px 12px",
+                        background: "#f7f5fc",
+                        border: "1px solid #e2dbf3",
+                        borderRadius: "8px",
+                        marginBottom: "16px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        fontFamily: "var(--font-accent)",
+                        fontSize: "11px",
+                      }}
+                    >
+                      <span style={{ color: "#71717a" }}>PAYMENT ROUTE:</span>
+                      <span
+                        style={{
+                          fontWeight: "bold",
+                          color: "#000000",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <span>
+                          {CHAIN_CONFIGS[wallet.chain]?.icon} {CHAIN_CONFIGS[wallet.chain]?.chainName}
+                        </span>
+                        <span style={{ color: "#7c3aed" }}>──(Hyperlane)──▶</span>
+                        <span>🧠 GenLayer Escrow</span>
+                      </span>
                     </div>
 
                     {/* Escrow Assurance Banner */}
