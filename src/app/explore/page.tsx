@@ -18,90 +18,100 @@ interface CapabilityListing {
   ratingScore: number;
 }
 
+const MODEL_PROVIDERS = [
+  { id: "all", label: "All Models" },
+  { id: "anthropic", label: "Anthropic" },
+  { id: "openai", label: "OpenAI" },
+  { id: "gemini", label: "Google Gemini" },
+  { id: "deepseek", label: "DeepSeek" },
+  { id: "open-weights", label: "Open-Weights" },
+  { id: "community", label: "Community Grants" },
+];
+
 const INITIAL_CAPABILITIES: CapabilityListing[] = [
   {
-    id: 4,
-    seller: "0xdAea9d883f8d7F87F0D62378555e6660EC51AB77",
-    name: "Autonomous Web Scraping Engine",
-    endpoint: "https://api.kridge.network/v1/scraping",
-    pricePerCall: 10000, // 0.01 USDC
-    category: "scraping",
-    description: "Headless browser cluster with residential proxy rotation and anti-bot bypass. Returns clean markdown or structured DOM JSON for agent ingestion.",
+    id: 1,
+    seller: "0x892aF8cE12B9aF9120489912C091bA4982aF1092",
+    name: "Claude 3.5 Sonnet Dedicated Quota",
+    endpoint: "https://api.kridge.network/v1/anthropic/claude-3-5-sonnet",
+    pricePerCall: 15000, // 0.015 USDC
+    category: "anthropic",
+    description: "Enterprise Claude 3.5 Sonnet compute quota with 200K token context window, prompt caching enabled, and fast tool calling.",
     active: true,
-    totalCalls: 18420,
-    successRatio: 99.4,
+    totalCalls: 31200,
+    successRatio: 99.9,
     avgResponseMs: 120,
     ratingScore: 99,
   },
   {
-    id: 5,
-    seller: "0x71C8412F5E2421a8a25c798A331908C5e5520e5e",
-    name: "Real-Time Recursive Summarizer",
-    endpoint: "https://api.kridge.network/v1/summarize",
-    pricePerCall: 15000, // 0.015 USDC
-    category: "summarization",
-    description: "High-throughput token compression engine for 100k+ context chunks with recursive hierarchical key takeaways and citation tagging.",
+    id: 2,
+    seller: "0x3Fa910482Bcd90184A0912Ba7721Cc08129Fa810",
+    name: "GPT-4o Multimodal Quota Pool",
+    endpoint: "https://api.kridge.network/v1/openai/gpt-4o",
+    pricePerCall: 12000, // 0.012 USDC
+    category: "openai",
+    description: "High-throughput GPT-4o compute with native vision parsing, structured JSON schema outputs, and sub-second token streaming.",
     active: true,
-    totalCalls: 9540,
-    successRatio: 99.8,
-    avgResponseMs: 95,
+    totalCalls: 24800,
+    successRatio: 99.4,
+    avgResponseMs: 110,
     ratingScore: 98,
   },
   {
-    id: 6,
-    seller: "0x3Fa910482Bcd90184A0912Ba7721Cc08129Fa810",
-    name: "Flux & SDXL Visual Generation Node",
-    endpoint: "https://api.kridge.network/v1/image-gen",
-    pricePerCall: 40000, // 0.040 USDC
-    category: "image-gen",
-    description: "Low-latency GPU cluster generating high-res visual assets, UI banners, and infographics directly from autonomous multi-agent pipelines.",
+    id: 3,
+    seller: "0x71C8412F5E2421a8a25c798A331908C5e5520e5e",
+    name: "Gemini 1.5 Pro 2M Context Node",
+    endpoint: "https://api.kridge.network/v1/google/gemini-1-5-pro",
+    pricePerCall: 10000, // 0.010 USDC
+    category: "gemini",
+    description: "Massive 2-million token context window compute. Ideal for full-codebase repository audits, video analysis, and document synthesis.",
     active: true,
-    totalCalls: 4210,
-    successRatio: 98.9,
-    avgResponseMs: 840,
-    ratingScore: 96,
-  },
-  {
-    id: 7,
-    seller: "0x892aF8cE12B9aF9120489912C091bA4982aF1092",
-    name: "Claude 3.5 Sonnet Reasoning Proxy",
-    endpoint: "https://api.kridge.network/v1/reasoning/claude",
-    pricePerCall: 25000, // 0.025 USDC
-    category: "reasoning",
-    description: "Enterprise Anthropic proxy with prompt caching, streaming tool use, and automated mathematical verification for complex coding workflows.",
-    active: true,
-    totalCalls: 31200,
-    successRatio: 99.9,
-    avgResponseMs: 180,
-    ratingScore: 100,
-  },
-  {
-    id: 8,
-    seller: "0xDA0_Treasury_OpenSource_GenLayer",
-    name: "Secure Python Sandbox Execution",
-    endpoint: "https://api.kridge.network/v1/sandbox/python",
-    pricePerCall: 8000, // 0.008 USDC
-    category: "code-exec",
-    description: "Firecracker microVM isolated runtime for executing untrusted agent Python scripts, NumPy transforms, and data analysis tasks.",
-    active: true,
-    totalCalls: 12890,
-    successRatio: 99.5,
-    avgResponseMs: 65,
+    totalCalls: 18420,
+    successRatio: 99.2,
+    avgResponseMs: 145,
     ratingScore: 97,
   },
   {
-    id: 9,
-    seller: "0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97",
-    name: "Financial Market Sentiment & News Vectorizer",
-    endpoint: "https://api.kridge.network/v1/sentiment/feed",
-    pricePerCall: 12000, // 0.012 USDC
-    category: "summarization",
-    description: "Continuously ingested sentiment parser aggregating SEC filings, crypto order book deltas, and breaking macroeconomic headlines.",
+    id: 4,
+    seller: "0xdAea9d883f8d7F87F0D62378555e6660EC51AB77",
+    name: "DeepSeek R1 Reasoning LPU Cluster",
+    endpoint: "https://api.kridge.network/v1/deepseek/r1",
+    pricePerCall: 8000, // 0.008 USDC
+    category: "deepseek",
+    description: "State-of-the-art open reasoning model served on high-speed LPUs. Outstanding performance on mathematical proofs, algorithms, and code logic.",
     active: true,
-    totalCalls: 8640,
+    totalCalls: 42150,
+    successRatio: 99.6,
+    avgResponseMs: 160,
+    ratingScore: 99,
+  },
+  {
+    id: 5,
+    seller: "0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97",
+    name: "Llama 3.3 70B Instruct H100 GPU",
+    endpoint: "https://api.kridge.network/v1/meta/llama-3-3-70b",
+    pricePerCall: 6000, // 0.006 USDC
+    category: "open-weights",
+    description: "Uncensored, high-concurrency Llama 3.3 70B hosted on dedicated H100 clusters with FP8 precision and speculative decoding.",
+    active: true,
+    totalCalls: 15300,
     successRatio: 99.1,
-    avgResponseMs: 110,
-    ratingScore: 95,
+    avgResponseMs: 85,
+    ratingScore: 96,
+  },
+  {
+    id: 6,
+    seller: "0xDA0_Treasury_OpenSource_GenLayer",
+    name: "AI Commons Public Compute Grant",
+    endpoint: "https://api.kridge.network/v1/faucet/public-grant",
+    pricePerCall: 0, // 0.000 USDC
+    category: "community",
+    description: "Subsidized public compute pool donated by DAO patrons for autonomous research agents, students, and open-source contributors.",
+    active: true,
+    totalCalls: 58900,
+    successRatio: 99.9,
+    avgResponseMs: 90,
+    ratingScore: 100,
   },
 ];
 
@@ -129,7 +139,7 @@ export default function ExploreAppPage() {
     name: "",
     endpoint: "",
     pricePerCall: "0.01",
-    category: "scraping",
+    category: "anthropic",
     description: "",
   });
   const [publishSuccess, setPublishSuccess] = useState(false);
@@ -308,22 +318,20 @@ export default function ExploreAppPage() {
           <div className="dashboard-grid">
             {/* Left Column: Settings and Wallet Config */}
             <aside className="dashboard-sidebar">
-              {/* 1. Category Filter Widget */}
+              {/* 1. Model Ecosystems Filter Widget */}
               <div className="panel-glass filter-card-premium">
-                <h3 className="sidebar-h3">⚡ Service Marketplace</h3>
-                <p className="sidebar-p">Filter registered agent capabilities on-chain</p>
+                <h3 className="sidebar-h3">⚡ Model Ecosystems</h3>
+                <p className="sidebar-p">Filter compute quotas & endpoints by model provider</p>
                 <div className="cat-filters-sidebar">
-                  {["all", "scraping", "summarization", "image-gen", "reasoning", "code-exec"].map(
-                    (cat) => (
-                      <button
-                        key={cat}
-                        className={`cat-btn ${categoryFilter === cat ? "active" : ""}`}
-                        onClick={() => setCategoryFilter(cat)}
-                      >
-                        {cat}
-                      </button>
-                    )
-                  )}
+                  {MODEL_PROVIDERS.map((provider) => (
+                    <button
+                      key={provider.id}
+                      className={`cat-btn ${categoryFilter === provider.id ? "active" : ""}`}
+                      onClick={() => setCategoryFilter(provider.id)}
+                    >
+                      {provider.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -383,12 +391,12 @@ export default function ExploreAppPage() {
 
             {/* Right Column: Main Capabilities List */}
             <div className="dashboard-main-content">
-              {/* Capabilities grid list header */}
+              {/* Model Endpoints grid list header */}
               <div className="workbench-section-header">
                 <h2 className="section-h2">
-                  On-Chain Registered Capabilities ({filteredListings.length})
+                  On-Chain Registered Model Endpoints ({filteredListings.length})
                 </h2>
-                <p className="section-p">Autonomous endpoints queryable via HTTP 402 challenges</p>
+                <p className="section-p">Autonomous AI compute queryable via HTTP 402 challenges</p>
               </div>
 
               {/* Service Cards Grid */}
@@ -403,7 +411,7 @@ export default function ExploreAppPage() {
                     fontFamily: "var(--font-accent)",
                   }}
                 >
-                  No active listings found for &quot;{categoryFilter}&quot;. Switch to &quot;[02] LIST SERVICE // SELLER&quot; to register a capability.
+                  No active model endpoints found for &quot;{categoryFilter}&quot;. Switch to &quot;[02] LIST SERVICE // SELLER&quot; to register a model quota.
                 </div>
               ) : (
                 <div className="service-grid">
@@ -416,7 +424,9 @@ export default function ExploreAppPage() {
                     >
                       <div>
                         <div className="card-head">
-                          <span className="badge-category">{listing.category}</span>
+                          <span className="badge-category">
+                            {listing.category.toUpperCase()}
+                          </span>
                           <div className="status-online">
                             <span className="pulse-dot"></span>
                             ONLINE
@@ -453,10 +463,12 @@ export default function ExploreAppPage() {
                           <div>
                             <div className="metric-lbl">PRICE / CALL</div>
                             <div className="price-usdc">
-                              {(listing.pricePerCall / 1e6).toFixed(2)} USDC
+                              {listing.pricePerCall === 0
+                                ? "FREE // 0.00 USDC"
+                                : `${(listing.pricePerCall / 1e6).toFixed(3)} USDC`}
                             </div>
                           </div>
-                          <div className="endpoint-lbl">/api/{listing.category}</div>
+                          <div className="endpoint-lbl">/v1/chat/completions</div>
                         </div>
                       </div>
                     </div>
@@ -537,7 +549,7 @@ export default function ExploreAppPage() {
                       <pre className="code-box">
 {`curl -X POST "${selectedListing.endpoint}" \\
   -H "Content-Type: application/json" \\
-  -d '{"prompt": "Analyze capability data..."}'`}
+  -d '{"model": "${selectedListing.name}", "messages": [{"role": "user", "content": "Hello, compute engine"}]}'`}
                       </pre>
                     </div>
                   </div>
@@ -559,10 +571,10 @@ export default function ExploreAppPage() {
                   marginBottom: "8px",
                 }}
               >
-                Register Seller Capability
+                Register Model Quota / Endpoint
               </h2>
               <p style={{ color: "var(--ink-secondary)", fontSize: "14px", marginBottom: "28px" }}>
-                Publish your wrapped HTTP API capability endpoint to the KridgeRegistry smart contract on Arc Testnet.
+                Publish your wrapped AI model capability endpoint to the KridgeRegistry smart contract on Arc Testnet.
               </p>
 
               {publishSuccess && (
@@ -578,17 +590,17 @@ export default function ExploreAppPage() {
                     fontSize: "13px",
                   }}
                 >
-                  ✓ Capability registered successfully on-chain! Switching to Marketplace...
+                  ✓ Model endpoint registered successfully on-chain! Switching to Marketplace...
                 </div>
               )}
 
               <form onSubmit={handleRegisterService}>
                 <div className="form-group-cell">
-                  <label className="label-cell">Service Name</label>
+                  <label className="label-cell">Model / Service Name</label>
                   <input
                     type="text"
                     className="input-cell"
-                    placeholder="e.g. Code Security Linter API"
+                    placeholder="e.g. Claude 3.5 Sonnet Dedicated Quota"
                     value={sellerForm.name}
                     onChange={(e) => setSellerForm({ ...sellerForm, name: e.target.value })}
                     required
@@ -600,7 +612,7 @@ export default function ExploreAppPage() {
                   <input
                     type="url"
                     className="input-cell"
-                    placeholder="https://api.yourdomain.com/kridge"
+                    placeholder="https://api.yourdomain.com/v1/chat/completions"
                     value={sellerForm.endpoint}
                     onChange={(e) => setSellerForm({ ...sellerForm, endpoint: e.target.value })}
                     required
@@ -623,18 +635,18 @@ export default function ExploreAppPage() {
                   </div>
 
                   <div className="form-group-cell">
-                    <label className="label-cell">Category</label>
+                    <label className="label-cell">Model Provider / Ecosystem</label>
                     <select
                       className="select-cell"
                       value={sellerForm.category}
                       onChange={(e) => setSellerForm({ ...sellerForm, category: e.target.value })}
                     >
-                      <option value="scraping">Scraping</option>
-                      <option value="summarization">Summarization</option>
-                      <option value="image-gen">Image Gen</option>
-                      <option value="reasoning">Reasoning</option>
-                      <option value="code-exec">Code Execution</option>
-                      <option value="sentiment">Sentiment</option>
+                      <option value="anthropic">Anthropic (Claude)</option>
+                      <option value="openai">OpenAI (GPT-4o, o1)</option>
+                      <option value="gemini">Google Gemini (1.5 Pro, Flash)</option>
+                      <option value="deepseek">DeepSeek (R1, V3)</option>
+                      <option value="open-weights">Open-Weights (Llama, Mistral)</option>
+                      <option value="community">Community Grant / Faucet</option>
                     </select>
                   </div>
                 </div>
@@ -644,7 +656,7 @@ export default function ExploreAppPage() {
                   <textarea
                     className="textarea-cell"
                     rows={3}
-                    placeholder="Describe what capability your agent endpoint provides..."
+                    placeholder="Describe model context size, rate limits, and compute throughput..."
                     value={sellerForm.description}
                     onChange={(e) =>
                       setSellerForm({ ...sellerForm, description: e.target.value })
