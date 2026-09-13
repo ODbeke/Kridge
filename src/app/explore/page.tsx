@@ -333,6 +333,19 @@ export default function ExploreAppPage() {
           </div>
         </Link>
 
+        {/* Live Persistent Ticker */}
+        <div className="ticker-strip">
+          <div className="ticker-cell">
+            <span className="ticker-lbl">ACTIVE_QUOTAS:</span>
+            <span className="ticker-val">{stats.activeCount} Listings</span>
+          </div>
+          <div style={{ color: "rgba(0, 0, 0, 0.2)" }}>|</div>
+          <div className="ticker-cell">
+            <span className="ticker-lbl">COMPUTE_POOL:</span>
+            <span className="ticker-val">{stats.tokenVolume} Tokens</span>
+          </div>
+        </div>
+
         {/* Navigation Action Buttons */}
         <div className="nav-actions">
           {/* Network Switcher Dropdown */}
@@ -455,13 +468,13 @@ export default function ExploreAppPage() {
             className={`btn-terminal ${viewMode === "buyer" ? "active" : ""}`}
             onClick={() => setViewMode("buyer")}
           >
-            [01] BROWSE // RENT
+            RENT
           </button>
           <button
             className={`btn-terminal ${viewMode === "seller" ? "active" : ""}`}
             onClick={() => setViewMode("seller")}
           >
-            [02] LIST QUOTA // SELLER
+            SELL
           </button>
         </div>
       </header>
@@ -597,21 +610,6 @@ export default function ExploreAppPage() {
 
             {/* Right Column: Main Capabilities List */}
             <div className="dashboard-main-content">
-              {/* Stats Ticker Strip placed cleanly on top of section header */}
-              <div style={{ marginBottom: "14px" }}>
-                <div className="ticker-strip" style={{ display: "inline-flex" }}>
-                  <div className="ticker-cell">
-                    <span className="ticker-lbl">ACTIVE_QUOTAS:</span>
-                    <span className="ticker-val">{stats.activeCount} Listings</span>
-                  </div>
-                  <div style={{ color: "rgba(0, 0, 0, 0.2)" }}>|</div>
-                  <div className="ticker-cell">
-                    <span className="ticker-lbl">COMPUTE_POOL:</span>
-                    <span className="ticker-val">{stats.tokenVolume} Tokens</span>
-                  </div>
-                </div>
-              </div>
-
               {/* Model Endpoints grid list header */}
               <div className="workbench-section-header">
                 <h2 className="section-h2">
