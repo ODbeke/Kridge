@@ -218,11 +218,6 @@ export default function ExploreAppPage() {
             <span className="ticker-lbl">COMPUTE_POOL:</span>
             <span className="ticker-val">{stats.tokenVolume} Tokens</span>
           </div>
-          <div style={{ color: "rgba(0, 0, 0, 0.2)" }}>|</div>
-          <div className="ticker-cell">
-            <span className="ticker-lbl">RETAIL_VALUE:</span>
-            <span className="ticker-val">{stats.retailSaved}</span>
-          </div>
         </div>
 
         {/* Navigation Action Buttons */}
