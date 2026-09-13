@@ -215,13 +215,7 @@ export default function ExploreAppPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", position: "relative", paddingBottom: "60px" }}>
-      {/* Background Graphic & Subtle Overlay */}
-      <div className="global-bg">
-        <img src="/usdc_activation_gate_spaced.jpg" alt="Background Gate" />
-        <div className="global-bg-overlay" />
-      </div>
-
+    <div className="app-shell">
       {/* Floating Cyber-Terminal Navigation Bar */}
       <header className="nav-terminal">
         <Link href="/" className="nav-brand">
@@ -308,7 +302,7 @@ export default function ExploreAppPage() {
       </header>
 
       {/* Main Content Area */}
-      <main style={{ maxWidth: "1240px", margin: "0 auto", padding: "0 24px" }}>
+      <main>
         {/* BUYER VIEW */}
         {viewMode === "buyer" && (
           <div className="dashboard-grid">
@@ -668,7 +662,7 @@ export default function ExploreAppPage() {
       </main>
 
       {/* Footer */}
-      <footer className="footer-admon" style={{ maxWidth: "1240px", margin: "60px auto 0", padding: "32px 24px 0" }}>
+      <footer className="footer-admon">
         <span className="footer-brand">Kridge.</span>
         <span>
           Built for Encode Club Programmable Money Hackathon on Arc L1 • Autonomous Agent Capability Marketplace
