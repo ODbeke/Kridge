@@ -376,35 +376,21 @@ class KridgeMarketplaceContract:
         rental = self.rentals[dispute.rental_id]
         listing = self.listings[rental.listing_id]
         
-        arbitration_prompt = (
-            "You are an impartial GenLayer Validator arbitrating an AI API key rental dispute.
+        arbitration_prompt = f"""You are an impartial GenLayer Validator arbitrating an AI API key rental dispute.
 
-"
-            + "Rental Context:
-"
-            + "- Provider: " + listing.provider + "
-"
-            + "- Rental Amount: $" + str(rental.amount_paid_usd) + "
-"
-            + "- Complainant: " + dispute.complainant + "
-"
-            + "- Reason: " + dispute.reason + "
-"
-            + "- Error Trace: " + dispute.error_trace + "
-"
-            + "- Gateway Signature Receipt: " + dispute.gateway_receipt + "
+Rental Context:
+- Provider: {listing.provider}
+- Rental Amount: ${rental.amount_paid_usd}
+- Complainant: {dispute.complainant}
+- Reason: {dispute.reason}
+- Error Trace: {dispute.error_trace}
+- Gateway Signature Receipt: {dispute.gateway_receipt}
 
-"
-            + "Determine if the seller revoked or failed to deliver working API quota, or if the buyer filed a false claim.
-"
-            + "Return a JSON object with:
-"
-            + "verdict: BUYER_REFUND or SELLER_WIN,
-"
-            + "confidence: 0.0 to 1.0,
-"
-            + "reasoning: Detailed explanation"
-        )
+Determine if the seller revoked or failed to deliver working API quota, or if the buyer filed a false claim.
+Return a JSON object with:
+verdict: BUYER_REFUND or SELLER_WIN,
+confidence: 0.0 to 1.0,
+reasoning: Detailed explanation"""
         
         ai_response = gl.exec_prompt(arbitration_prompt)
         try:
