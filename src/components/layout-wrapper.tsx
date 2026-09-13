@@ -8,8 +8,9 @@ import { Footer } from "@/components/footer";
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isHomePage = pathname === "/";
+  const isExplorePage = pathname === "/explore";
 
-  if (isHomePage) {
+  if (isHomePage || isExplorePage) {
     return <>{children}</>;
   }
 
