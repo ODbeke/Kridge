@@ -3,7 +3,8 @@
 > **Monetize unused AI subscriptions, access frontier models at 60%–80% discounts, or donate expiring compute to autonomous agents and open-source builders. Powered by GenLayer Intelligent Contracts, Optimistic Democracy, and Hyperlane.**
 
 [![GenLayer Hackathon](https://img.shields.io/badge/GenLayer-Intelligent%20Contracts-7928CA?style=for-the-badge&logo=python)](https://genlayer.com)
-[![Multi-Chain Hyperlane](https://img.shields.io/badge/Hyperlane-Base%20%7C%20zkSync%20%7C%20Solana-00F2FE?style=for-the-badge)](https://hyperlane.xyz)
+[![Primary Network: Base](https://img.shields.io/badge/Primary%20Network-Base%20Sepolia%20(Active)-0052FF?style=for-the-badge&logo=coinbase)](https://base.org)
+[![Multi-Chain Roadmap](https://img.shields.io/badge/Roadmap-zkSync%20%7C%20Solana%20(Coming%20Soon)-64748B?style=for-the-badge)](https://hyperlane.xyz)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16.3-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge)](LICENSE)
@@ -235,19 +236,19 @@ To prevent marketplace spam and bad-faith disputes, Kridge enforces mathematical
 
 ## 🌐 Multi-Chain Architecture & Seamless Network Switching
 
-Kridge is built for multi-chain accessibility. Users and agents on any supported network can interact with Kridge without fragmentation:
+To deliver the highest security, execution speed, and seamless developer onboarding during the hackathon, **Base (Sepolia)** serves as Kridge's active primary settlement network for consumer and seller wallets, while **GenLayer** powers the decentralized Intelligent Contract execution engine. Additional chains are queued on our Hyperlane cross-chain expansion roadmap:
 
-| Network | Chain ID / Type | Role in Kridge Protocol |
-| :--- | :--- | :--- |
-| **Base** | `8453` (EVM) | Primary consumer & seller onboarding; low-cost USDC payments. |
-| **zkSync Era** | `324` (ZK-EVM) | High-speed ZK rollups for enterprise compute batch settlement. |
-| **GenLayer** | `genlayer-1` / Testnet | Core Intelligent Contract execution, web probing (`gl.get_web_data`), and AI Tribunal arbitration. |
-| **Solana** | Devnet / Mainnet (SVM) | High-throughput autonomous agent escrow checkout and sub-key issuance. |
+| Network | Status | Chain ID / Type | Role in Kridge Protocol |
+| :--- | :---: | :--- | :--- |
+| **Base** | 🟢 **ACTIVE** | `8453` / `84532` (EVM) | **Active Settlement Layer**: Consumer onboarding, seller listing, low-cost USDC payments, and escrow deposits. |
+| **GenLayer** | 🟢 **ACTIVE** | `genlayer-1` / Testnet | **Intelligent Contracts Core**: Web probing (`gl.get_web_data`), Optimistic Democracy, and AI Tribunal dispute arbitration. |
+| **zkSync Era** | ⏳ *Coming Soon* | `324` / `300` (ZK-EVM) | *On Roadmap*: High-speed ZK rollups for enterprise compute batch settlement via Hyperlane. |
+| **Solana** | ⏳ *Coming Soon* | Devnet / Mainnet (SVM) | *On Roadmap*: High-throughput autonomous agent escrow checkout and sub-key issuance via SVM program. |
 
-### In-App Wallet Network Switching
-Kridge includes native EVM network auto-switching via `wallet_switchEthereumChain` and `wallet_addEthereumChain`. When switching between Base, zkSync, and GenLayer in the header dropdown, the connected Web3 wallet (MetaMask, Coinbase Wallet, Rabby) prompts the user to switch networks with zero friction.
+> [!NOTE]
+> **Active Network Focus**: During the current release, all wallet connections, escrow deposits, and compute rentals settle on **Base**. The in-app network dropdown clearly designates zkSync Era, Solana, and direct-GenLayer wallet connections as `COMING SOON`, preventing unintended wallet switching while the Hyperlane relayer bridges undergo final auditing.
 
-Cross-chain state updates and escrow confirmations are relayed across chains via **Hyperlane Mailbox** (`KridgeHyperlaneReceiver.sol`).
+Cross-chain state updates and escrow confirmations are designed to route across chains via **Hyperlane Mailbox** (`KridgeHyperlaneReceiver.sol`).
 
 ---
 
