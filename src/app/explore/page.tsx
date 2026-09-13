@@ -17,7 +17,7 @@ const MODEL_PROVIDERS = [
 ];
 
 export default function ExploreAppPage() {
-  const { listings, rentListing, addListing } = useKridgeStore();
+  const { listings, rentListing, addListing, wallet } = useKridgeStore();
 
   // Navigation & View Mode
   const [viewMode, setViewMode] = useState<"buyer" | "seller">("buyer");
@@ -313,8 +313,8 @@ export default function ExploreAppPage() {
               <div className="panel-glass wallet-card-premium">
                 <div className="wallet-card-header">
                   <span className="pulse-dot active-glow"></span>
-                  <span className="wallet-card-title">CIRCLE WALLET</span>
-                  <span className="wallet-card-net">ARC_TESTNET</span>
+                  <span className="wallet-card-title">ESCROW WALLET</span>
+                  <span className="wallet-card-net">GENLAYER_ESCROW</span>
                 </div>
                 <div className="wallet-card-body">
                   <div className="compact-policy-section">
@@ -543,8 +543,8 @@ export default function ExploreAppPage() {
                       }}
                     >
                       <strong style={{ color: "#7c3aed" }}>Escrow Assurance:</strong> Payment is locked in
-                      smart contract escrow on Arc Testnet. If the provider sub-key fails or is revoked early,
-                      GenLayer consensus validators automatically release a 100% refund to your wallet.
+                      the Kridge Escrow Intelligent Contract. If the provider sub-key fails or is revoked early,
+                      GenLayer AI consensus validators automatically verify web state and release a 100% refund to your wallet.
                     </div>
 
                     {/* Rented Sub-Key Reveal / Action Button */}
@@ -557,7 +557,7 @@ export default function ExploreAppPage() {
                         style={{ width: "100%", marginBottom: "24px" }}
                       >
                         {isRenting
-                          ? "Securing Sub-Key on Arc Escrow..."
+                          ? "Securing Sub-Key on Kridge Escrow..."
                           : selectedListing.listingType === "DONATION"
                           ? "Claim Free Community Compute Grant"
                           : `Confirm & Rent Sub-Key for ${formatCurrency(selectedListing.priceUsd)} USDC`}
@@ -659,7 +659,7 @@ export default function ExploreAppPage() {
                 List Unspent Quota for Rent
               </h2>
               <p style={{ color: "var(--ink-secondary)", fontSize: "14px", marginBottom: "28px" }}>
-                Monetize idle or expiring model quotas. Lock in buyer rental payments via smart contract escrow on Arc Testnet.
+                Monetize idle or expiring model quotas. Lock in buyer rental payments via Kridge Escrow Intelligent Contracts with GenLayer AI validator dispute protection.
               </p>
 
               {publishSuccess && (
@@ -809,7 +809,7 @@ export default function ExploreAppPage() {
       <footer className="footer-admon">
         <span className="footer-brand">Kridge.</span>
         <span>
-          Built for Encode Club Programmable Money Hackathon on Arc L1 • Autonomous Compute Quota Marketplace
+          Built for the GenLayer Hackathon • Powered by GenLayer Intelligent Contracts & Hyperlane Cross-Chain Messaging
         </span>
       </footer>
     </div>
