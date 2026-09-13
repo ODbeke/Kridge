@@ -92,9 +92,7 @@ export default function ExploreAppPage() {
   const [walletBalance, setWalletBalance] = useState("45.20");
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
 
-  // Spend Limits Guardrails
-  const [maxRentalBudget, setMaxRentalBudget] = useState("10.00");
-  const [maxSessionBudget, setMaxSessionBudget] = useState("50.00");
+
 
   // Seller Form State
   const [sellerForm, setSellerForm] = useState({
@@ -517,7 +515,6 @@ export default function ExploreAppPage() {
                   {wallet.chainBalances?.[wallet.chain] && (
                     <div
                       style={{
-                        marginBottom: "14px",
                         padding: "8px 12px",
                         background: "#f7f5fc",
                         border: "1px solid #e2dbf3",
@@ -559,51 +556,6 @@ export default function ExploreAppPage() {
                       </div>
                     </div>
                   )}
-
-                  <div className="compact-policy-section">
-                    <div
-                      style={{
-                        fontFamily: "var(--font-accent)",
-                        fontSize: "10px",
-                        color: "var(--ink-secondary)",
-                        letterSpacing: "0.05em",
-                        marginBottom: "12px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      RENTAL SPEND GUARDRAILS
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                      <div className="policy-input-box" style={{ minWidth: 0 }}>
-                        <div className="policy-lbl">MAX / RENTAL</div>
-                        <div className="policy-input-wrapper" style={{ padding: "2px 8px" }}>
-                          <input
-                            type="text"
-                            className="guard-input-field"
-                            style={{ width: "100%", minWidth: 0 }}
-                            value={maxRentalBudget}
-                            onChange={(e) => setMaxRentalBudget(e.target.value)}
-                          />
-                          <span className="input-suffix">USDC</span>
-                        </div>
-                      </div>
-
-                      <div className="policy-input-box" style={{ minWidth: 0 }}>
-                        <div className="policy-lbl">SESSION CAP</div>
-                        <div className="policy-input-wrapper" style={{ padding: "2px 8px" }}>
-                          <input
-                            type="text"
-                            className="guard-input-field"
-                            style={{ width: "100%", minWidth: 0 }}
-                            value={maxSessionBudget}
-                            onChange={(e) => setMaxSessionBudget(e.target.value)}
-                          />
-                          <span className="input-suffix">USDC</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </aside>
