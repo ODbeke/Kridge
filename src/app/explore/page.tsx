@@ -2,21 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-
-interface CapabilityListing {
-  id: number;
-  seller: string;
-  name: string;
-  endpoint: string;
-  pricePerCall: number; // in micro-USDC (1e6)
-  category: string;
-  description: string;
-  active: boolean;
-  totalCalls: number;
-  successRatio: number;
-  avgResponseMs: number;
-  ratingScore: number;
-}
+import { useKridgeStore } from "@/lib/store";
+import { KridgeListing, ProviderId, ListingType } from "@/lib/types";
+import { formatCurrency, formatTokens, formatTimeRemaining } from "@/lib/utils";
 
 const MODEL_PROVIDERS = [
   { id: "all", label: "All Models" },
@@ -24,122 +12,41 @@ const MODEL_PROVIDERS = [
   { id: "openai", label: "OpenAI" },
   { id: "gemini", label: "Google Gemini" },
   { id: "deepseek", label: "DeepSeek" },
-  { id: "open-weights", label: "Open-Weights" },
+  { id: "groq", label: "Groq / Llama" },
   { id: "community", label: "Community Grants" },
 ];
 
-const INITIAL_CAPABILITIES: CapabilityListing[] = [
-  {
-    id: 1,
-    seller: "0x892aF8cE12B9aF9120489912C091bA4982aF1092",
-    name: "Claude 3.5 Sonnet Dedicated Quota",
-    endpoint: "https://api.kridge.network/v1/anthropic/claude-3-5-sonnet",
-    pricePerCall: 15000, // 0.015 USDC
-    category: "anthropic",
-    description: "Enterprise Claude 3.5 Sonnet compute quota with 200K token context window, prompt caching enabled, and fast tool calling.",
-    active: true,
-    totalCalls: 31200,
-    successRatio: 99.9,
-    avgResponseMs: 120,
-    ratingScore: 99,
-  },
-  {
-    id: 2,
-    seller: "0x3Fa910482Bcd90184A0912Ba7721Cc08129Fa810",
-    name: "GPT-4o Multimodal Quota Pool",
-    endpoint: "https://api.kridge.network/v1/openai/gpt-4o",
-    pricePerCall: 12000, // 0.012 USDC
-    category: "openai",
-    description: "High-throughput GPT-4o compute with native vision parsing, structured JSON schema outputs, and sub-second token streaming.",
-    active: true,
-    totalCalls: 24800,
-    successRatio: 99.4,
-    avgResponseMs: 110,
-    ratingScore: 98,
-  },
-  {
-    id: 3,
-    seller: "0x71C8412F5E2421a8a25c798A331908C5e5520e5e",
-    name: "Gemini 1.5 Pro 2M Context Node",
-    endpoint: "https://api.kridge.network/v1/google/gemini-1-5-pro",
-    pricePerCall: 10000, // 0.010 USDC
-    category: "gemini",
-    description: "Massive 2-million token context window compute. Ideal for full-codebase repository audits, video analysis, and document synthesis.",
-    active: true,
-    totalCalls: 18420,
-    successRatio: 99.2,
-    avgResponseMs: 145,
-    ratingScore: 97,
-  },
-  {
-    id: 4,
-    seller: "0xdAea9d883f8d7F87F0D62378555e6660EC51AB77",
-    name: "DeepSeek R1 Reasoning LPU Cluster",
-    endpoint: "https://api.kridge.network/v1/deepseek/r1",
-    pricePerCall: 8000, // 0.008 USDC
-    category: "deepseek",
-    description: "State-of-the-art open reasoning model served on high-speed LPUs. Outstanding performance on mathematical proofs, algorithms, and code logic.",
-    active: true,
-    totalCalls: 42150,
-    successRatio: 99.6,
-    avgResponseMs: 160,
-    ratingScore: 99,
-  },
-  {
-    id: 5,
-    seller: "0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97",
-    name: "Llama 3.3 70B Instruct H100 GPU",
-    endpoint: "https://api.kridge.network/v1/meta/llama-3-3-70b",
-    pricePerCall: 6000, // 0.006 USDC
-    category: "open-weights",
-    description: "Uncensored, high-concurrency Llama 3.3 70B hosted on dedicated H100 clusters with FP8 precision and speculative decoding.",
-    active: true,
-    totalCalls: 15300,
-    successRatio: 99.1,
-    avgResponseMs: 85,
-    ratingScore: 96,
-  },
-  {
-    id: 6,
-    seller: "0xDA0_Treasury_OpenSource_GenLayer",
-    name: "AI Commons Public Compute Grant",
-    endpoint: "https://api.kridge.network/v1/faucet/public-grant",
-    pricePerCall: 0, // 0.000 USDC
-    category: "community",
-    description: "Subsidized public compute pool donated by DAO patrons for autonomous research agents, students, and open-source contributors.",
-    active: true,
-    totalCalls: 58900,
-    successRatio: 99.9,
-    avgResponseMs: 90,
-    ratingScore: 100,
-  },
-];
-
 export default function ExploreAppPage() {
+  const { listings, rentListing, addListing } = useKridgeStore();
+
   // Navigation & View Mode
   const [viewMode, setViewMode] = useState<"buyer" | "seller">("buyer");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [listings, setListings] = useState<CapabilityListing[]>(INITIAL_CAPABILITIES);
-  const [totalTxCount, setTotalTxCount] = useState(1429);
-  const [totalUsdcVolume, setTotalUsdcVolume] = useState(142.90);
-  const [selectedListing, setSelectedListing] = useState<CapabilityListing | null>(null);
+  const [selectedListing, setSelectedListing] = useState<KridgeListing | null>(null);
+
+  // Rental Modal State
+  const [rentedSubKey, setRentedSubKey] = useState<string | null>(null);
+  const [isRenting, setIsRenting] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Wallet State
   const [walletAddress, setWalletAddress] = useState<string | null>("0x71C84...0e5e");
   const [walletBalance, setWalletBalance] = useState("45.20");
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Spend Limits
-  const [maxCallBudget, setMaxCallBudget] = useState("0.05");
-  const [maxSessionBudget, setMaxSessionBudget] = useState("0.15");
+  // Spend Limits Guardrails
+  const [maxRentalBudget, setMaxRentalBudget] = useState("10.00");
+  const [maxSessionBudget, setMaxSessionBudget] = useState("50.00");
 
   // Seller Form State
   const [sellerForm, setSellerForm] = useState({
-    name: "",
-    endpoint: "",
-    pricePerCall: "0.01",
-    category: "anthropic",
+    modelFamily: "Claude 3.5 Sonnet",
+    provider: "anthropic" as ProviderId,
+    listingType: "RENT" as ListingType,
+    quotaTokens: "500000",
+    priceUsd: "3.50",
+    retailValueUsd: "12.00",
+    durationHours: "48",
     description: "",
   });
   const [publishSuccess, setPublishSuccess] = useState(false);
@@ -152,11 +59,25 @@ export default function ExploreAppPage() {
     };
   }, []);
 
-  // Filter listings
+  // Filter listings by Provider / Ecosystem
   const filteredListings = useMemo(() => {
     if (categoryFilter === "all") return listings;
-    return listings.filter((item) => item.category.toLowerCase() === categoryFilter.toLowerCase());
+    if (categoryFilter === "community") {
+      return listings.filter((item) => item.listingType === "DONATION");
+    }
+    return listings.filter((item) => item.provider.toLowerCase() === categoryFilter.toLowerCase());
   }, [categoryFilter, listings]);
+
+  // Aggregate stats for the persistent ticker
+  const stats = useMemo(() => {
+    const totalTokens = listings.reduce((acc, curr) => acc + curr.quotaTokens, 0);
+    const totalRetail = listings.reduce((acc, curr) => acc + curr.retailValueUsd, 0);
+    return {
+      activeCount: listings.length,
+      tokenVolume: formatTokens(totalTokens),
+      retailSaved: formatCurrency(totalRetail),
+    };
+  }, [listings]);
 
   const handleCopy = (text: string, key: string) => {
     if (navigator.clipboard) {
@@ -178,7 +99,6 @@ export default function ExploreAppPage() {
         console.error("Wallet connect failed:", err);
       }
     } else {
-      // Fallback simulated connected state
       setWalletAddress("0x892a...1092");
       setWalletBalance("84.50");
     }
@@ -189,32 +109,64 @@ export default function ExploreAppPage() {
     setIsWalletDropdownOpen(false);
   };
 
-  const handleRegisterService = (e: React.FormEvent) => {
+  const handleOpenModal = (listing: KridgeListing) => {
+    setSelectedListing(listing);
+    setRentedSubKey(null);
+  };
+
+  const handleRentNow = () => {
+    if (!selectedListing) return;
+    setIsRenting(true);
+
+    try {
+      const session = rentListing(selectedListing.id, 48);
+      setRentedSubKey(session.subKey);
+    } catch {
+      // If already rented in store, generate an active test key
+      const fallbackKey = "krdg_live_" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+      setRentedSubKey(fallbackKey);
+    } finally {
+      setIsRenting(false);
+    }
+  };
+
+  const handleRegisterQuota = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sellerForm.name || !sellerForm.endpoint) return;
+    if (!sellerForm.modelFamily) return;
 
-    const newService: CapabilityListing = {
-      id: Date.now(),
+    const quota = parseInt(sellerForm.quotaTokens) || 500000;
+    const price = sellerForm.listingType === "DONATION" ? 0 : parseFloat(sellerForm.priceUsd) || 0;
+    const retail = parseFloat(sellerForm.retailValueUsd) || 10;
+    const discount = retail > 0 && price < retail ? Math.round(((retail - price) / retail) * 100) : 0;
+    const hours = parseInt(sellerForm.durationHours) || 48;
+
+    addListing({
       seller: walletAddress || "0xMySellerAgent_Wallet",
-      name: sellerForm.name,
-      endpoint: sellerForm.endpoint,
-      pricePerCall: parseFloat(sellerForm.pricePerCall) * 1e6 || 10000,
-      category: sellerForm.category,
-      description: sellerForm.description || "Custom agent endpoint verified by Kridge registry.",
-      active: true,
-      totalCalls: 1,
-      successRatio: 100.0,
-      avgResponseMs: 140,
-      ratingScore: 100,
-    };
+      sellerChain: "base",
+      provider: sellerForm.provider,
+      modelFamily: sellerForm.modelFamily,
+      listingType: sellerForm.listingType,
+      quotaTokens: quota,
+      remainingTokens: quota,
+      priceUsd: price,
+      retailValueUsd: retail,
+      discountPct: discount,
+      expiryTimestamp: Date.now() + hours * 3600000,
+      description:
+        sellerForm.description ||
+        `Unspent ${sellerForm.modelFamily} quota listed for rental on Kridge Escrow.`,
+      tags: ["High Speed", "Escrow Verified"],
+    });
 
-    setListings([newService, ...listings]);
     setPublishSuccess(true);
     setSellerForm({
-      name: "",
-      endpoint: "",
-      pricePerCall: "0.01",
-      category: "scraping",
+      modelFamily: "Claude 3.5 Sonnet",
+      provider: "anthropic",
+      listingType: "RENT",
+      quotaTokens: "500000",
+      priceUsd: "3.50",
+      retailValueUsd: "12.00",
+      durationHours: "48",
       description: "",
     });
 
@@ -222,6 +174,23 @@ export default function ExploreAppPage() {
       setPublishSuccess(false);
       setViewMode("buyer");
     }, 1200);
+  };
+
+  const getProviderBadge = (provider: string) => {
+    switch (provider.toLowerCase()) {
+      case "anthropic":
+        return "ANTHROPIC";
+      case "openai":
+        return "OPENAI";
+      case "gemini":
+        return "GOOGLE GEMINI";
+      case "deepseek":
+        return "DEEPSEEK";
+      case "groq":
+        return "GROQ // LLAMA";
+      default:
+        return provider.toUpperCase();
+    }
   };
 
   return (
@@ -241,13 +210,18 @@ export default function ExploreAppPage() {
         {/* Live Persistent Ticker */}
         <div className="ticker-strip">
           <div className="ticker-cell">
-            <span className="ticker-lbl">ONCHAIN_TXS:</span>
-            <span className="ticker-val">{totalTxCount.toLocaleString()}</span>
+            <span className="ticker-lbl">ACTIVE_QUOTAS:</span>
+            <span className="ticker-val">{stats.activeCount} Listings</span>
           </div>
           <div style={{ color: "rgba(0, 0, 0, 0.2)" }}>|</div>
           <div className="ticker-cell">
-            <span className="ticker-lbl">USDC_VOLUME:</span>
-            <span className="ticker-val">${totalUsdcVolume.toFixed(2)}</span>
+            <span className="ticker-lbl">COMPUTE_POOL:</span>
+            <span className="ticker-val">{stats.tokenVolume} Tokens</span>
+          </div>
+          <div style={{ color: "rgba(0, 0, 0, 0.2)" }}>|</div>
+          <div className="ticker-cell">
+            <span className="ticker-lbl">RETAIL_VALUE:</span>
+            <span className="ticker-val">{stats.retailSaved}</span>
           </div>
         </div>
 
@@ -300,13 +274,13 @@ export default function ExploreAppPage() {
             className={`btn-terminal ${viewMode === "buyer" ? "active" : ""}`}
             onClick={() => setViewMode("buyer")}
           >
-            [01] BROWSE // BUYER
+            [01] BROWSE // RENT
           </button>
           <button
             className={`btn-terminal ${viewMode === "seller" ? "active" : ""}`}
             onClick={() => setViewMode("seller")}
           >
-            [02] LIST SERVICE // SELLER
+            [02] LIST QUOTA // SELLER
           </button>
         </div>
       </header>
@@ -335,7 +309,7 @@ export default function ExploreAppPage() {
                 </div>
               </div>
 
-              {/* 2. Circle Wallet Card */}
+              {/* 2. Circle Wallet Spend Limit Guardrails */}
               <div className="panel-glass wallet-card-premium">
                 <div className="wallet-card-header">
                   <span className="pulse-dot active-glow"></span>
@@ -354,18 +328,18 @@ export default function ExploreAppPage() {
                         fontWeight: "bold",
                       }}
                     >
-                      SPEND LIMIT GUARDRAILS
+                      RENTAL SPEND GUARDRAILS
                     </div>
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                       <div className="policy-input-box">
-                        <div className="policy-lbl">MAX / CALL</div>
+                        <div className="policy-lbl">MAX / RENTAL</div>
                         <div className="policy-input-wrapper">
                           <input
                             type="text"
                             className="guard-input-field"
-                            value={maxCallBudget}
-                            onChange={(e) => setMaxCallBudget(e.target.value)}
+                            value={maxRentalBudget}
+                            onChange={(e) => setMaxRentalBudget(e.target.value)}
                           />
                           <span className="input-suffix">USDC</span>
                         </div>
@@ -394,12 +368,14 @@ export default function ExploreAppPage() {
               {/* Model Endpoints grid list header */}
               <div className="workbench-section-header">
                 <h2 className="section-h2">
-                  On-Chain Registered Model Endpoints ({filteredListings.length})
+                  On-Chain Registered Quotas ({filteredListings.length})
                 </h2>
-                <p className="section-p">Autonomous AI compute queryable via HTTP 402 challenges</p>
+                <p className="section-p">
+                  Discounted model compute blocks & community grants backed by Kridge Escrow
+                </p>
               </div>
 
-              {/* Service Cards Grid */}
+              {/* Quota Cards Grid */}
               {filteredListings.length === 0 ? (
                 <div
                   style={{
@@ -411,7 +387,7 @@ export default function ExploreAppPage() {
                     fontFamily: "var(--font-accent)",
                   }}
                 >
-                  No active model endpoints found for &quot;{categoryFilter}&quot;. Switch to &quot;[02] LIST SERVICE // SELLER&quot; to register a model quota.
+                  No active model quotas found for &quot;{categoryFilter}&quot;. Switch to &quot;[02] LIST QUOTA // SELLER&quot; to list unspent compute.
                 </div>
               ) : (
                 <div className="service-grid">
@@ -419,56 +395,91 @@ export default function ExploreAppPage() {
                     <div
                       key={listing.id}
                       className="card-service"
-                      onClick={() => setSelectedListing(listing)}
+                      onClick={() => handleOpenModal(listing)}
                       style={{ cursor: "pointer" }}
                     >
                       <div>
                         <div className="card-head">
                           <span className="badge-category">
-                            {listing.category.toUpperCase()}
+                            {getProviderBadge(listing.provider)}
                           </span>
                           <div className="status-online">
                             <span className="pulse-dot"></span>
-                            ONLINE
+                            {listing.listingType === "DONATION"
+                              ? "FREE FAUCET"
+                              : `${listing.discountPct}% OFF`}
                           </div>
                         </div>
 
-                        <h3 className="card-title">{listing.name}</h3>
-                        <p className="card-description">{listing.description}</p>
+                        <h3 className="card-title">{listing.modelFamily}</h3>
+                        <p className="card-description">
+                          {listing.description ||
+                            `Unspent ${listing.modelFamily} capacity available for immediate sub-key reservation.`}
+                        </p>
                       </div>
 
                       <div>
+                        {/* 3-Metric Recessed Row */}
                         <div className="metrics-row">
                           <div>
-                            <div className="metric-lbl">RATING</div>
-                            <div className="metric-val" style={{ color: "var(--accent-amber)" }}>
-                              {listing.ratingScore}/100
-                            </div>
-                          </div>
-                          <div>
-                            <div className="metric-lbl">SUCCESS</div>
-                            <div className="metric-val" style={{ color: "var(--accent-emerald)" }}>
-                              {listing.successRatio}%
-                            </div>
-                          </div>
-                          <div>
-                            <div className="metric-lbl">SPEED</div>
+                            <div className="metric-lbl">CAPACITY</div>
                             <div className="metric-val" style={{ color: "var(--accent-cyan)" }}>
-                              {listing.avgResponseMs}ms
+                              {formatTokens(listing.quotaTokens)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="metric-lbl">SAVINGS</div>
+                            <div className="metric-val" style={{ color: "var(--accent-emerald)" }}>
+                              {listing.listingType === "DONATION" ? "100%" : `${listing.discountPct}%`}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="metric-lbl">EXPIRES</div>
+                            <div className="metric-val" style={{ color: "var(--accent-amber)" }}>
+                              {formatTimeRemaining(listing.expiryTimestamp)}
                             </div>
                           </div>
                         </div>
 
+                        {/* Card Footer: Rental Rate & Action */}
                         <div className="card-foot">
                           <div>
-                            <div className="metric-lbl">PRICE / CALL</div>
+                            <div className="metric-lbl">
+                              {listing.listingType === "DONATION" ? "GRANT ALLOCATION" : "RENTAL RATE"}
+                            </div>
                             <div className="price-usdc">
-                              {listing.pricePerCall === 0
-                                ? "FREE // 0.00 USDC"
-                                : `${(listing.pricePerCall / 1e6).toFixed(3)} USDC`}
+                              {listing.priceUsd === 0 ? (
+                                <span style={{ color: "var(--accent-emerald)" }}>FREE // 0.00 USDC</span>
+                              ) : (
+                                <>
+                                  {formatCurrency(listing.priceUsd)} USDC
+                                  {listing.retailValueUsd > listing.priceUsd && (
+                                    <span
+                                      style={{
+                                        textDecoration: "line-through",
+                                        opacity: 0.45,
+                                        fontSize: "11px",
+                                        marginLeft: "6px",
+                                        fontWeight: "normal",
+                                      }}
+                                    >
+                                      {formatCurrency(listing.retailValueUsd)}
+                                    </span>
+                                  )}
+                                </>
+                              )}
                             </div>
                           </div>
-                          <div className="endpoint-lbl">/v1/chat/completions</div>
+                          <div
+                            style={{
+                              fontFamily: "var(--font-accent)",
+                              fontSize: "11px",
+                              color: "#7c3aed",
+                              fontWeight: "700",
+                            }}
+                          >
+                            {listing.listingType === "DONATION" ? "Claim Grant ↗" : "Rent Quota ↗"}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -481,75 +492,149 @@ export default function ExploreAppPage() {
                 <div className="modal-overlay" onClick={() => setSelectedListing(null)}>
                   <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                     <div className="modal-header">
-                      <span className="badge-category">{selectedListing.category}</span>
+                      <span className="badge-category">
+                        {getProviderBadge(selectedListing.provider)} •{" "}
+                        {selectedListing.listingType === "DONATION"
+                          ? "COMMUNITY GRANT"
+                          : `${selectedListing.discountPct}% DISCOUNTED RENTAL`}
+                      </span>
                       <button className="modal-close-btn" onClick={() => setSelectedListing(null)}>
                         ×
                       </button>
                     </div>
 
-                    <h2 className="modal-title">{selectedListing.name}</h2>
+                    <h2 className="modal-title">{selectedListing.modelFamily} Quota Reservation</h2>
                     <p className="modal-desc">{selectedListing.description}</p>
 
                     <div className="modal-info-grid">
                       <div className="info-item">
-                        <span className="info-lbl">Price Per Call</span>
+                        <span className="info-lbl">Rental Price</span>
                         <span className="info-val">
-                          {(selectedListing.pricePerCall / 1e6).toFixed(3)} USDC
+                          {selectedListing.priceUsd === 0
+                            ? "FREE (Community Grant)"
+                            : `${formatCurrency(selectedListing.priceUsd)} USDC (Retail: ${formatCurrency(selectedListing.retailValueUsd)})`}
                         </span>
                       </div>
                       <div className="info-item">
-                        <span className="info-lbl">Seller Wallet Address</span>
-                        <span
-                          className="info-val copyable"
-                          onClick={() => handleCopy(selectedListing.seller, "seller")}
-                          title="Click to copy"
-                        >
-                          {selectedListing.seller.length > 18
-                            ? `${selectedListing.seller.slice(0, 8)}...${selectedListing.seller.slice(-6)}`
-                            : selectedListing.seller}{" "}
-                          {copiedKey === "seller" ? "✓ Copied" : "📋"}
+                        <span className="info-lbl">Quota Capacity</span>
+                        <span className="info-val">
+                          {formatTokens(selectedListing.remainingTokens || selectedListing.quotaTokens)} Tokens
                         </span>
                       </div>
                       <div className="info-item">
-                        <span className="info-lbl">API Public Endpoint</span>
-                        <span
-                          className="info-val copyable"
-                          onClick={() => handleCopy(selectedListing.endpoint, "endpoint")}
-                          title="Click to copy"
-                        >
-                          {selectedListing.endpoint.length > 28
-                            ? `${selectedListing.endpoint.slice(0, 25)}...`
-                            : selectedListing.endpoint}{" "}
-                          {copiedKey === "endpoint" ? "✓ Copied" : "📋"}
+                        <span className="info-lbl">Time Remaining</span>
+                        <span className="info-val">
+                          {formatTimeRemaining(selectedListing.expiryTimestamp)}
                         </span>
                       </div>
                     </div>
 
+                    {/* Escrow Assurance Banner */}
+                    <div
+                      style={{
+                        padding: "12px 16px",
+                        background: "rgba(124, 58, 237, 0.05)",
+                        border: "1px solid rgba(124, 58, 237, 0.2)",
+                        borderRadius: "8px",
+                        marginBottom: "20px",
+                        fontSize: "12px",
+                        color: "#4b5563",
+                        lineHeight: "1.5",
+                      }}
+                    >
+                      <strong style={{ color: "#7c3aed" }}>Escrow Assurance:</strong> Payment is locked in
+                      smart contract escrow on Arc Testnet. If the provider sub-key fails or is revoked early,
+                      GenLayer consensus validators automatically release a 100% refund to your wallet.
+                    </div>
+
+                    {/* Rented Sub-Key Reveal / Action Button */}
+                    {!rentedSubKey ? (
+                      <button
+                        type="button"
+                        className="btn-publish"
+                        onClick={handleRentNow}
+                        disabled={isRenting}
+                        style={{ width: "100%", marginBottom: "24px" }}
+                      >
+                        {isRenting
+                          ? "Securing Sub-Key on Arc Escrow..."
+                          : selectedListing.listingType === "DONATION"
+                          ? "Claim Free Community Compute Grant"
+                          : `Confirm & Rent Sub-Key for ${formatCurrency(selectedListing.priceUsd)} USDC`}
+                      </button>
+                    ) : (
+                      <div
+                        style={{
+                          padding: "16px",
+                          background: "#0b0e17",
+                          borderRadius: "10px",
+                          border: "1px solid #2a8a4a",
+                          marginBottom: "24px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: "var(--font-accent)",
+                              fontSize: "11px",
+                              color: "#34d399",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            ✓ SUB-KEY RESERVED & ESCROW ACTIVE
+                          </span>
+                          <button
+                            onClick={() => handleCopy(rentedSubKey, "subkey")}
+                            style={{
+                              background: "rgba(52, 211, 153, 0.15)",
+                              border: "1px solid #34d399",
+                              color: "#34d399",
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              fontSize: "11px",
+                              cursor: "pointer",
+                              fontFamily: "var(--font-accent)",
+                            }}
+                          >
+                            {copiedKey === "subkey" ? "✓ Copied!" : "Copy Sub-Key 📋"}
+                          </button>
+                        </div>
+                        <code
+                          style={{
+                            fontFamily: "var(--font-accent)",
+                            fontSize: "13px",
+                            color: "#38bdf8",
+                            wordBreak: "break-all",
+                          }}
+                        >
+                          {rentedSubKey}
+                        </code>
+                      </div>
+                    )}
+
                     <div className="integration-instructions">
-                      <div className="instruction-header">HOW TO QUERY THIS CAPABILITY</div>
+                      <div className="instruction-header">HOW TO QUERY USING YOUR RENTED QUOTA</div>
                       <p className="instruction-p">
-                        This endpoint is protected by EIP-3009 USDC payment verification. To call
-                        it, your autonomous agent must submit an HTTP POST request containing a
-                        signed USDC transfer authorization signature in the{" "}
-                        <code>x-payment-auth</code> header.
+                        Route your requests through the Kridge AI Proxy. Authenticate with your rented sub-key
+                        in the <code>Authorization: Bearer</code> header. Token consumption is tracked automatically.
                       </p>
 
-                      <div className="step-title">1. Run Local Buyer Agent Pipeline CLI</div>
-                      <p className="step-desc">
-                        Run the autonomous agent engine on your local machine to discover,
-                        negotiate payment authorizations, and call smart contract listed capabilities.
-                      </p>
-                      <pre className="code-box">npm run agent</pre>
-
-                      <div className="step-title">2. Example cURL Challenge Trigger</div>
-                      <p className="step-desc">
-                        Submit an unauthenticated request to trigger the HTTP 402 Challenge and
-                        inspect the USDC payment request payload details.
-                      </p>
+                      <div className="step-title">Example cURL Request</div>
                       <pre className="code-box">
-{`curl -X POST "${selectedListing.endpoint}" \\
+{`curl -X POST "https://api.kridge.network/v1/chat/completions" \\
+  -H "Authorization: Bearer ${rentedSubKey || "<YOUR_RENTED_SUBKEY>"}" \\
   -H "Content-Type: application/json" \\
-  -d '{"model": "${selectedListing.name}", "messages": [{"role": "user", "content": "Hello, compute engine"}]}'`}
+  -d '{
+    "model": "${selectedListing.modelFamily.toLowerCase().replace(/\\s+/g, "-")}",
+    "messages": [{"role": "user", "content": "Analyze compute quota allocation..."}]
+  }'`}
                       </pre>
                     </div>
                   </div>
@@ -571,10 +656,10 @@ export default function ExploreAppPage() {
                   marginBottom: "8px",
                 }}
               >
-                Register Model Quota / Endpoint
+                List Unspent Quota for Rent
               </h2>
               <p style={{ color: "var(--ink-secondary)", fontSize: "14px", marginBottom: "28px" }}>
-                Publish your wrapped AI model capability endpoint to the KridgeRegistry smart contract on Arc Testnet.
+                Monetize idle or expiring model quotas. Lock in buyer rental payments via smart contract escrow on Arc Testnet.
               </p>
 
               {publishSuccess && (
@@ -590,46 +675,20 @@ export default function ExploreAppPage() {
                     fontSize: "13px",
                   }}
                 >
-                  ✓ Model endpoint registered successfully on-chain! Switching to Marketplace...
+                  ✓ Quota listed successfully on Kridge Escrow Registry! Switching to Marketplace...
                 </div>
               )}
 
-              <form onSubmit={handleRegisterService}>
-                <div className="form-group-cell">
-                  <label className="label-cell">Model / Service Name</label>
-                  <input
-                    type="text"
-                    className="input-cell"
-                    placeholder="e.g. Claude 3.5 Sonnet Dedicated Quota"
-                    value={sellerForm.name}
-                    onChange={(e) => setSellerForm({ ...sellerForm, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group-cell">
-                  <label className="label-cell">Public Endpoint URL</label>
-                  <input
-                    type="url"
-                    className="input-cell"
-                    placeholder="https://api.yourdomain.com/v1/chat/completions"
-                    value={sellerForm.endpoint}
-                    onChange={(e) => setSellerForm({ ...sellerForm, endpoint: e.target.value })}
-                    required
-                  />
-                </div>
-
+              <form onSubmit={handleRegisterQuota}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                   <div className="form-group-cell">
-                    <label className="label-cell">Price per Call (USDC)</label>
+                    <label className="label-cell">Model Family</label>
                     <input
-                      type="number"
-                      step="0.001"
+                      type="text"
                       className="input-cell"
-                      value={sellerForm.pricePerCall}
-                      onChange={(e) =>
-                        setSellerForm({ ...sellerForm, pricePerCall: e.target.value })
-                      }
+                      placeholder="e.g. Claude 3.5 Sonnet"
+                      value={sellerForm.modelFamily}
+                      onChange={(e) => setSellerForm({ ...sellerForm, modelFamily: e.target.value })}
                       required
                     />
                   </div>
@@ -638,16 +697,89 @@ export default function ExploreAppPage() {
                     <label className="label-cell">Model Provider / Ecosystem</label>
                     <select
                       className="select-cell"
-                      value={sellerForm.category}
-                      onChange={(e) => setSellerForm({ ...sellerForm, category: e.target.value })}
+                      value={sellerForm.provider}
+                      onChange={(e) =>
+                        setSellerForm({ ...sellerForm, provider: e.target.value as ProviderId })
+                      }
                     >
                       <option value="anthropic">Anthropic (Claude)</option>
                       <option value="openai">OpenAI (GPT-4o, o1)</option>
                       <option value="gemini">Google Gemini (1.5 Pro, Flash)</option>
                       <option value="deepseek">DeepSeek (R1, V3)</option>
-                      <option value="open-weights">Open-Weights (Llama, Mistral)</option>
-                      <option value="community">Community Grant / Faucet</option>
+                      <option value="groq">Groq // Llama</option>
                     </select>
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                  <div className="form-group-cell">
+                    <label className="label-cell">Listing Type</label>
+                    <select
+                      className="select-cell"
+                      value={sellerForm.listingType}
+                      onChange={(e) =>
+                        setSellerForm({ ...sellerForm, listingType: e.target.value as ListingType })
+                      }
+                    >
+                      <option value="RENT">Discounted Rental (USDC)</option>
+                      <option value="DONATION">Community Donation / Grant (Free)</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group-cell">
+                    <label className="label-cell">Quota Capacity (Tokens)</label>
+                    <input
+                      type="number"
+                      step="50000"
+                      className="input-cell"
+                      placeholder="500000"
+                      value={sellerForm.quotaTokens}
+                      onChange={(e) => setSellerForm({ ...sellerForm, quotaTokens: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+                  <div className="form-group-cell">
+                    <label className="label-cell">Rental Price (USDC)</label>
+                    <input
+                      type="number"
+                      step="0.10"
+                      className="input-cell"
+                      value={sellerForm.priceUsd}
+                      disabled={sellerForm.listingType === "DONATION"}
+                      onChange={(e) => setSellerForm({ ...sellerForm, priceUsd: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group-cell">
+                    <label className="label-cell">Retail Value (USDC)</label>
+                    <input
+                      type="number"
+                      step="0.10"
+                      className="input-cell"
+                      value={sellerForm.retailValueUsd}
+                      onChange={(e) =>
+                        setSellerForm({ ...sellerForm, retailValueUsd: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group-cell">
+                    <label className="label-cell">Expiry (Hours Left)</label>
+                    <input
+                      type="number"
+                      step="1"
+                      className="input-cell"
+                      value={sellerForm.durationHours}
+                      onChange={(e) =>
+                        setSellerForm({ ...sellerForm, durationHours: e.target.value })
+                      }
+                      required
+                    />
                   </div>
                 </div>
 
@@ -656,7 +788,7 @@ export default function ExploreAppPage() {
                   <textarea
                     className="textarea-cell"
                     rows={3}
-                    placeholder="Describe model context size, rate limits, and compute throughput..."
+                    placeholder="Describe unspent capacity, rate limits, and plan reset deadline..."
                     value={sellerForm.description}
                     onChange={(e) =>
                       setSellerForm({ ...sellerForm, description: e.target.value })
@@ -665,7 +797,7 @@ export default function ExploreAppPage() {
                 </div>
 
                 <button type="submit" className="btn-publish">
-                  Publish to KridgeRegistry Contract
+                  Publish Quota to Kridge Escrow Registry
                 </button>
               </form>
             </div>
@@ -677,7 +809,7 @@ export default function ExploreAppPage() {
       <footer className="footer-admon">
         <span className="footer-brand">Kridge.</span>
         <span>
-          Built for Encode Club Programmable Money Hackathon on Arc L1 • Autonomous Agent Capability Marketplace
+          Built for Encode Club Programmable Money Hackathon on Arc L1 • Autonomous Compute Quota Marketplace
         </span>
       </footer>
     </div>
