@@ -27,7 +27,7 @@ const CHAIN_CONFIGS: Record<
     blockExplorerUrls: string[];
     icon: string;
     isEvm: boolean;
-    status: "active" | "coming_soon";
+    status: "active" | "disabled";
   }
 > = {
   base: {
@@ -41,6 +41,17 @@ const CHAIN_CONFIGS: Record<
     isEvm: true,
     status: "active",
   },
+  genlayer: {
+    chainIdHex: "0xa179", // GenLayer Testnet
+    chainName: "GenLayer",
+    networkTag: "GENLAYER_TESTNET",
+    rpcUrls: ["https://testnet.genlayer.network"],
+    nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
+    blockExplorerUrls: ["https://scan.genlayer.network"],
+    icon: "🧠",
+    isEvm: true,
+    status: "active",
+  },
   zksync: {
     chainIdHex: "0x12c", // 300 zkSync Sepolia
     chainName: "zkSync Era",
@@ -50,7 +61,7 @@ const CHAIN_CONFIGS: Record<
     blockExplorerUrls: ["https://sepolia.explorer.zksync.io"],
     icon: "⚡",
     isEvm: true,
-    status: "coming_soon",
+    status: "disabled",
   },
   solana: {
     chainIdHex: "solana",
@@ -61,18 +72,7 @@ const CHAIN_CONFIGS: Record<
     blockExplorerUrls: ["https://solscan.io?cluster=devnet"],
     icon: "🟣",
     isEvm: false,
-    status: "coming_soon",
-  },
-  genlayer: {
-    chainIdHex: "0xa179", // GenLayer Testnet
-    chainName: "GenLayer",
-    networkTag: "GENLAYER_TESTNET",
-    rpcUrls: ["https://testnet.genlayer.network"],
-    nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
-    blockExplorerUrls: ["https://scan.genlayer.network"],
-    icon: "🧠",
-    isEvm: true,
-    status: "coming_soon",
+    status: "disabled",
   },
 };
 
@@ -151,7 +151,7 @@ export default function ExploreAppPage() {
   // Switch network in connected browser wallet (e.g. MetaMask) & Kridge Store
   const switchNetworkInWallet = async (targetChain: SupportedChain) => {
     const config = CHAIN_CONFIGS[targetChain];
-    if (config?.status === "coming_soon") {
+    if (config?.status === "disabled") {
       return;
     }
 
@@ -375,7 +375,7 @@ export default function ExploreAppPage() {
             </button>
 
             {isNetworkDropdownOpen && (
-              <div className="wallet-dropdown" style={{ minWidth: "235px" }}>
+              <div className="wallet-dropdown" style={{ minWidth: "190px" }}>
                 <div
                   style={{
                     padding: "4px 8px",
@@ -391,13 +391,13 @@ export default function ExploreAppPage() {
                 <hr className="dropdown-divider" />
                 {Object.entries(CHAIN_CONFIGS).map(([key, cfg]) => {
                   const isSelected = wallet.chain === key;
-                  const isComingSoon = cfg.status === "coming_soon";
+                  const isDisabled = cfg.status === "disabled";
                   return (
                     <button
                       key={key}
-                      disabled={isComingSoon}
+                      disabled={isDisabled}
                       onClick={() => {
-                        if (!isComingSoon) {
+                        if (!isDisabled) {
                           switchNetworkInWallet(key as SupportedChain);
                         }
                       }}
@@ -410,39 +410,23 @@ export default function ExploreAppPage() {
                         borderRadius: "6px",
                         border: isSelected ? "1px solid #7c3aed" : "1px solid transparent",
                         background: isSelected ? "rgba(124, 58, 237, 0.08)" : "transparent",
-                        color: isComingSoon ? "#64748b" : "#000000",
+                        color: isDisabled ? "#94a3b8" : "#000000",
                         fontFamily: "var(--font-accent)",
                         fontSize: "11px",
-                        cursor: isComingSoon ? "not-allowed" : "pointer",
+                        cursor: isDisabled ? "not-allowed" : "pointer",
                         textAlign: "left",
-                        opacity: isComingSoon ? 0.75 : 1,
+                        opacity: isDisabled ? 0.38 : 1,
                       }}
                     >
-                      <span style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <span>{cfg.icon}</span>
                         <span style={{ fontWeight: isSelected ? "700" : "500" }}>{cfg.chainName}</span>
                       </span>
-                      {isComingSoon ? (
-                        <span
-                          style={{
-                            fontSize: "8px",
-                            fontFamily: "var(--font-accent)",
-                            fontWeight: "bold",
-                            letterSpacing: "0.04em",
-                            background: "#f1f5f9",
-                            color: "#64748b",
-                            padding: "2px 6px",
-                            borderRadius: "4px",
-                            border: "1px solid #e2e8f0",
-                          }}
-                        >
-                          COMING SOON
-                        </span>
-                      ) : isSelected ? (
+                      {isSelected && (
                         <span style={{ color: "#2a8a4a", fontWeight: "bold", fontSize: "12px" }}>
                           ✓
                         </span>
-                      ) : null}
+                      )}
                     </button>
                   );
                 })}

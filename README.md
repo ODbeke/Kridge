@@ -246,7 +246,7 @@ To deliver the highest security, execution speed, and seamless developer onboard
 | **Solana** | ⏳ *Coming Soon* | Devnet / Mainnet (SVM) | *On Roadmap*: High-throughput autonomous agent escrow checkout and sub-key issuance via SVM program. |
 
 > [!NOTE]
-> **Active Network Focus**: During the current release, all wallet connections, escrow deposits, and compute rentals settle on **Base**. The in-app network dropdown clearly designates zkSync Era, Solana, and direct-GenLayer wallet connections as `COMING SOON`, preventing unintended wallet switching while the Hyperlane relayer bridges undergo final auditing.
+> **Active Network Focus**: During the current release, **Base** and **GenLayer** are the active networks driving consumer settlement and intelligent contract arbitration. Inactive networks (zkSync Era and Solana) are temporarily disabled in the in-app network selector while their dedicated Hyperlane relayer adapters undergo final testing.
 
 Cross-chain state updates and escrow confirmations are designed to route across chains via **Hyperlane Mailbox** (`KridgeHyperlaneReceiver.sol`).
 
