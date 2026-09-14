@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Zap, Send, Code, Copy, Check, ShieldAlert, Cpu, Activity, Key } from "lucide-react";
 import { useKridgeStore } from "@/lib/store";
 import { formatTokens, formatCurrency } from "@/lib/utils";
+import { CountdownTimer } from "@/components/CountdownTimer";
 
 interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -204,7 +205,7 @@ export default function PlaygroundPage() {
 
             <div className="grid grid-cols-2 gap-2 text-xs font-mono pt-2">
               <div className="p-3 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] text-zinc-500 block">EST. REMAINING USD</span><span className="text-white font-bold text-sm">${estRemainingUsd}</span></div>
-              <div className="p-3 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] text-zinc-500 block">TTL EXPIRATION</span><span className="text-white font-bold text-sm">{hoursLeft}h left</span></div>
+              <div className="p-3 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] text-zinc-500 block">TTL EXPIRATION</span><span className="text-white font-bold text-sm"><CountdownTimer expiryTimestamp={activeRental?.expiresAt || (Date.now() + 48 * 3600000)} /></span></div>
             </div>
 
             {lastMeta && (

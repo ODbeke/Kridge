@@ -36,22 +36,18 @@ export function formatAddress(address: string, chars = 4): string {
   return address.substring(0, chars + 2) + "..." + address.substring(address.length - chars);
 }
 
-export function formatTimeRemaining(expiryTimestampMs: number): string {
-  const diffMs = expiryTimestampMs - Date.now();
-  if (diffMs <= 0) return "Expired";
+export function formatTimeRemaining(expiryTimestampMs: number, currentNowMs = Date.now()): string {
+  if (!expiryTimestampMs || isNaN(expiryTimestampMs)) return "00:00:00";
+  const diffMs = expiryTimestampMs - currentNowMs;
+  if (diffMs <= 0) return "00:00:00";
   
-  const hours = Math.floor(diffMs / 3600000);
-  const minutes = Math.floor((diffMs % 3600000) / 60000);
+  const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
   
-  if (hours >= 24) {
-    const days = Math.floor(hours / 24);
-    const remHours = hours % 24;
-    return `${days}d ${remHours}h left`;
-  }
-  if (hours > 0) {
-    return `${hours}h ${minutes}m left`;
-  }
-  return `${minutes}m left`;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
 export const TIER_CONFIG: Record<

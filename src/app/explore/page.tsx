@@ -13,6 +13,7 @@ import {
   getNextTierProgress,
   getTierFromRescued
 } from "@/lib/utils";
+import { CountdownTimer } from "@/components/CountdownTimer";
 
 const TIERS_LIST: BadgeTier[] = ["WOOD", "BRONZE", "SILVER", "GOLD", "DIAMOND", "PLATINUM"];
 
@@ -1050,7 +1051,7 @@ export default function ExploreAppPage() {
                           <div>
                             <div className="metric-lbl">EXPIRES</div>
                             <div className="metric-val" style={{ color: "var(--accent-amber)" }}>
-                              {formatTimeRemaining(listing.expiryTimestamp)}
+                              <CountdownTimer expiryTimestamp={listing.expiryTimestamp} />
                             </div>
                           </div>
                         </div>
@@ -1138,7 +1139,7 @@ export default function ExploreAppPage() {
                       <div className="info-item">
                         <span className="info-lbl">Time Remaining</span>
                         <span className="info-val">
-                          {formatTimeRemaining(selectedListing.expiryTimestamp)}
+                          <CountdownTimer expiryTimestamp={selectedListing.expiryTimestamp} />
                         </span>
                       </div>
                     </div>
@@ -1814,7 +1815,7 @@ export default function ExploreAppPage() {
 
                             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontFamily: "var(--font-accent)", color: "#71717a" }}>
                               <span>{rental.listingType === "DONATION" ? "FREE COMMUNITY GRANT" : `${formatCurrency(rental.amountPaidUsd)} USDC`}</span>
-                              <span>⏱ {formatTimeRemaining(rental.expiresAt)}</span>
+                              <span><CountdownTimer expiryTimestamp={rental.expiresAt} showIcon={true} /></span>
                             </div>
                           </div>
 
