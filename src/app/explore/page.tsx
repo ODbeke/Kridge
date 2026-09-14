@@ -104,7 +104,7 @@ export default function ExploreAppPage() {
   const [selectedDisputeId, setSelectedDisputeId] = useState<number | null>(null);
   const [isArbitrating, setIsArbitrating] = useState(false);
   const [disputeFilingModalOpen, setDisputeFilingModalOpen] = useState(false);
-  const [selectedDisputeRentalId, setSelectedDisputeRentalId] = useState<number>(rentals[0]?.rentalId || 1);
+  const [selectedDisputeRentalId, setSelectedDisputeRentalId] = useState<number>(rentals[0]?.rentalId || 0);
   const [disputeReason, setDisputeReason] = useState("Upstream 401 Unauthorized: Key was revoked mid-rental by seller.");
   const [disputeTrace, setDisputeTrace] = useState("HTTP 401: Invalid API Key provided to Anthropic API endpoint. Gateway HMAC receipt #0x7fa89c validates authentic upstream error.");
 
@@ -143,8 +143,17 @@ export default function ExploreAppPage() {
     resetDispute(disputeId);
   };
 
+  const openDisputeModal = () => {
+    if (rentals.length > 0 && (!selectedDisputeRentalId || !rentals.some((r) => r.rentalId === selectedDisputeRentalId))) {
+      setSelectedDisputeRentalId(rentals[0].rentalId);
+    }
+    setDisputeFilingModalOpen(true);
+  };
+
   const handleFileNewDispute = () => {
-    const rentalId = selectedDisputeRentalId || (rentals[0]?.rentalId || 1);
+    if (rentals.length === 0) return;
+    const rentalId = selectedDisputeRentalId || rentals[0]?.rentalId;
+    if (!rentalId) return;
     const newDispute = fileDispute(rentalId, disputeReason, disputeTrace);
     setSelectedDisputeId(newDispute.disputeId);
     setDisputeFilingModalOpen(false);
@@ -2371,7 +2380,7 @@ export default function ExploreAppPage() {
                     ← BACK TO MARKETPLACE
                   </button>
                   <button
-                    onClick={() => setDisputeFilingModalOpen(true)}
+                    onClick={openDisputeModal}
                     className="btn-terminal active"
                     style={{
                       padding: "8px 16px",
@@ -2508,7 +2517,7 @@ export default function ExploreAppPage() {
 
                 <div style={{ display: "flex", gap: "10px", marginTop: "10px", flexWrap: "wrap", justifyContent: "center" }}>
                   <button
-                    onClick={() => setDisputeFilingModalOpen(true)}
+                    onClick={openDisputeModal}
                     className="btn-publish"
                     style={{
                       padding: "10px 20px",
@@ -2519,7 +2528,7 @@ export default function ExploreAppPage() {
                     }}
                   >
                     <ShieldAlert style={{ width: "13px", height: "13px", display: "inline", marginRight: "6px" }} />
-                    File Test Dispute ($1.00 Bond)
+                    File Escrow Dispute ($1.00 Bond)
                   </button>
                   <button
                     onClick={() => {
@@ -2913,23 +2922,33 @@ export default function ExploreAppPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginTop: "16px" }}>
               <div>
                 <label className="label-cell">Target Compute Session:</label>
-                <select
-                  value={selectedDisputeRentalId}
-                  onChange={(e) => setSelectedDisputeRentalId(Number(e.target.value))}
-                  className="select-cell"
-                >
-                  {rentals.length > 0 ? (
-                    rentals.map((r) => (
+                {rentals.length > 0 ? (
+                  <select
+                    value={selectedDisputeRentalId}
+                    onChange={(e) => setSelectedDisputeRentalId(Number(e.target.value))}
+                    className="select-cell"
+                  >
+                    {rentals.map((r) => (
                       <option key={r.rentalId} value={r.rentalId}>
                         Rental #{r.rentalId} • {r.modelFamily} (${r.amountPaidUsd} USDC)
                       </option>
-                    ))
-                  ) : (
-                    <option value={1}>
-                      Demo Session: Claude 3.5 Sonnet ($3.50 USDC)
-                    </option>
-                  )}
-                </select>
+                    ))}
+                  </select>
+                ) : (
+                  <div
+                    style={{
+                      padding: "10px 14px",
+                      background: "rgba(225, 29, 72, 0.06)",
+                      border: "1px solid rgba(225, 29, 72, 0.2)",
+                      borderRadius: "8px",
+                      fontSize: "11px",
+                      color: "#be123c",
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    ⚠️ <strong>No Purchased Rentals Found:</strong> Only a buyer who has rented compute from the marketplace can file an escrow dispute. Please rent an API quota first.
+                  </div>
+                )}
               </div>
 
               <div>
@@ -2981,11 +3000,13 @@ export default function ExploreAppPage() {
               <button
                 type="button"
                 className="btn-publish"
+                disabled={rentals.length === 0}
                 onClick={handleFileNewDispute}
                 style={{
                   padding: "8px 18px",
                   fontSize: "11px",
-                  cursor: "pointer",
+                  cursor: rentals.length === 0 ? "not-allowed" : "pointer",
+                  opacity: rentals.length === 0 ? 0.45 : 1,
                   background: "linear-gradient(135deg, #e11d48, #be123c)",
                 }}
               >
