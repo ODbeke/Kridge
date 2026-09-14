@@ -719,7 +719,7 @@ export default function ExploreAppPage() {
         sellerForm.description ||
         `Unspent ${sellerForm.modelFamily} quota listed for rental on Kridge Base Sepolia Escrow.`,
       tags: ["High Speed", "Escrow Verified"],
-    });
+    }, sellerForm.apiKey);
 
     setPublishSuccess(true);
     setSellerForm({

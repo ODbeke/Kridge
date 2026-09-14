@@ -64,6 +64,11 @@ export async function POST(req: NextRequest) {
       tags,
     });
 
+    if (body.apiKey) {
+      const { vaultApiKey } = await import("@/lib/vault");
+      vaultApiKey(newListing.id, provider, body.apiKey);
+    }
+
     return NextResponse.json({
       success: true,
       listing: newListing,

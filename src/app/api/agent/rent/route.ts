@@ -28,10 +28,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Listing not found or details missing" }, { status: 404 });
     }
 
+    const { getVaultedApiKey } = await import("@/lib/vault");
+    const vaultedKey = listingId ? getVaultedApiKey(Number(listingId)) : undefined;
+    const upstreamApiKey = vaultedKey || ("sk-vault-" + Math.random().toString(36).substring(7));
+
     const session = KridgeProxyService.createSession({
       listingId: Number(listingId) || 1,
       provider: provider as any,
-      upstreamApiKey: "sk-vault-" + Math.random().toString(36).substring(7),
+      upstreamApiKey,
       allocatedTokens: allocatedTokens || 500000,
       modelFamily: modelFamily || "claude-3-5-sonnet",
       buyerAddress: agentWallet || "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",

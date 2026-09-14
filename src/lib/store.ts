@@ -199,7 +199,8 @@ export function useKridgeStore() {
   };
 
   const addListing = async (
-    listing: Omit<KridgeListing, "id" | "isVerified" | "verificationScore" | "lastVerifiedMinutesAgo">
+    listing: Omit<KridgeListing, "id" | "isVerified" | "verificationScore" | "lastVerifiedMinutesAgo">,
+    apiKey?: string
   ) => {
     const newId = listings.length ? Math.max(...listings.map((l) => l.id)) + 1 : 1;
     const fullListing: KridgeListing = {
@@ -213,12 +214,12 @@ export function useKridgeStore() {
     const updated = [fullListing, ...listings];
     saveListings(updated);
 
-    // Persist to live server registry
+    // Persist to live server registry and vault secret key securely
     try {
       await fetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fullListing),
+        body: JSON.stringify({ ...fullListing, apiKey }),
       });
     } catch (err) {
       console.warn("Failed persisting listing to server:", err);
