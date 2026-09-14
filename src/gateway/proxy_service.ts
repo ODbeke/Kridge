@@ -243,6 +243,7 @@ export class KridgeProxyService {
       stream?: boolean;
     }
   ): Promise<{ responseText: string; promptTokens: number; completionTokens: number; latencyMs: number }> {
+    const startTime = Date.now();
     const session = this.getSession(subKey, payload.model);
     if (!session) {
       throw new Error("Invalid or expired Kridge virtual key");
@@ -265,11 +266,91 @@ export class KridgeProxyService {
     }
 
     const lastMessage = payload.messages[payload.messages.length - 1]?.content || "";
-    const promptTokens = Math.max(12, KridgeProxyService.estimateTokens(JSON.stringify(payload.messages)));
-
-    // Upstream simulation or real forwarding with dynamic context awareness
+    let promptTokens = Math.max(12, KridgeProxyService.estimateTokens(JSON.stringify(payload.messages)));
+    let completionTokens = 24;
     let responseText = "";
-    const lower = lastMessage.toLowerCase();
+    let latencyMs = 120;
+
+    // Check for real vaulted or environment upstream API keys
+    const realApiKey =
+      (!session.upstreamApiKey.startsWith("sk-vault-") && !session.upstreamApiKey.startsWith("sk-ant-api03-mock-")
+        ? session.upstreamApiKey
+        : "") ||
+      (session.provider === "gemini"
+        ? process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY
+        : session.provider === "openai"
+        ? process.env.OPENAI_API_KEY
+        : session.provider === "groq"
+        ? process.env.GROQ_API_KEY
+        : process.env.ANTHROPIC_API_KEY) ||
+      process.env.GEMINI_API_KEY ||
+      process.env.OPENAI_API_KEY ||
+      "";
+
+    let realSuccess = false;
+
+    if (realApiKey) {
+      try {
+        const isGeminiKey = realApiKey.startsWith("AIzaSy") || session.provider === "gemini";
+        const isOpenAIKey = realApiKey.startsWith("sk-") || session.provider === "openai";
+        const isGroqKey = realApiKey.startsWith("gsk_") || session.provider === "groq";
+
+        if (isGeminiKey) {
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${realApiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: lastMessage }] }],
+              }),
+            }
+          );
+          if (geminiRes.ok) {
+            const data = await geminiRes.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) {
+              responseText = text;
+              promptTokens = data.usageMetadata?.promptTokenCount || promptTokens;
+              completionTokens = data.usageMetadata?.candidatesTokenCount || KridgeProxyService.estimateTokens(text);
+              latencyMs = Date.now() - startTime;
+              realSuccess = true;
+            }
+          }
+        } else if (isOpenAIKey || isGroqKey) {
+          const endpoint = isGroqKey ? "https://api.groq.com/openai/v1/chat/completions" : "https://api.openai.com/v1/chat/completions";
+          const modelName = isGroqKey ? "llama-3.3-70b-versatile" : (session.modelFamily || "gpt-4o-mini");
+          const openAiRes = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${realApiKey}`,
+            },
+            body: JSON.stringify({
+              model: modelName,
+              messages: payload.messages,
+            }),
+          });
+          if (openAiRes.ok) {
+            const data = await openAiRes.json();
+            const text = data.choices?.[0]?.message?.content;
+            if (text) {
+              responseText = text;
+              promptTokens = data.usage?.prompt_tokens || promptTokens;
+              completionTokens = data.usage?.completion_tokens || KridgeProxyService.estimateTokens(text);
+              latencyMs = Date.now() - startTime;
+              realSuccess = true;
+            }
+          }
+        }
+      } catch (upstreamErr) {
+        console.warn("Real upstream forwarding failed, utilizing gateway sandbox simulator:", upstreamErr);
+      }
+    }
+
+    if (!realSuccess) {
+      // Upstream simulation mode with dynamic context awareness
+      const lower = lastMessage.toLowerCase();
 
     if (
       lower.includes("what model") ||
@@ -295,9 +376,11 @@ export class KridgeProxyService {
       responseText = `[Kridge Proxy ${session.provider.toUpperCase()} Gateway]: Successfully processed prompt through rented ${session.modelFamily} quota session (${session.subKey.substring(0, 18)}...). Prompt executed with tamper-evident HMAC telemetry and GenLayer escrow security.`;
     }
 
-    const completionTokens = Math.max(24, KridgeProxyService.estimateTokens(responseText));
+      completionTokens = Math.max(24, KridgeProxyService.estimateTokens(responseText));
+      latencyMs = Math.floor(Math.random() * 90) + 110;
+    }
+
     const totalTokens = promptTokens + completionTokens;
-    const latencyMs = Math.floor(Math.random() * 90) + 110;
 
     // Deduct tokens
     this.recordUsage(subKey, totalTokens);
