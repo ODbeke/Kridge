@@ -3,29 +3,10 @@ pragma solidity ^0.8.20;
 
 /**
  * @title KridgeHyperlaneReceiver
- * @notice EVM Cross-Chain Receiver for Kridge (deployed on Base & zkSync Era).
- * Allows users to initiate API credit rentals and donations using native USDC/ETH
- * and dispatches the execution intent to the GenLayer Intelligent Contract via Hyperlane Mailbox.
+ * @notice EVM Cross-Chain Receiver & Escrow for Kridge on Base Sepolia.
+ * Allows users to initiate API credit rentals and donations,
+ * dispatching execution intent to the GenLayer Intelligent Contract via Hyperlane.
  */
-
-interface IMailbox {
-    function dispatch(
-        uint32 _destinationDomain,
-        bytes32 _recipientAddress,
-        bytes calldata _messageBody
-    ) external payable returns (bytes32 messageId);
-    
-    function process(
-        bytes calldata _metadata,
-        bytes calldata _message
-    ) external;
-}
-
-interface IERC20 {
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-    function transfer(address recipient, uint256 amount) external returns (bool);
-}
-
 contract KridgeHyperlaneReceiver {
     address public owner;
     IMailbox public mailbox;
@@ -59,7 +40,7 @@ contract KridgeHyperlaneReceiver {
     }
     
     /**
-     * @notice Initiates a rental from Base or zkSync to GenLayer
+     * @notice Initiates a rental from Base to GenLayer
      */
     function rentCreditCrossChain(
         uint256 listingId,
@@ -89,7 +70,7 @@ contract KridgeHyperlaneReceiver {
     }
     
     /**
-     * @notice Initiates a credit donation from Base or zkSync to GenLayer
+     * @notice Initiates a credit donation from Base to GenLayer
      */
     function donateCreditCrossChain(
         string calldata provider,
@@ -135,4 +116,22 @@ contract KridgeHyperlaneReceiver {
             emit SettlementExecuted(recipient, amount);
         }
     }
+}
+
+interface IMailbox {
+    function dispatch(
+        uint32 _destinationDomain,
+        bytes32 _recipientAddress,
+        bytes calldata _messageBody
+    ) external payable returns (bytes32 messageId);
+    
+    function process(
+        bytes calldata _metadata,
+        bytes calldata _message
+    ) external;
+}
+
+interface IERC20 {
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    function transfer(address recipient, uint256 amount) external returns (bool);
 }
