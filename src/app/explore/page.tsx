@@ -2398,11 +2398,11 @@ export default function ExploreAppPage() {
                 </div>
               </div>
 
-              {/* 4 Summary Stats */}
+              {/* Summary Stats */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
                   gap: "14px",
                   marginTop: "24px",
                 }}
@@ -2425,18 +2425,6 @@ export default function ExploreAppPage() {
                     ${disputes.reduce((acc, d) => acc + (d.bondAmountUsd || 1.0), 0).toFixed(2)} USD
                   </div>
                   <span style={{ fontSize: "10px", color: "#71717a" }}>Anti-Sybil Complainant Bonds</span>
-                </div>
-
-                <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
-                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#059669", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
-                    AI JURY CONSENSUS
-                  </span>
-                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "20px", fontWeight: "800", color: "#059669", marginTop: "2px" }}>
-                    {disputes.length > 0 ? "3/3 Consensus" : "Standby"}
-                  </div>
-                  <span style={{ fontSize: "10px", color: "#71717a", display: "block" }}>
-                    {disputes.length > 0 ? "Consensus Validated" : "(0 Pending)"}
-                  </span>
                 </div>
 
                 <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
