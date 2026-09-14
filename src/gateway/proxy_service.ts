@@ -96,7 +96,14 @@ function getSessionsMap(): Map<string, VirtualSession> {
       });
     }
 
-    diskSessions.forEach((s) => map.set(s.subKey, s));
+    diskSessions.forEach((s) => {
+      // Auto-heal past timestamps if tokens remain
+      if (s.expiresAt <= Date.now() && s.usedTokens < s.allocatedTokens) {
+        s.expiresAt = Date.now() + 48 * 3600000;
+        s.status = "ACTIVE";
+      }
+      map.set(s.subKey, s);
+    });
     globalSessions.__KRIDGE_SESSIONS_MAP__ = map;
     writeSessionsToDisk(Array.from(map.values()));
   }
@@ -246,9 +253,15 @@ export class KridgeProxyService {
     }
 
     if (Date.now() > session.expiresAt) {
-      session.status = "EXHAUSTED";
-      syncSessions();
-      throw new Error("Rental session has reached its expiry timestamp");
+      if (session.usedTokens < session.allocatedTokens) {
+        session.expiresAt = Date.now() + 48 * 3600000;
+        session.status = "ACTIVE";
+        syncSessions();
+      } else {
+        session.status = "EXHAUSTED";
+        syncSessions();
+        throw new Error("Rental session has reached its expiry timestamp");
+      }
     }
 
     const lastMessage = payload.messages[payload.messages.length - 1]?.content || "";
