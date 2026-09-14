@@ -2431,10 +2431,12 @@ export default function ExploreAppPage() {
                   <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#059669", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
                     AI JURY CONSENSUS
                   </span>
-                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#059669", marginTop: "2px" }}>
-                    {disputes.length > 0 ? "3/3 Consensus" : "Standby (0 Pending)"}
+                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "20px", fontWeight: "800", color: "#059669", marginTop: "2px" }}>
+                    {disputes.length > 0 ? "3/3 Consensus" : "Standby"}
                   </div>
-                  <span style={{ fontSize: "10px", color: "#71717a" }}>Llama-3, DeepSeek-V3, Claude</span>
+                  <span style={{ fontSize: "10px", color: "#71717a", display: "block" }}>
+                    {disputes.length > 0 ? "Consensus Validated" : "(0 Pending)"}
+                  </span>
                 </div>
 
                 <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
