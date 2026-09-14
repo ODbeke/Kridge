@@ -171,6 +171,7 @@ export default function ExploreAppPage() {
   // Rental Modal State
   const [rentedSubKey, setRentedSubKey] = useState<string | null>(null);
   const [rentalTxHash, setRentalTxHash] = useState<string | null>(null);
+  const [rentalError, setRentalError] = useState<string | null>(null);
   const [isRenting, setIsRenting] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -468,7 +469,7 @@ export default function ExploreAppPage() {
         switchChain("base");
       } else if (hex === "0x12c" || hex === "0x144") {
         switchChain("zksync");
-      } else if (hex === "0xa179") {
+      } else if (hex === "0xa179" || hex === "0xf22d") {
         switchChain("genlayer");
       }
     };
@@ -548,36 +549,112 @@ export default function ExploreAppPage() {
     setSelectedListing(listing);
     setRentedSubKey(null);
     setRentalTxHash(null);
+    setRentalError(null);
   };
 
   const handleRentNow = async () => {
     if (!selectedListing) return;
     setIsRenting(true);
+    setRentalError(null);
 
     let onChainTxHash = "";
 
     try {
+      const isPaidListing = selectedListing.priceUsd > 0 && selectedListing.listingType !== "DONATION";
+
       // 1. If connected with an EVM browser wallet on Base and rental requires funds, trigger on-chain deposit
-      if (typeof window !== "undefined" && (window as any).ethereum && walletAddress && selectedListing.priceUsd > 0) {
+      if (isPaidListing) {
+        if (typeof window === "undefined" || !(window as any).ethereum) {
+          throw new Error("A Web3 wallet (such as MetaMask) is required to fund escrow and rent this compute quota.");
+        }
+
+        let userAddr = walletAddress;
+        if (!userAddr) {
+          try {
+            const accounts = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
+            if (accounts && accounts[0]) {
+              userAddr = accounts[0];
+              setWalletAddress(userAddr);
+            } else {
+              throw new Error("Wallet connection was declined. Payment not signed, so no sub-key was issued.");
+            }
+          } catch (connErr: any) {
+            if (connErr?.code === 4001 || connErr?.message?.toLowerCase().includes("user rejected") || connErr?.message?.toLowerCase().includes("user denied")) {
+              throw new Error("Wallet connection was rejected. Escrow not funded, so no sub-key was issued.");
+            }
+            throw new Error(connErr?.message || "Failed to connect wallet.");
+          }
+        }
+
+        // Switch to Base Sepolia (0x14a34 = 84532)
         try {
-          const txParams = {
-            from: walletAddress,
-            to: process.env.NEXT_PUBLIC_BASE_SEPOLIA_RECEIVER || "0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf", // Kridge Base Sepolia Escrow Receiver
-            value: "0x0",
-            data: "0x436865636b6f7574",
-          };
+          const currentChainId = await (window as any).ethereum.request({ method: "eth_chainId" });
+          if (currentChainId?.toLowerCase() !== "0x14a34") {
+            try {
+              await (window as any).ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: "0x14a34" }],
+              });
+            } catch (switchError: any) {
+              if (switchError?.code === 4902) {
+                await (window as any).ethereum.request({
+                  method: "wallet_addEthereumChain",
+                  params: [
+                    {
+                      chainId: "0x14a34",
+                      chainName: "Base Sepolia",
+                      nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+                      rpcUrls: ["https://sepolia.base.org"],
+                      blockExplorerUrls: ["https://sepolia.basescan.org"],
+                    },
+                  ],
+                });
+              }
+            }
+          }
+        } catch (switchWarn) {
+          console.warn("Chain switch warning:", switchWarn);
+        }
+
+        // Prepare valid ERC-20 transfer of USDC to Kridge Escrow Receiver
+        const escrowReceiver = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RECEIVER || "0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf";
+        const cleanReceiver = escrowReceiver.toLowerCase().replace("0x", "").padStart(64, "0");
+        const usdcUnits = Math.round(selectedListing.priceUsd * 1e6);
+        const hexAmount = BigInt(usdcUnits).toString(16).padStart(64, "0");
+        const usdcTransferData = "0xa9059cbb" + cleanReceiver + hexAmount;
+
+        const txParams = {
+          from: userAddr,
+          to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // Official Circle USDC on Base Sepolia
+          data: usdcTransferData,
+          value: "0x0",
+        };
+
+        try {
           onChainTxHash = await (window as any).ethereum.request({
             method: "eth_sendTransaction",
             params: [txParams],
           });
-        } catch (walletErr) {
-          console.warn("User declined or transaction failed:", walletErr);
+        } catch (walletErr: any) {
+          console.error("Wallet transaction declined or failed:", walletErr);
+          if (
+            walletErr?.code === 4001 ||
+            walletErr?.message?.toLowerCase().includes("user rejected") ||
+            walletErr?.message?.toLowerCase().includes("user denied")
+          ) {
+            throw new Error("Transaction was rejected in your wallet. Payment was not confirmed, so no sub-key was issued.");
+          }
+          throw new Error(walletErr?.message || "Transaction simulation failed. Payment was not confirmed, so no sub-key was issued.");
+        }
+
+        if (!onChainTxHash) {
+          throw new Error("Transaction was cancelled or no transaction hash was returned. No sub-key was issued.");
         }
       }
 
       setRentalTxHash(onChainTxHash || null);
 
-      // 2. Register virtual sub-key in KridgeProxyService
+      // 2. Register virtual sub-key in KridgeProxyService ONLY after successful on-chain transaction (or free grant)
       const res = await fetch("/api/agent/rent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -586,27 +663,27 @@ export default function ExploreAppPage() {
           agentWallet: walletAddress || "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
           durationHours: 48,
           listingDetails: selectedListing,
+          txHash: onChainTxHash || undefined,
         }),
       });
 
+      if (!res.ok) {
+        throw new Error("Proxy gateway failed to allocate virtual sub-key session.");
+      }
+
       const data = await res.json();
-      const subKeyToUse =
-        data?.subKey ||
-        "krdg_live_" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+      if (!data?.subKey) {
+        throw new Error(data?.error || "Proxy gateway did not return a valid sub-key.");
+      }
 
       // 3. Save into local Kridge store
-      const session = rentListing(selectedListing.id, 48, subKeyToUse);
+      const session = rentListing(selectedListing.id, 48, data.subKey);
       setRentedSubKey(session.subKey);
+      setRentalError(null);
     } catch (err: any) {
-      console.error("Rental execution error:", err);
-      const fallbackKey =
-        "krdg_live_" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
-      try {
-        const session = rentListing(selectedListing.id, 48, fallbackKey);
-        setRentedSubKey(session.subKey);
-      } catch {
-        setRentedSubKey(fallbackKey);
-      }
+      console.error("Rental execution stopped:", err);
+      setRentalError(err?.message || "Payment incomplete. No sub-key was issued.");
+      setRentedSubKey(null); // CRITICAL: NEVER issue key on failure or rejection
     } finally {
       setIsRenting(false);
     }
@@ -1336,6 +1413,32 @@ export default function ExploreAppPage() {
                       GenLayer AI consensus validators automatically verify web state and release a 100% refund to your wallet.
                     </div>
 
+                    {/* Payment / Escrow Error Alert */}
+                    {rentalError && (
+                      <div
+                        style={{
+                          padding: "12px 16px",
+                          background: "#fef2f2",
+                          border: "1px solid #f87171",
+                          borderRadius: "8px",
+                          marginBottom: "18px",
+                          fontSize: "12.5px",
+                          color: "#991b1b",
+                          lineHeight: "1.5",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                          <span style={{ fontSize: "14px", lineHeight: "1.2" }}>⚠️</span>
+                          <div>
+                            <div style={{ fontWeight: "700", marginBottom: "2px", color: "#7f1d1d" }}>
+                              Transaction Incomplete
+                            </div>
+                            <div>{rentalError}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Rented Sub-Key Reveal / Action Button */}
                     {!rentedSubKey ? (
                       <button
@@ -1347,6 +1450,8 @@ export default function ExploreAppPage() {
                       >
                         {isRenting
                           ? "Securing Sub-Key on Kridge Escrow..."
+                          : rentalError
+                          ? "Retry Transaction"
                           : selectedListing.listingType === "DONATION"
                           ? "Claim Free Community Compute Grant"
                           : `Confirm & Rent Sub-Key for ${formatCurrency(selectedListing.priceUsd)} USDC`}
