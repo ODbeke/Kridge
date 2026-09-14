@@ -442,13 +442,13 @@ body.menu-open {
 
 /* Subhead */
 .subhead {
-  max-width: 540px;
-  font-size: clamp(12.5px, 1.3vw, 15px);
+  max-width: 680px;
+  font-size: clamp(14px, 1.5vw, 18px);
   color: #e5e7eb;
-  opacity: 0.85;
-  line-height: 1.55;
+  opacity: 0.9;
+  line-height: 1.6;
   font-weight: 400;
-  margin: clamp(10px, 1.6vh, 16px) auto clamp(14px, 2.2vh, 22px);
+  margin: clamp(12px, 1.8vh, 18px) auto clamp(16px, 2.4vh, 24px);
 }
 
 /* Hero Actions & CTAs */

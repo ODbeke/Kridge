@@ -125,8 +125,8 @@ export default function LandingPage() {
 
           {/* Kridge Subhead */}
           <p className="subhead anim" style={{ "--d": "0.28s" } as React.CSSProperties}>
-            Rent expiring AI subscription quota at 60%–75% discounts—or donate credits to
-            public agent faucets in exchange for on-chain ESG Impact Badges. Powered by GenLayer, Base, zkSync & Solana.
+            Turn idle AI subscription quota into liquid yield. Rent top-tier models at 60%–75%
+            discounts, or donate unused compute to autonomous agent faucets for on-chain ESG reputation. Settled in USDC on Base &amp; GenLayer.
           </p>
 
           {/* Action CTAs */}
