@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { KridgeListing, UserRentalSession, DisputeItem, DonorProfile, SupportedChain, BadgeTier, ListingType, ChainBalanceInfo, WalletState } from "./types";
+import { KridgeListing, UserRentalSession, DisputeItem, DonorProfile, SupportedChain, BadgeTier, ListingType, ChainBalanceInfo, WalletState, ProviderId } from "./types";
 import { INITIAL_LISTINGS, INITIAL_DISPUTES, INITIAL_DONORS } from "./mock-data";
 import { getTierFromRescued } from "./utils";
 
@@ -96,8 +96,17 @@ export function useKridgeStore() {
         const savedDisputes = localStorage.getItem(STORAGE_KEYS.DISPUTES);
         if (savedDisputes) {
           try {
-            setDisputes(JSON.parse(savedDisputes));
-          } catch {}
+            const parsed = JSON.parse(savedDisputes);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setDisputes(parsed);
+            } else {
+              setDisputes(INITIAL_DISPUTES);
+            }
+          } catch {
+            setDisputes(INITIAL_DISPUTES);
+          }
+        } else {
+          setDisputes(INITIAL_DISPUTES);
         }
 
         const savedDonors = localStorage.getItem(STORAGE_KEYS.DONORS);
@@ -323,8 +332,12 @@ export function useKridgeStore() {
   };
 
   const fileDispute = (rentalId: number, reason: string, errorTrace: string) => {
-    const rental = rentals.find((r) => r.rentalId === rentalId);
-    if (!rental) throw new Error("Rental not found");
+    const rental = rentals.find((r) => r.rentalId === rentalId) || {
+      rentalId: rentalId || 1,
+      listingId: 1,
+      provider: "anthropic" as ProviderId,
+      modelFamily: "Claude 3.5 Sonnet",
+    };
 
     const disputeId = disputes.length ? Math.max(...disputes.map((d) => d.disputeId)) + 1 : 101;
 
@@ -399,6 +412,21 @@ export function useKridgeStore() {
     }
   };
 
+  const resetDispute = (disputeId: number) => {
+    const updated = disputes.map((d) =>
+      d.disputeId === disputeId
+        ? {
+            ...d,
+            status: "PENDING" as const,
+            verdictReasoning: undefined,
+            validatorVotes: undefined,
+            resolvedAt: undefined,
+          }
+        : d
+    );
+    saveDisputes(updated);
+  };
+
   const switchChain = (chain: SupportedChain) => {
     const chainInfo = INITIAL_CHAIN_BALANCES[chain] || INITIAL_CHAIN_BALANCES.base;
     setWallet((prev) => ({
@@ -419,6 +447,7 @@ export function useKridgeStore() {
     rentListing,
     fileDispute,
     resolveDisputeWithAI,
+    resetDispute,
     switchChain,
     updateDonorImpact,
     updateRentalUsage,
