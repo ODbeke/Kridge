@@ -12,7 +12,7 @@ export default function ActivityRedirectPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#faf9fe", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-accent)" }}>
-      <div style={{ color: "#7c3aed", fontWeight: "700", fontSize: "14px" }}>
+      <div style={{ color: "#422624", fontWeight: "700", fontSize: "14px" }}>
         Loading Activity & Badges...
       </div>
     </div>

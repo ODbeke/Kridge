@@ -21,7 +21,7 @@ export default function SellRedirectPage() {
         fontFamily: "var(--font-accent)",
       }}
     >
-      <div style={{ color: "#7c3aed", fontWeight: "700", fontSize: "14px" }}>
+      <div style={{ color: "#422624", fontWeight: "700", fontSize: "14px" }}>
         Loading Seller Studio...
       </div>
     </div>

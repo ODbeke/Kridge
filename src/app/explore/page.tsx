@@ -736,7 +736,7 @@ export default function ExploreAppPage() {
                     padding: "4px 8px",
                     fontSize: "9px",
                     fontFamily: "var(--font-accent)",
-                    color: "#7c3aed",
+                    color: "#422624",
                     fontWeight: "bold",
                     letterSpacing: "0.08em",
                   }}
@@ -763,8 +763,8 @@ export default function ExploreAppPage() {
                         width: "100%",
                         padding: "7px 10px",
                         borderRadius: "6px",
-                        border: isSelected ? "1px solid #7c3aed" : "1px solid transparent",
-                        background: isSelected ? "rgba(124, 58, 237, 0.08)" : "transparent",
+                        border: isSelected ? "1px solid #422624" : "1px solid transparent",
+                        background: isSelected ? "rgba(66, 38, 36, 0.08)" : "transparent",
                         color: isDisabled ? "#94a3b8" : "#000000",
                         fontFamily: "var(--font-accent)",
                         fontSize: "11px",
@@ -963,8 +963,8 @@ export default function ExploreAppPage() {
                   textAlign: "left",
                   display: "block",
                   padding: "14px 16px",
-                  background: "linear-gradient(135deg, rgba(124, 58, 237, 0.07) 0%, rgba(6, 182, 212, 0.05) 100%)",
-                  border: "1px solid rgba(124, 58, 237, 0.28)",
+                  background: "linear-gradient(135deg, rgba(66, 38, 36, 0.07) 0%, rgba(6, 182, 212, 0.05) 100%)",
+                  border: "1px solid rgba(66, 38, 36, 0.28)",
                   borderRadius: "12px",
                   transition: "all 0.2s ease",
                   cursor: "pointer",
@@ -982,7 +982,7 @@ export default function ExploreAppPage() {
                   >
                     ACTIVITY & BADGES
                   </span>
-                  <span style={{ fontSize: "12px", color: "#7c3aed", fontWeight: "bold" }}>
+                  <span style={{ fontSize: "12px", color: "#422624", fontWeight: "bold" }}>
                     →
                   </span>
                 </div>
@@ -994,8 +994,8 @@ export default function ExploreAppPage() {
                     style={{
                       fontSize: "9px",
                       fontFamily: "var(--font-accent)",
-                      background: "rgba(124, 58, 237, 0.12)",
-                      color: "#7c3aed",
+                      background: "rgba(66, 38, 36, 0.12)",
+                      color: "#422624",
                       padding: "2px 6px",
                       borderRadius: "4px",
                       fontWeight: "bold",
@@ -1045,7 +1045,7 @@ export default function ExploreAppPage() {
                   textAlign: "left",
                   display: "block",
                   padding: "14px 16px",
-                  background: "linear-gradient(135deg, rgba(225, 29, 72, 0.05) 0%, rgba(124, 58, 237, 0.04) 100%)",
+                  background: "linear-gradient(135deg, rgba(225, 29, 72, 0.05) 0%, rgba(66, 38, 36, 0.04) 100%)",
                   border: "1px solid rgba(225, 29, 72, 0.22)",
                   borderRadius: "12px",
                   marginTop: "12px",
@@ -1121,9 +1121,9 @@ export default function ExploreAppPage() {
                   style={{
                     padding: "60px 24px",
                     textAlign: "center",
-                    border: "1px dashed #7c3aed",
+                    border: "1px dashed #422624",
                     borderRadius: "14px",
-                    background: "rgba(124, 58, 237, 0.03)",
+                    background: "rgba(66, 38, 36, 0.03)",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -1230,7 +1230,7 @@ export default function ExploreAppPage() {
                             style={{
                               fontFamily: "var(--font-accent)",
                               fontSize: "11px",
-                              color: "#7c3aed",
+                              color: "#422624",
                               fontWeight: "700",
                             }}
                           >
@@ -1313,7 +1313,7 @@ export default function ExploreAppPage() {
                         <span>
                           {CHAIN_CONFIGS[wallet.chain]?.chainName || "Base"}
                         </span>
-                        <span style={{ color: "#7c3aed" }}>──(Hyperlane)──▶</span>
+                        <span style={{ color: "#422624" }}>──(Hyperlane)──▶</span>
                         <span>GenLayer Escrow</span>
                       </span>
                     </div>
@@ -1322,8 +1322,8 @@ export default function ExploreAppPage() {
                     <div
                       style={{
                         padding: "12px 16px",
-                        background: "rgba(124, 58, 237, 0.05)",
-                        border: "1px solid rgba(124, 58, 237, 0.2)",
+                        background: "rgba(66, 38, 36, 0.05)",
+                        border: "1px solid rgba(66, 38, 36, 0.2)",
                         borderRadius: "8px",
                         marginBottom: "20px",
                         fontSize: "12px",
@@ -1331,7 +1331,7 @@ export default function ExploreAppPage() {
                         lineHeight: "1.5",
                       }}
                     >
-                      <strong style={{ color: "#7c3aed" }}>Escrow Assurance:</strong> Payment is locked in
+                      <strong style={{ color: "#422624" }}>Escrow Assurance:</strong> Payment is locked in
                       the Kridge Escrow Intelligent Contract. If the provider sub-key fails or is revoked early,
                       GenLayer AI consensus validators automatically verify web state and release a 100% refund to your wallet.
                     </div>
@@ -1628,7 +1628,7 @@ export default function ExploreAppPage() {
                 <div className="form-group-cell">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                     <label className="label-cell" style={{ margin: 0 }}>Upstream Provider API Key</label>
-                    <span style={{ fontSize: "11px", color: "#7c3aed", fontWeight: "700" }}>
+                    <span style={{ fontSize: "11px", color: "#422624", fontWeight: "700" }}>
                       🔒 Vaulted & Never Revealed to Buyer
                     </span>
                   </div>
@@ -1649,8 +1649,8 @@ export default function ExploreAppPage() {
                       style={{
                         whiteSpace: "nowrap",
                         padding: "0 16px",
-                        borderColor: "#7c3aed",
-                        color: "#7c3aed",
+                        borderColor: "#422624",
+                        color: "#422624",
                         fontWeight: "700",
                         cursor: isProbing || !sellerForm.apiKey ? "not-allowed" : "pointer",
                       }}
@@ -1682,8 +1682,8 @@ export default function ExploreAppPage() {
                 {/* Architecture & Key Protection Explainer */}
                 <div
                   style={{
-                    background: "rgba(124, 58, 237, 0.05)",
-                    border: "1px solid rgba(124, 58, 237, 0.18)",
+                    background: "rgba(66, 38, 36, 0.05)",
+                    border: "1px solid rgba(66, 38, 36, 0.18)",
                     borderRadius: "10px",
                     padding: "14px 16px",
                     marginBottom: "16px",
@@ -1692,7 +1692,7 @@ export default function ExploreAppPage() {
                     lineHeight: "1.6",
                   }}
                 >
-                  <div style={{ fontWeight: "700", color: "#7c3aed", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <div style={{ fontWeight: "700", color: "#422624", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
                     <span>💡</span>
                     <span>How Key Delegation & Buyer Access Works:</span>
                   </div>
@@ -1743,9 +1743,9 @@ export default function ExploreAppPage() {
                       alignItems: "center",
                       padding: "4px 10px",
                       borderRadius: "6px",
-                      background: "rgba(124, 58, 237, 0.1)",
-                      border: "1px solid rgba(124, 58, 237, 0.25)",
-                      color: "#7c3aed",
+                      background: "rgba(66, 38, 36, 0.1)",
+                      border: "1px solid rgba(66, 38, 36, 0.25)",
+                      color: "#422624",
                       fontSize: "11px",
                       fontWeight: "700",
                       fontFamily: "var(--font-accent)",
@@ -1805,7 +1805,7 @@ export default function ExploreAppPage() {
                 }}
               >
                 <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
-                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
+                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#422624", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
                     RENTED SUB-KEYS
                   </span>
                   <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#1e1e24", marginTop: "2px" }}>
@@ -1835,10 +1835,10 @@ export default function ExploreAppPage() {
                 </div>
 
                 <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
-                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
+                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#422624", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
                     COMPUTE RESCUED
                   </span>
-                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#7c3aed", marginTop: "2px" }}>
+                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#422624", marginTop: "2px" }}>
                     {formatCurrency(currentDonor.totalRescuedUsd)}
                   </div>
                   <span style={{ fontSize: "10px", color: "#71717a" }}>{formatTokens(currentDonor.totalTokensDonated)} tokens</span>
@@ -1880,9 +1880,9 @@ export default function ExploreAppPage() {
                     style={{
                       padding: "60px 24px",
                       textAlign: "center",
-                      border: "1px dashed #7c3aed",
+                      border: "1px dashed #422624",
                       borderRadius: "14px",
-                      background: "rgba(124, 58, 237, 0.03)",
+                      background: "rgba(66, 38, 36, 0.03)",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
@@ -1969,7 +1969,7 @@ export default function ExploreAppPage() {
                               padding: "10px 12px",
                             }}
                           >
-                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "700", marginBottom: "4px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", fontFamily: "var(--font-accent)", color: "#422624", fontWeight: "700", marginBottom: "4px" }}>
                               <span>VIRTUAL SUB-KEY</span>
                               <span>METERED PROXY</span>
                             </div>
@@ -2010,7 +2010,7 @@ export default function ExploreAppPage() {
                                 style={{
                                   width: `${Math.max(4, burnedPct)}%`,
                                   height: "100%",
-                                  background: "linear-gradient(90deg, #7c3aed, #059669)",
+                                  background: "linear-gradient(90deg, #422624, #059669)",
                                   borderRadius: "999px",
                                   transition: "width 0.3s ease",
                                 }}
@@ -2022,7 +2022,7 @@ export default function ExploreAppPage() {
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px dashed #e2dbf3", paddingTop: "10px", fontSize: "11px", fontFamily: "var(--font-accent)" }}>
                             <Link
                               href="/playground"
-                              style={{ color: "#7c3aed", fontWeight: "700", textDecoration: "none" }}
+                              style={{ color: "#422624", fontWeight: "700", textDecoration: "none" }}
                             >
                               ⚡ Test in Playground →
                             </Link>
@@ -2131,7 +2131,7 @@ export default function ExploreAppPage() {
                           >
                             <div>
                               <span style={{ fontSize: "9px", fontFamily: "var(--font-accent)", color: "#71717a", display: "block" }}>CAPACITY</span>
-                              <span style={{ fontSize: "13px", fontFamily: "var(--font-accent)", fontWeight: "700", color: "#7c3aed" }}>
+                              <span style={{ fontSize: "13px", fontFamily: "var(--font-accent)", fontWeight: "700", color: "#422624" }}>
                                 {formatTokens(listing.quotaTokens)}
                               </span>
                             </div>
@@ -2152,7 +2152,7 @@ export default function ExploreAppPage() {
                               setViewMode("buyer");
                               if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore");
                             }}
-                            style={{ background: "none", border: "none", color: "#7c3aed", fontWeight: "700", cursor: "pointer", padding: 0 }}
+                            style={{ background: "none", border: "none", color: "#422624", fontWeight: "700", cursor: "pointer", padding: 0 }}
                           >
                             View on Marketplace →
                           </button>
@@ -2173,7 +2173,7 @@ export default function ExploreAppPage() {
                   style={{
                     padding: "28px 32px",
                     borderRadius: "16px",
-                    background: "linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, rgba(124, 58, 237, 0.05) 100%)",
+                    background: "linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, rgba(66, 38, 36, 0.05) 100%)",
                     border: "1.5px solid rgba(234, 179, 8, 0.35)",
                   }}
                 >
@@ -2280,8 +2280,8 @@ export default function ExploreAppPage() {
                               fontSize: "10px",
                               fontFamily: "var(--font-accent)",
                               fontWeight: "800",
-                              color: isUnlocked ? "#b45309" : "#7c3aed",
-                              background: isUnlocked ? "rgba(234, 179, 8, 0.12)" : "rgba(124, 58, 237, 0.08)",
+                              color: isUnlocked ? "#b45309" : "#422624",
+                              background: isUnlocked ? "rgba(234, 179, 8, 0.12)" : "rgba(66, 38, 36, 0.08)",
                               padding: "2px 7px",
                               borderRadius: "4px",
                               letterSpacing: "0.05em",
@@ -2308,7 +2308,7 @@ export default function ExploreAppPage() {
                           <div style={{ fontFamily: "var(--font-display)", fontSize: "15px", fontWeight: "700", color: "#1e1e24" }}>
                             {cfg.name}
                           </div>
-                          <div style={{ fontSize: "11px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "600", marginTop: "2px" }}>
+                          <div style={{ fontSize: "11px", fontFamily: "var(--font-accent)", color: "#422624", fontWeight: "600", marginTop: "2px" }}>
                             ${cfg.thresholdUsd.toLocaleString()}+ compute rescued
                           </div>
                         </div>
@@ -2418,10 +2418,10 @@ export default function ExploreAppPage() {
                 </div>
 
                 <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
-                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
+                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#422624", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
                     ESCROW BONDS LOCKED
                   </span>
-                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#7c3aed", marginTop: "2px" }}>
+                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#422624", marginTop: "2px" }}>
                     ${disputes.reduce((acc, d) => acc + (d.bondAmountUsd || 1.0), 0).toFixed(2)} USD
                   </div>
                   <span style={{ fontSize: "10px", color: "#71717a" }}>Anti-Sybil Complainant Bonds</span>
@@ -2509,7 +2509,7 @@ export default function ExploreAppPage() {
                     textAlign: "left",
                   }}
                 >
-                  <strong style={{ color: "#7c3aed" }}>How Escrow Disputes Work:</strong>
+                  <strong style={{ color: "#422624" }}>How Escrow Disputes Work:</strong>
                   <div style={{ marginTop: "4px" }}>
                     If an upstream API key is invalidated early or encounters server-side 401/403/429 errors during your rental session, you can stake a <strong>$1.00 Anti-Spam Bond</strong> to summon the GenLayer Multi-LLM Jury. Verified claims automatically refund 100% of your rental fee plus return your full bond.
                   </div>
@@ -2614,7 +2614,7 @@ export default function ExploreAppPage() {
                               <span style={{ color: "#059669", fontWeight: "700" }}>
                                 Bond: ${(dispute.bondAmountUsd || 1.0).toFixed(2)} USD
                               </span>
-                              <span style={{ color: "#7c3aed", fontWeight: "700", textTransform: "uppercase" }}>
+                              <span style={{ color: "#422624", fontWeight: "700", textTransform: "uppercase" }}>
                                 {dispute.provider}
                               </span>
                             </div>
@@ -2630,13 +2630,13 @@ export default function ExploreAppPage() {
                     style={{
                       padding: "18px",
                       borderRadius: "16px",
-                      background: "rgba(124, 58, 237, 0.04)",
-                      border: "1px solid rgba(124, 58, 237, 0.22)",
+                      background: "rgba(66, 38, 36, 0.04)",
+                      border: "1px solid rgba(66, 38, 36, 0.22)",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-                      <Scale style={{ width: "14px", height: "14px", color: "#7c3aed" }} />
-                      <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#7c3aed" }}>
+                      <Scale style={{ width: "14px", height: "14px", color: "#422624" }} />
+                      <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#422624" }}>
                         GenLayer Anti-Spam Bond Rules
                       </span>
                     </div>
@@ -2651,7 +2651,7 @@ export default function ExploreAppPage() {
                   {/* Case Header */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", borderBottom: "1px solid #e2dbf3", paddingBottom: "16px" }}>
                     <div>
-                      <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "800", letterSpacing: "0.06em", display: "block", marginBottom: "4px" }}>
+                      <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#422624", fontWeight: "800", letterSpacing: "0.06em", display: "block", marginBottom: "4px" }}>
                         GENLAYER INTELLIGENT CONTRACT ARBITRATION #0X65
                       </span>
                       <h3 style={{ fontFamily: "var(--font-display)", fontSize: "20px", fontWeight: "800", color: "#1e1e24", margin: 0 }}>
@@ -2710,7 +2710,7 @@ export default function ExploreAppPage() {
 
                   {/* Evidence & Gateway Traces */}
                   <div style={{ background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "12px", padding: "16px 18px", fontFamily: "var(--font-accent)", fontSize: "11px" }}>
-                    <div style={{ fontSize: "10px", fontWeight: "800", color: "#7c3aed", letterSpacing: "0.06em", marginBottom: "10px" }}>
+                    <div style={{ fontSize: "10px", fontWeight: "800", color: "#422624", letterSpacing: "0.06em", marginBottom: "10px" }}>
                       CRYPTOGRAPHIC EVIDENCE &amp; GATEWAY TRACES:
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
@@ -2720,7 +2720,7 @@ export default function ExploreAppPage() {
                       </div>
                       <div>
                         <span style={{ color: "#71717a", display: "block" }}>Target Model Provider:</span>
-                        <span style={{ fontWeight: "700", color: "#7c3aed", textTransform: "uppercase" }}>{activeDispute.provider}</span>
+                        <span style={{ fontWeight: "700", color: "#422624", textTransform: "uppercase" }}>{activeDispute.provider}</span>
                       </div>
                       <div>
                         <span style={{ color: "#71717a", display: "block" }}>Anti-Spam Bond Staked:</span>
@@ -2744,7 +2744,7 @@ export default function ExploreAppPage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Bot style={{ width: "15px", height: "15px", color: "#7c3aed" }} />
+                        <Bot style={{ width: "15px", height: "15px", color: "#422624" }} />
                         <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#1e1e24", letterSpacing: "0.05em" }}>
                           GENLAYER AI VALIDATOR JURY (3/3 CONSENSUS)
                         </span>
@@ -2761,7 +2761,7 @@ export default function ExploreAppPage() {
                           <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#1e1e24" }}>
                             Validator 01
                           </span>
-                          <span style={{ fontSize: "9px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "700" }}>
+                          <span style={{ fontSize: "9px", fontFamily: "var(--font-accent)", color: "#422624", fontWeight: "700" }}>
                             Llama-3-70B
                           </span>
                         </div>
@@ -2976,8 +2976,8 @@ export default function ExploreAppPage() {
               <div
                 style={{
                   padding: "12px 14px",
-                  background: "rgba(124, 58, 237, 0.06)",
-                  border: "1px solid rgba(124, 58, 237, 0.25)",
+                  background: "rgba(66, 38, 36, 0.06)",
+                  border: "1px solid rgba(66, 38, 36, 0.25)",
                   borderRadius: "8px",
                   fontSize: "11px",
                   color: "#4b5563",
