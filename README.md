@@ -302,7 +302,6 @@ print(response.choices[0].message.content)
 | **`/`** | **Landing Page** | Live subscription waste ticker, interactive ROI calculator, problem breakdown, and multi-chain architecture overview. |
 | **`/explore`** | **Marketplace Hub** | High-density terminal interface featuring real-time stats ticker (`ACTIVE_QUOTAS` and `COMPUTE_POOL`), network switcher, mode toggles (`RENT` / `SELL`), capability filters, and one-click escrow rental. |
 | **`/sell`** | **Seller and ESG Studio** | Wizard for listing keys. Includes one-click live provider health probing (`/api/probe`), quota sliders, pricing calculator, and ESG donation mode. |
-| **`/playground`** | **Live Proxy Console** | Interactive test console to send prompts through virtual sub-keys, inspect streaming responses, and observe real-time latency and token deductions. |
 | **`/tribunal`** | **GenLayer AI Courtroom** | Real-time visualizer of GenLayer AI validator jury deliberations, cryptographic log analysis, and dispute resolution verdicts. |
 | **`/impact`** | **ESG Hall of Fame** | On-chain registry of donors, total rescued compute volume, and interactive 6-tier Impact Badges. |
 | **`/agentic`** | **Agent Hub** | Developer hub with code snippets, x402 protocol specification, and LangChain, CrewAI, and ElizaOS SDK setup. |
