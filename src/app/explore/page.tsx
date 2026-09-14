@@ -83,7 +83,7 @@ const CHAIN_CONFIGS: Record<
 };
 
 export default function ExploreAppPage() {
-  const { listings, rentals, donors, rentListing, addListing, wallet, switchChain } = useKridgeStore();
+  const { listings, rentals, donors, disputes, rentListing, addListing, wallet, switchChain } = useKridgeStore();
 
   // Navigation & View Mode ("buyer" = RENT, "seller" = SELL, "activity" = ACTIVITY & BADGES)
   const [viewMode, setViewMode] = useState<"buyer" | "seller" | "activity">("buyer");
@@ -956,10 +956,77 @@ export default function ExploreAppPage() {
                       fontWeight: "bold",
                     }}
                   >
-                    Badges 🌲
+                    Badges
                   </span>
                 </div>
               </button>
+
+              {/* 4. AI Tribunal / Dispute Protection Card */}
+              <Link
+                href="/tribunal"
+                className="panel-glass"
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  display: "block",
+                  padding: "14px 16px",
+                  background: "linear-gradient(135deg, rgba(225, 29, 72, 0.05) 0%, rgba(124, 58, 237, 0.04) 100%)",
+                  border: "1px solid rgba(225, 29, 72, 0.22)",
+                  borderRadius: "12px",
+                  textDecoration: "none",
+                  marginTop: "12px",
+                  transition: "all 0.2s ease",
+                  cursor: "pointer",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontFamily: "var(--font-accent)",
+                      fontWeight: "800",
+                      color: "#9f1239",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    AI TRIBUNAL (DISPUTES)
+                  </span>
+                  <span style={{ fontSize: "12px", color: "#e11d48", fontWeight: "bold" }}>
+                    →
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: "10px", color: "#64748b", lineHeight: "1.4" }}>
+                  GenLayer on-chain AI arbitration, escrow claims &amp; dispute resolution
+                </p>
+                <div style={{ marginTop: "10px", display: "flex", gap: "6px", alignItems: "center" }}>
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      fontFamily: "var(--font-accent)",
+                      background: "rgba(225, 29, 72, 0.12)",
+                      color: "#be123c",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {disputes.length} Cases
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      fontFamily: "var(--font-accent)",
+                      background: "rgba(5, 150, 105, 0.12)",
+                      color: "#059669",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    $1.00 Anti-Spam Bond
+                  </span>
+                </div>
+              </Link>
             </aside>
 
             {/* Right Column: Main Capabilities List */}
