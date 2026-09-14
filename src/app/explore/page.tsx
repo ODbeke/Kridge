@@ -134,9 +134,14 @@ export default function ExploreAppPage() {
         }),
       });
       const data = await res.json();
+      if (!res.ok || !data.valid) {
+        alert(data.error || "API Key probe failed: Key was rejected by the upstream provider.");
+        setProbeResult({ valid: false, status: "INVALID_KEY" });
+        return;
+      }
       setProbeResult(data);
     } catch (e) {
-      setProbeResult({ valid: true, latencyMs: 110, status: "HEALTHY_AND_UNREVOKED" });
+      alert("Network timeout probing API key.");
     } finally {
       setIsProbing(false);
     }
