@@ -30,6 +30,7 @@ export function CountdownTimer({
   return (
     <span
       className={className}
+      title="Days : Hours : Minutes : Seconds (dd:hh:mm:ss)"
       style={{
         fontVariantNumeric: "tabular-nums",
         fontFeatureSettings: "'tnum'",
