@@ -2433,9 +2433,8 @@ export default function ExploreAppPage() {
                     ARBITRATION LAYER
                   </span>
                   <div style={{ fontFamily: "var(--font-accent)", fontSize: "20px", fontWeight: "800", color: "#2563eb", marginTop: "2px" }}>
-                    GenLayer Testnet
+                    GenLayer
                   </div>
-                  <span style={{ fontSize: "10px", color: "#71717a" }}>Domain 61997 • gl.exec_prompt</span>
                 </div>
               </div>
             </div>
