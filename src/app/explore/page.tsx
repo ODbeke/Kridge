@@ -767,30 +767,6 @@ export default function ExploreAppPage() {
           >
             SELL
           </button>
-          <button
-            className={`btn-terminal ${viewMode === "activity" ? "active" : ""}`}
-            onClick={() => {
-              setViewMode("activity");
-              if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore?view=activity");
-            }}
-            style={{ display: "flex", alignItems: "center", gap: "5px" }}
-          >
-            <span>ACTIVITY & BADGES</span>
-            {rentals.length > 0 && (
-              <span
-                style={{
-                  background: viewMode === "activity" ? "#000000" : "#7c3aed",
-                  color: "#ffffff",
-                  fontSize: "9px",
-                  padding: "1px 5px",
-                  borderRadius: "999px",
-                  fontWeight: "bold",
-                }}
-              >
-                {rentals.length}
-              </span>
-            )}
-          </button>
         </div>
       </header>
 
