@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useKridgeStore } from "@/lib/store";
-import { KridgeListing, ProviderId, ListingType, SupportedChain, BadgeTier, DonorProfile } from "@/lib/types";
+import { KridgeListing, ProviderId, ListingType, SupportedChain, BadgeTier, DonorProfile, DisputeItem } from "@/lib/types";
 import {
   formatCurrency,
   formatTokens,
@@ -14,6 +14,32 @@ import {
   getTierFromRescued
 } from "@/lib/utils";
 import { CountdownTimer } from "@/components/CountdownTimer";
+import {
+  Scale,
+  ShieldAlert,
+  ShieldCheck,
+  Bot,
+  CheckCircle2,
+  RotateCcw,
+  AlertTriangle,
+  Sparkles,
+  Gavel,
+  Cpu,
+  Clock,
+  ExternalLink
+} from "lucide-react";
+
+const DEFAULT_SAMPLE_CASE: DisputeItem = {
+  disputeId: 101,
+  rentalId: 1,
+  listingId: 1,
+  complainant: "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
+  provider: "anthropic",
+  reason: "Upstream 401 Unauthorized: Key was revoked mid-rental by seller.",
+  errorTrace: "HTTP 401: Invalid API Key provided to Anthropic API endpoint. Gateway HMAC receipt #0x7fa89c validates authentic upstream error.",
+  bondAmountUsd: 1.0,
+  status: "PENDING",
+};
 
 const TIERS_LIST: BadgeTier[] = ["WOOD", "BRONZE", "SILVER", "GOLD", "DIAMOND", "PLATINUM"];
 
@@ -81,12 +107,62 @@ const CHAIN_CONFIGS: Record<
     status: "disabled",
   },
 };
-
 export default function ExploreAppPage() {
-  const { listings, rentals, donors, disputes, rentListing, addListing, wallet, switchChain } = useKridgeStore();
+  const { listings, rentals, donors, disputes, rentListing, addListing, wallet, switchChain, fileDispute, resolveDisputeWithAI, resetDispute } = useKridgeStore();
 
-  // Navigation & View Mode ("buyer" = RENT, "seller" = SELL, "activity" = ACTIVITY & BADGES)
-  const [viewMode, setViewMode] = useState<"buyer" | "seller" | "activity">("buyer");
+  // Navigation & View Mode ("buyer" = RENT, "seller" = SELL, "activity" = ACTIVITY & BADGES, "tribunal" = AI TRIBUNAL)
+  const [viewMode, setViewMode] = useState<"buyer" | "seller" | "activity" | "tribunal">("buyer");
+
+  // Tribunal State & Dispute Handlers
+  const effectiveDisputes: DisputeItem[] = disputes.length > 0 ? disputes : [DEFAULT_SAMPLE_CASE];
+  const [selectedDisputeId, setSelectedDisputeId] = useState<number>(effectiveDisputes[0]?.disputeId || 101);
+  const [isArbitrating, setIsArbitrating] = useState(false);
+  const [disputeFilingModalOpen, setDisputeFilingModalOpen] = useState(false);
+  const [selectedDisputeRentalId, setSelectedDisputeRentalId] = useState<number>(rentals[0]?.rentalId || 1);
+  const [disputeReason, setDisputeReason] = useState("Upstream 401 Unauthorized: Key was revoked mid-rental by seller.");
+  const [disputeTrace, setDisputeTrace] = useState("HTTP 401: Invalid API Key provided to Anthropic API endpoint. Gateway HMAC receipt #0x7fa89c validates authentic upstream error.");
+
+  const activeDispute = effectiveDisputes.find((d) => d.disputeId === selectedDisputeId) || effectiveDisputes[0];
+
+  const handleExecuteArbitration = async (disputeId: number, simulatedVerdict: "BUYER_REFUND" | "SELLER_WIN") => {
+    setIsArbitrating(true);
+    try {
+      const res = await fetch("/api/contract/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "ARBITRATE_DISPUTE_EXEC_PROMPT",
+          params: {
+            errorType: simulatedVerdict === "BUYER_REFUND" ? "VALID_REVOCATION" : "FALSE_CLAIM",
+            rentalAmount: 3.50,
+          },
+        }),
+      });
+      const data = await res.json();
+      resolveDisputeWithAI(disputeId, data.verdict, data.reasoning);
+    } catch (e) {
+      resolveDisputeWithAI(
+        disputeId,
+        simulatedVerdict,
+        simulatedVerdict === "BUYER_REFUND"
+          ? "GenLayer AI Validators verified that upstream key returned HTTP 401 Unauthorized. Key was revoked mid-rental by seller."
+          : "Evidence review shows client exceeded rate limits intentionally; upstream key remains active and unrevoked. 50% anti-spam bond slashed."
+      );
+    } finally {
+      setIsArbitrating(false);
+    }
+  };
+
+  const handleResetCase = (disputeId: number) => {
+    resetDispute(disputeId);
+  };
+
+  const handleFileNewDispute = () => {
+    const rentalId = selectedDisputeRentalId || (rentals[0]?.rentalId || 1);
+    const newDispute = fileDispute(rentalId, disputeReason, disputeTrace);
+    setSelectedDisputeId(newDispute.disputeId);
+    setDisputeFilingModalOpen(false);
+  };
   const [activityTab, setActivityTab] = useState<"purchases" | "listings" | "badges">("purchases");
   const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({});
   const [copiedActivityKey, setCopiedActivityKey] = useState<string | null>(null);
@@ -212,8 +288,8 @@ export default function ExploreAppPage() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const v = params.get("view");
-      if (v === "activity" || v === "seller" || v === "buyer") {
-        setViewMode(v as "buyer" | "seller" | "activity");
+      if (v === "activity" || v === "seller" || v === "buyer" || v === "tribunal") {
+        setViewMode(v as "buyer" | "seller" | "activity" | "tribunal");
       }
     }
 
@@ -790,6 +866,24 @@ export default function ExploreAppPage() {
           >
             SELL
           </button>
+          <button
+            className={`btn-terminal ${viewMode === "activity" ? "active" : ""}`}
+            onClick={() => {
+              setViewMode("activity");
+              if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore?view=activity");
+            }}
+          >
+            ACTIVITY
+          </button>
+          <button
+            className={`btn-terminal ${viewMode === "tribunal" ? "active" : ""}`}
+            onClick={() => {
+              setViewMode("tribunal");
+              if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore?view=tribunal");
+            }}
+          >
+            TRIBUNAL
+          </button>
         </div>
       </header>
 
@@ -962,8 +1056,12 @@ export default function ExploreAppPage() {
               </button>
 
               {/* 4. AI Tribunal / Dispute Protection Card */}
-              <Link
-                href="/tribunal"
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode("tribunal");
+                  if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore?view=tribunal");
+                }}
                 className="panel-glass"
                 style={{
                   width: "100%",
@@ -973,7 +1071,6 @@ export default function ExploreAppPage() {
                   background: "linear-gradient(135deg, rgba(225, 29, 72, 0.05) 0%, rgba(124, 58, 237, 0.04) 100%)",
                   border: "1px solid rgba(225, 29, 72, 0.22)",
                   borderRadius: "12px",
-                  textDecoration: "none",
                   marginTop: "12px",
                   transition: "all 0.2s ease",
                   cursor: "pointer",
@@ -1010,7 +1107,7 @@ export default function ExploreAppPage() {
                       fontWeight: "bold",
                     }}
                   >
-                    {disputes.length} Cases
+                    {effectiveDisputes.length} Cases
                   </span>
                   <span
                     style={{
@@ -1026,7 +1123,7 @@ export default function ExploreAppPage() {
                     $1.00 Anti-Spam Bond
                   </span>
                 </div>
-              </Link>
+              </button>
             </aside>
 
             {/* Right Column: Main Capabilities List */}
@@ -2250,7 +2347,592 @@ export default function ExploreAppPage() {
             )}
           </div>
         )}
+
+        {/* TRIBUNAL VIEW */}
+        {viewMode === "tribunal" && (
+          <div style={{ maxWidth: "1120px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
+            {/* Top Control Panel */}
+            <div className="panel-glass" style={{ padding: "32px 36px", borderRadius: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
+                <div>
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      background: "rgba(225, 29, 72, 0.08)",
+                      border: "1px solid rgba(225, 29, 72, 0.22)",
+                      color: "#be123c",
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      fontFamily: "var(--font-accent)",
+                      letterSpacing: "0.05em",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <Scale style={{ width: "13px", height: "13px" }} />
+                    <span>GENLAYER ON-CHAIN AI ARBITRATION COURTROOM</span>
+                  </div>
+                  <h2
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: "28px",
+                      fontWeight: "800",
+                      color: "#1e1e24",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    GenLayer Dispute Tribunal
+                  </h2>
+                  <p style={{ color: "var(--ink-secondary)", fontSize: "13px", margin: 0 }}>
+                    Decentralized LLM consensus over cryptographic error receipts and escrow bonds without human arbiters.
+                  </p>
+                </div>
+
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                  <button
+                    onClick={() => {
+                      setViewMode("buyer");
+                      if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore");
+                    }}
+                    className="btn-terminal"
+                    style={{ padding: "8px 16px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                  >
+                    ← BACK TO MARKETPLACE
+                  </button>
+                  <button
+                    onClick={() => setDisputeFilingModalOpen(true)}
+                    className="btn-terminal active"
+                    style={{
+                      padding: "8px 16px",
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      background: "linear-gradient(135deg, #e11d48, #be123c)",
+                      borderColor: "#be123c",
+                      color: "#ffffff",
+                    }}
+                  >
+                    <ShieldAlert style={{ width: "13px", height: "13px", display: "inline", marginRight: "6px" }} />
+                    FILE NEW DISPUTE ($1.00 BOND)
+                  </button>
+                </div>
+              </div>
+
+              {/* 4 Summary Stats */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+                  gap: "14px",
+                  marginTop: "24px",
+                }}
+              >
+                <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
+                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#be123c", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
+                    ACTIVE &amp; HISTORICAL CASES
+                  </span>
+                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#1e1e24", marginTop: "2px" }}>
+                    {effectiveDisputes.length} Cases
+                  </div>
+                  <span style={{ fontSize: "10px", color: "#71717a" }}>Live Escrow Arbitrations</span>
+                </div>
+
+                <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
+                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
+                    ESCROW BONDS LOCKED
+                  </span>
+                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#7c3aed", marginTop: "2px" }}>
+                    ${(effectiveDisputes.reduce((acc, d) => acc + (d.bondAmountUsd || 1.0), 0)).toFixed(2)} USD
+                  </div>
+                  <span style={{ fontSize: "10px", color: "#71717a" }}>Anti-Sybil Complainant Bonds</span>
+                </div>
+
+                <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
+                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#059669", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
+                    AI JURY CONSENSUS
+                  </span>
+                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#059669", marginTop: "2px" }}>
+                    3/3 Consensus
+                  </div>
+                  <span style={{ fontSize: "10px", color: "#71717a" }}>Llama-3, DeepSeek-V3, Claude</span>
+                </div>
+
+                <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
+                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#2563eb", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
+                    ARBITRATION LAYER
+                  </span>
+                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "20px", fontWeight: "800", color: "#2563eb", marginTop: "2px" }}>
+                    GenLayer Testnet
+                  </div>
+                  <span style={{ fontSize: "10px", color: "#71717a" }}>Domain 61997 • gl.exec_prompt</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Split Courtroom Layout */}
+            <div style={{ display: "grid", gridTemplateColumns: "330px 1fr", gap: "20px", alignItems: "start" }}>
+              {/* Left Column: Cases List & Bond Rules */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div className="panel-glass" style={{ padding: "20px", borderRadius: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                    <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#1e1e24", letterSpacing: "0.05em" }}>
+                      ACTIVE CASES ({effectiveDisputes.length})
+                    </span>
+                    <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#059669", fontWeight: "700" }}>
+                      Live Escrow
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {effectiveDisputes.map((dispute) => {
+                      const isSelected = dispute.disputeId === activeDispute.disputeId;
+                      return (
+                        <div
+                          key={dispute.disputeId}
+                          onClick={() => setSelectedDisputeId(dispute.disputeId)}
+                          style={{
+                            padding: "12px 14px",
+                            borderRadius: "10px",
+                            background: isSelected ? "#ffffff" : "#fbfafd",
+                            border: isSelected ? "1.5px solid #be123c" : "1px solid #e2dbf3",
+                            boxShadow: isSelected ? "0 4px 14px rgba(225, 29, 72, 0.12)" : "none",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                            <span style={{ fontSize: "12px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#1e1e24" }}>
+                              Case #{dispute.disputeId}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: "9px",
+                                fontFamily: "var(--font-accent)",
+                                fontWeight: "800",
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                background:
+                                  dispute.status === "RESOLVED_BUYER_WINS"
+                                    ? "rgba(16, 185, 129, 0.15)"
+                                    : dispute.status === "RESOLVED_SELLER_WINS"
+                                    ? "rgba(225, 29, 72, 0.15)"
+                                    : "rgba(245, 158, 11, 0.15)",
+                                color:
+                                  dispute.status === "RESOLVED_BUYER_WINS"
+                                    ? "#059669"
+                                    : dispute.status === "RESOLVED_SELLER_WINS"
+                                    ? "#be123c"
+                                    : "#b45309",
+                              }}
+                            >
+                              {dispute.status === "PENDING"
+                                ? "PENDING"
+                                : dispute.status === "RESOLVED_BUYER_WINS"
+                                ? "REFUNDED"
+                                : "SLASHED"}
+                            </span>
+                          </div>
+
+                          <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: "#4b5563", lineHeight: "1.4" }}>
+                            {dispute.reason}
+                          </p>
+
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "10px", fontFamily: "var(--font-accent)" }}>
+                            <span style={{ color: "#059669", fontWeight: "700" }}>
+                              Bond: ${(dispute.bondAmountUsd || 1.0).toFixed(2)} USD
+                            </span>
+                            <span style={{ color: "#7c3aed", fontWeight: "700", textTransform: "uppercase" }}>
+                              {dispute.provider}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* GenLayer Anti-Spam Bond Rules Panel */}
+                <div
+                  className="panel-glass"
+                  style={{
+                    padding: "18px",
+                    borderRadius: "16px",
+                    background: "rgba(124, 58, 237, 0.04)",
+                    border: "1px solid rgba(124, 58, 237, 0.22)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                    <Scale style={{ width: "14px", height: "14px", color: "#7c3aed" }} />
+                    <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#7c3aed" }}>
+                      GenLayer Anti-Spam Bond Rules
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: "11px", color: "#4b5563", lineHeight: "1.5" }}>
+                    Filing a dispute requires staking a <strong>$1.00 anti-spam bond</strong>. Valid claims (e.g. revoked API keys or upstream outages) return <strong>100% of the bond + full rental refund</strong>. Fraudulent or unsubstantiated claims forfeit 50% ($0.50) slashed to the treasury.
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Column: Active Dispute Detail & Live AI Jury Panel */}
+              <div className="panel-glass" style={{ padding: "28px 32px", borderRadius: "16px", display: "flex", flexDirection: "column", gap: "20px" }}>
+                {/* Case Header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", borderBottom: "1px solid #e2dbf3", paddingBottom: "16px" }}>
+                  <div>
+                    <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "800", letterSpacing: "0.06em", display: "block", marginBottom: "4px" }}>
+                      GENLAYER INTELLIGENT CONTRACT ARBITRATION #0X65
+                    </span>
+                    <h3 style={{ fontFamily: "var(--font-display)", fontSize: "20px", fontWeight: "800", color: "#1e1e24", margin: 0 }}>
+                      {activeDispute.reason}
+                    </h3>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      background:
+                        activeDispute.status === "RESOLVED_BUYER_WINS"
+                          ? "rgba(16, 185, 129, 0.12)"
+                          : activeDispute.status === "RESOLVED_SELLER_WINS"
+                          ? "rgba(225, 29, 72, 0.12)"
+                          : "rgba(245, 158, 11, 0.12)",
+                      border:
+                        activeDispute.status === "RESOLVED_BUYER_WINS"
+                          ? "1px solid rgba(16, 185, 129, 0.3)"
+                          : activeDispute.status === "RESOLVED_SELLER_WINS"
+                          ? "1px solid rgba(225, 29, 72, 0.3)"
+                          : "1px solid rgba(245, 158, 11, 0.3)",
+                      fontSize: "11px",
+                      fontFamily: "var(--font-accent)",
+                      fontWeight: "700",
+                      color:
+                        activeDispute.status === "RESOLVED_BUYER_WINS"
+                          ? "#059669"
+                          : activeDispute.status === "RESOLVED_SELLER_WINS"
+                          ? "#be123c"
+                          : "#b45309",
+                    }}
+                  >
+                    {activeDispute.status === "RESOLVED_BUYER_WINS" ? (
+                      <>
+                        <CheckCircle2 style={{ width: "13px", height: "13px" }} />
+                        <span>Consensus: Buyer Refund (100%)</span>
+                      </>
+                    ) : activeDispute.status === "RESOLVED_SELLER_WINS" ? (
+                      <>
+                        <ShieldAlert style={{ width: "13px", height: "13px" }} />
+                        <span>Consensus: Seller Win (Bond Slashed)</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="pulse-dot active-glow" style={{ width: "6px", height: "6px", background: "#f59e0b" }} />
+                        <span>Awaiting AI Consensus</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Evidence & Gateway Traces */}
+                <div style={{ background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "12px", padding: "16px 18px", fontFamily: "var(--font-accent)", fontSize: "11px" }}>
+                  <div style={{ fontSize: "10px", fontWeight: "800", color: "#7c3aed", letterSpacing: "0.06em", marginBottom: "10px" }}>
+                    CRYPTOGRAPHIC EVIDENCE &amp; GATEWAY TRACES:
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                    <div>
+                      <span style={{ color: "#71717a", display: "block" }}>Complainant Wallet:</span>
+                      <span style={{ fontWeight: "700", color: "#1e1e24" }}>{formatAddress(activeDispute.complainant)}</span>
+                    </div>
+                    <div>
+                      <span style={{ color: "#71717a", display: "block" }}>Target Model Provider:</span>
+                      <span style={{ fontWeight: "700", color: "#7c3aed", textTransform: "uppercase" }}>{activeDispute.provider}</span>
+                    </div>
+                    <div>
+                      <span style={{ color: "#71717a", display: "block" }}>Anti-Spam Bond Staked:</span>
+                      <span style={{ fontWeight: "700", color: "#059669" }}>$1.00 USD (GenLayer Locked)</span>
+                    </div>
+                    <div>
+                      <span style={{ color: "#71717a", display: "block" }}>Smart Contract Arbiter:</span>
+                      <span style={{ fontWeight: "700", color: "#2563eb" }}>0x65...7e21 (Intelligent Contract)</span>
+                    </div>
+                  </div>
+
+                  <div style={{ borderTop: "1px dashed #e2dbf3", paddingTop: "10px" }}>
+                    <span style={{ color: "#71717a", display: "block", marginBottom: "4px" }}>Error Trace Payload:</span>
+                    <div style={{ background: "#ffffff", border: "1px solid #e2dbf3", borderRadius: "6px", padding: "10px 12px", color: "#be123c", fontWeight: "600", wordBreak: "break-all" }}>
+                      {activeDispute.errorTrace}
+                    </div>
+                  </div>
+                </div>
+
+                {/* GenLayer AI Validator Jury (3/3 Consensus) */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Bot style={{ width: "15px", height: "15px", color: "#7c3aed" }} />
+                      <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#1e1e24", letterSpacing: "0.05em" }}>
+                        GENLAYER AI VALIDATOR JURY (3/3 CONSENSUS)
+                      </span>
+                    </div>
+                    <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#71717a" }}>
+                      Execution: gl.exec_prompt()
+                    </span>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
+                    {/* Validator 01 */}
+                    <div style={{ background: "#ffffff", border: "1px solid #e2dbf3", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#1e1e24" }}>
+                          Validator 01
+                        </span>
+                        <span style={{ fontSize: "9px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "700" }}>
+                          Llama-3-70B
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "10px", fontFamily: "var(--font-accent)", fontWeight: "700", color: activeDispute.status === "RESOLVED_BUYER_WINS" ? "#059669" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "#be123c" : "#b45309" }}>
+                        {activeDispute.status === "RESOLVED_BUYER_WINS" ? "BUYER REFUND (98.4%)" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "SELLER WIN (95.1%)" : "ANALYZING TRACE..."}
+                      </div>
+                      <p style={{ margin: 0, fontSize: "10px", color: "#4b5563", lineHeight: "1.4", fontStyle: "italic" }}>
+                        &ldquo;HTTP 401 proves seller revoked key before expiry. Escrow should refund.&rdquo;
+                      </p>
+                    </div>
+
+                    {/* Validator 02 */}
+                    <div style={{ background: "#ffffff", border: "1px solid #e2dbf3", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#1e1e24" }}>
+                          Validator 02
+                        </span>
+                        <span style={{ fontSize: "9px", fontFamily: "var(--font-accent)", color: "#2563eb", fontWeight: "700" }}>
+                          DeepSeek-V3
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "10px", fontFamily: "var(--font-accent)", fontWeight: "700", color: activeDispute.status === "RESOLVED_BUYER_WINS" ? "#059669" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "#be123c" : "#b45309" }}>
+                        {activeDispute.status === "RESOLVED_BUYER_WINS" ? "BUYER REFUND (99.1%)" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "SELLER WIN (96.7%)" : "ANALYZING TRACE..."}
+                      </div>
+                      <p style={{ margin: 0, fontSize: "10px", color: "#4b5563", lineHeight: "1.4", fontStyle: "italic" }}>
+                        &ldquo;Gateway HMAC signature validates authentic 401 error from upstream.&rdquo;
+                      </p>
+                    </div>
+
+                    {/* Validator 03 */}
+                    <div style={{ background: "#ffffff", border: "1px solid #e2dbf3", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#1e1e24" }}>
+                          Validator 03
+                        </span>
+                        <span style={{ fontSize: "9px", fontFamily: "var(--font-accent)", color: "#059669", fontWeight: "700" }}>
+                          Claude-3.5-Sonnet
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "10px", fontFamily: "var(--font-accent)", fontWeight: "700", color: activeDispute.status === "RESOLVED_BUYER_WINS" ? "#059669" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "#be123c" : "#b45309" }}>
+                        {activeDispute.status === "RESOLVED_BUYER_WINS" ? "BUYER REFUND (99.8%)" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "SELLER WIN (98.2%)" : "ANALYZING TRACE..."}
+                      </div>
+                      <p style={{ margin: 0, fontSize: "10px", color: "#4b5563", lineHeight: "1.4", fontStyle: "italic" }}>
+                        &ldquo;Unanimous consensus. Full $1.00 anti-spam bond returned to buyer.&rdquo;
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Consensus Outcome & Bond Resolution */}
+                <div style={{ background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "12px", padding: "16px 18px", fontFamily: "var(--font-accent)", fontSize: "11px" }}>
+                  <div style={{ fontSize: "10px", fontWeight: "800", color: "#1e1e24", letterSpacing: "0.06em", marginBottom: "6px" }}>
+                    CONSENSUS OUTCOME &amp; BOND RESOLUTION:
+                  </div>
+                  <p style={{ margin: "0 0 10px 0", color: "#4b5563", lineHeight: "1.4" }}>
+                    {activeDispute.status === "PENDING"
+                      ? "Dispute is currently pending review by GenLayer AI validators. Click below to trigger simulated LLM consensus."
+                      : activeDispute.verdictReasoning ||
+                        "GenLayer AI consensus confirmed that the upstream provider key was invalidated prematurely. 100% rental refund dispatched to buyer, and $1.00 anti-spam bond unlocked."}
+                  </p>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px dashed #e2dbf3", paddingTop: "10px", flexWrap: "wrap", gap: "10px" }}>
+                    <div>
+                      <span style={{ color: "#71717a" }}>Rental Refund: </span>
+                      <strong style={{ color: activeDispute.status === "RESOLVED_BUYER_WINS" ? "#059669" : "#71717a" }}>
+                        {activeDispute.status === "RESOLVED_BUYER_WINS" ? "$3.50 USDC (100% Refunded)" : "$0.00 USDC"}
+                      </strong>
+                    </div>
+                    <div>
+                      <span style={{ color: "#71717a" }}>Anti-Spam Bond: </span>
+                      <strong style={{ color: activeDispute.status === "RESOLVED_BUYER_WINS" ? "#059669" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "#be123c" : "#b45309" }}>
+                        {activeDispute.status === "RESOLVED_BUYER_WINS"
+                          ? "$1.00 USD (100% Returned)"
+                          : activeDispute.status === "RESOLVED_SELLER_WINS"
+                          ? "$0.50 USD (50% Slashed)"
+                          : "$1.00 USD (Locked)"}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Simulation Action Bar */}
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center", borderTop: "1px solid #e2dbf3", paddingTop: "16px" }}>
+                  <button
+                    type="button"
+                    disabled={isArbitrating || activeDispute.status === "RESOLVED_BUYER_WINS"}
+                    onClick={() => handleExecuteArbitration(activeDispute.disputeId, "BUYER_REFUND")}
+                    className="btn-publish"
+                    style={{
+                      padding: "10px 18px",
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      cursor: isArbitrating || activeDispute.status === "RESOLVED_BUYER_WINS" ? "not-allowed" : "pointer",
+                      opacity: isArbitrating || activeDispute.status === "RESOLVED_BUYER_WINS" ? 0.6 : 1,
+                    }}
+                  >
+                    <Cpu style={{ width: "13px", height: "13px", display: "inline", marginRight: "6px" }} />
+                    {isArbitrating ? "Evaluating with GenLayer Jury..." : "Trigger AI Jury (gl.exec_prompt)"}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isArbitrating || activeDispute.status === "RESOLVED_SELLER_WINS"}
+                    onClick={() => handleExecuteArbitration(activeDispute.disputeId, "SELLER_WIN")}
+                    className="btn-terminal"
+                    style={{
+                      padding: "10px 18px",
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      color: "#be123c",
+                      borderColor: "rgba(225, 29, 72, 0.4)",
+                      background: "rgba(225, 29, 72, 0.05)",
+                      cursor: isArbitrating || activeDispute.status === "RESOLVED_SELLER_WINS" ? "not-allowed" : "pointer",
+                      opacity: isArbitrating || activeDispute.status === "RESOLVED_SELLER_WINS" ? 0.6 : 1,
+                    }}
+                  >
+                    Test False Claim Ruling (Slash 50% Bond)
+                  </button>
+
+                  {activeDispute.status !== "PENDING" && (
+                    <button
+                      type="button"
+                      onClick={() => handleResetCase(activeDispute.disputeId)}
+                      className="btn-terminal"
+                      style={{ padding: "10px 18px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                    >
+                      <RotateCcw style={{ width: "12px", height: "12px", display: "inline", marginRight: "6px" }} />
+                      Reset Case to Pending
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* Dispute Filing Modal */}
+      {disputeFilingModalOpen && (
+        <div className="modal-overlay" onClick={() => setDisputeFilingModalOpen(false)}>
+          <div className="modal-content" style={{ maxWidth: "540px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="badge-category" style={{ color: "#be123c", borderColor: "rgba(225, 29, 72, 0.3)" }}>
+                <ShieldAlert style={{ width: "12px", height: "12px", display: "inline", marginRight: "4px" }} />
+                GENLAYER ESCROW DISPUTE
+              </span>
+              <button className="modal-close-btn" onClick={() => setDisputeFilingModalOpen(false)}>
+                ×
+              </button>
+            </div>
+
+            <h2 className="modal-title">File Dispute &amp; Stake Anti-Spam Bond</h2>
+            <p className="modal-desc">
+              Submit cryptographic evidence of premature API key revocation or upstream error traces to the GenLayer AI Tribunal.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginTop: "16px" }}>
+              <div>
+                <label className="label-cell">Target Compute Session:</label>
+                <select
+                  value={selectedDisputeRentalId}
+                  onChange={(e) => setSelectedDisputeRentalId(Number(e.target.value))}
+                  className="select-cell"
+                >
+                  {rentals.length > 0 ? (
+                    rentals.map((r) => (
+                      <option key={r.rentalId} value={r.rentalId}>
+                        Rental #{r.rentalId} • {r.modelFamily} (${r.amountPaidUsd} USDC)
+                      </option>
+                    ))
+                  ) : (
+                    <option value={1}>
+                      Demo Session: Claude 3.5 Sonnet ($3.50 USDC)
+                    </option>
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="label-cell">Dispute Reason:</label>
+                <input
+                  type="text"
+                  value={disputeReason}
+                  onChange={(e) => setDisputeReason(e.target.value)}
+                  className="input-cell"
+                  placeholder="e.g. Upstream 401 Unauthorized"
+                />
+              </div>
+
+              <div>
+                <label className="label-cell">Error Trace Payload / HMAC Signature:</label>
+                <textarea
+                  rows={3}
+                  value={disputeTrace}
+                  onChange={(e) => setDisputeTrace(e.target.value)}
+                  className="textarea-cell"
+                  placeholder="Paste error JSON, gateway HMAC receipt, or upstream response trace"
+                />
+              </div>
+
+              <div
+                style={{
+                  padding: "12px 14px",
+                  background: "rgba(124, 58, 237, 0.06)",
+                  border: "1px solid rgba(124, 58, 237, 0.25)",
+                  borderRadius: "8px",
+                  fontSize: "11px",
+                  color: "#4b5563",
+                  lineHeight: "1.5",
+                }}
+              >
+                🔒 A <strong>$1.00 Anti-Spam Bond</strong> will be locked in escrow. If your claim is valid, you receive 100% of the bond + full rental refund back. If false, 50% ($0.50) is slashed to the treasury.
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
+              <button
+                type="button"
+                className="btn-terminal"
+                onClick={() => setDisputeFilingModalOpen(false)}
+                style={{ padding: "8px 16px", fontSize: "11px", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-publish"
+                onClick={handleFileNewDispute}
+                style={{
+                  padding: "8px 18px",
+                  fontSize: "11px",
+                  cursor: "pointer",
+                  background: "linear-gradient(135deg, #e11d48, #be123c)",
+                }}
+              >
+                Lock $1.00 Bond &amp; File Dispute
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="footer-admon">

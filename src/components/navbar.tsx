@@ -31,7 +31,7 @@ const NAV_LINKS = [
   { href: "/explore?view=seller", label: "List Quota", icon: PlusCircle, isCta: true },
   { href: "/explore?view=activity", label: "Activity & Badges", icon: Activity },
   { href: "/playground", label: "Playground", icon: Play },
-  { href: "/tribunal", label: "AI Tribunal", icon: Scale },
+  { href: "/explore?view=tribunal", label: "AI Tribunal", icon: Scale },
   { href: "/impact", label: "Impact", icon: Award },
   { href: "/agentic", label: "Agent Hub", icon: Bot },
   { href: "/bridge", label: "Bridge", icon: Globe2 },
