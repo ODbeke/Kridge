@@ -126,7 +126,7 @@ export default function LandingPage() {
           {/* Kridge Subhead */}
           <p className="subhead anim" style={{ "--d": "0.28s" } as React.CSSProperties}>
             Turn idle AI subscription quota into liquid yield. Rent top-tier models at 60%–75%
-            discounts, or donate unused compute to autonomous agent faucets for on-chain ESG reputation. Settled in USDC on Base &amp; GenLayer.
+            discounts, or donate unused compute to autonomous agent faucets for on-chain ESG reputation. Settled on GenLayer Intelligent Contracts with zero master key exposure.
           </p>
 
           {/* Action CTAs */}
