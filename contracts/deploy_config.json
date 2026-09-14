@@ -22,7 +22,7 @@
       "chainId": 84532,
       "rpc": "https://sepolia.base.org",
       "contracts": {
-        "KridgeHyperlaneReceiver": "0x91834eC952136067C0877994EAbFE89a05F4A801",
+        "KridgeHyperlaneReceiver": "0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf",
         "HyperlaneMailbox": "0x8B7E9F90aA2A944C3c57D7A04E85817AcFF0B6E6"
       }
     },

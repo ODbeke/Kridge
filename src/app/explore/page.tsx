@@ -255,7 +255,7 @@ export default function ExploreAppPage() {
         try {
           const txParams = {
             from: walletAddress,
-            to: "0x91834eC952136067C0877994EAbFE89a05F4A801", // Kridge Base Sepolia Escrow Receiver
+            to: process.env.NEXT_PUBLIC_BASE_SEPOLIA_RECEIVER || "0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf", // Kridge Base Sepolia Escrow Receiver
             value: "0x0",
             data: "0x436865636b6f7574"
           };

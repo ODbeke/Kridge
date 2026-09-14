@@ -382,7 +382,7 @@ KRIDGE/
 | Network | Contract / Component | Address | Status |
 | :--- | :--- | :--- | :--- |
 | **GenLayer Studio / Testnet** | `KridgeMarketplace` (Intelligent Contract) | [`0xC54DCDCBeB99E5773693F894285756E78EdAf242`](https://studio-next.genlayer.com/) | **Live & Deployed** |
-| **Base Sepolia** | `KridgeHyperlaneReceiver` (Escrow) | `0x91834eC952136067C0877994EAbFE89a05F4A801` | **Live & Active** |
+| **Base Sepolia** | `KridgeHyperlaneReceiver` (Escrow) | [`0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf`](https://sepolia.basescan.org/address/0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf) | **Live & Active** |
 | **zkSync Era Sepolia** | `KridgeHyperlaneReceiver` | `0x12a99C048A463c647b0197dFa36D4FF3924f7988` | *Coming Soon* |
 | **Solana Devnet** | `KrdgSolanaMailboxReceiver` | `KrdgSolanaMailboxReceiver11111111111111111` | *Coming Soon* |
 
