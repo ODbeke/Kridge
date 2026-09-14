@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   Award,
@@ -19,41 +19,81 @@ import {
   Cpu
 } from "lucide-react";
 import { useKridgeStore } from "@/lib/store";
-import { BadgeTier } from "@/lib/types";
+import { BadgeTier, DonorProfile, KridgeListing } from "@/lib/types";
 import {
   formatCurrency,
   formatTokens,
   formatAddress,
   TIER_CONFIG,
-  getNextTierProgress
+  getNextTierProgress,
+  getTierFromRescued
 } from "@/lib/utils";
 
 const TIERS_LIST: BadgeTier[] = ["WOOD", "BRONZE", "SILVER", "GOLD", "DIAMOND", "PLATINUM"];
 
 export default function ImpactPage() {
-  const { donors, wallet } = useKridgeStore();
+  const { donors, listings, wallet } = useKridgeStore();
 
-  const currentDonor = donors.find(
-    (d) => d.address.toLowerCase() === wallet.address.toLowerCase()
-  ) || {
-    address: wallet.address,
-    chain: wallet.chain,
-    totalRescuedUsd: 120.00,
-    totalTokensDonated: 4500000,
-    donationsCount: 2,
-    highestTier: "WOOD" as BadgeTier,
-    unlockedBadges: ["WOOD"] as BadgeTier[],
-    rank: 6
-  };
+  const myListings = useMemo(() => {
+    if (!wallet.address) return [];
+    return listings.filter((l) => l.seller.toLowerCase() === wallet.address.toLowerCase());
+  }, [listings, wallet.address]);
+
+  const listedRescuedUsd = useMemo(() => {
+    return myListings.reduce((sum: number, l: KridgeListing) => sum + (l.retailValueUsd || l.priceUsd || 0), 0);
+  }, [myListings]);
+
+  const listedTokens = useMemo(() => {
+    return myListings.reduce((sum: number, l: KridgeListing) => sum + (l.quotaTokens || 0), 0);
+  }, [myListings]);
+
+  const currentDonor: DonorProfile = useMemo(() => {
+    const recorded = donors.find(
+      (d) => wallet.address && d.address.toLowerCase() === wallet.address.toLowerCase()
+    );
+    const recordedRescuedUsd = recorded?.totalRescuedUsd || 0;
+    const recordedTokens = recorded?.totalTokensDonated || 0;
+    const donationsCount = recorded?.donationsCount || 0;
+
+    const totalRescuedUsd = recordedRescuedUsd + listedRescuedUsd;
+    const totalTokensDonated = recordedTokens + listedTokens;
+    const highestTier = getTierFromRescued(totalRescuedUsd);
+    const allTiers: BadgeTier[] = ["WOOD", "BRONZE", "SILVER", "GOLD", "DIAMOND", "PLATINUM"];
+    const unlockedBadges = allTiers.filter((t) => totalRescuedUsd >= TIER_CONFIG[t].thresholdUsd);
+
+    return {
+      address: wallet.address || "Not Connected",
+      chain: wallet.chain,
+      totalRescuedUsd,
+      totalTokensDonated,
+      donationsCount: donationsCount + (myListings.length > 0 ? myListings.length : 0),
+      highestTier,
+      unlockedBadges,
+      rank: totalRescuedUsd > 0 ? 1 : undefined,
+    };
+  }, [donors, wallet.address, wallet.chain, listedRescuedUsd, listedTokens, myListings.length]);
 
   const progressInfo = getNextTierProgress(currentDonor.totalRescuedUsd);
   const [shareSuccess, setShareSuccess] = useState(false);
 
-  const globalTotalRescuedUsd = donors.reduce((sum, d) => sum + d.totalRescuedUsd, 0) + 184920;
-  const globalTotalTokens = donors.reduce((sum, d) => sum + d.totalTokensDonated, 0) + 14200000000;
+  const globalTotalRescuedUsd = useMemo(() => {
+    return (
+      donors.reduce((sum: number, d: DonorProfile) => sum + d.totalRescuedUsd, 0) +
+      listings.reduce((sum: number, l: KridgeListing) => sum + (l.retailValueUsd || l.priceUsd || 0), 0)
+    );
+  }, [donors, listings]);
+
+  const globalTotalTokens = useMemo(() => {
+    return (
+      donors.reduce((sum: number, d: DonorProfile) => sum + d.totalTokensDonated, 0) +
+      listings.reduce((sum: number, l: KridgeListing) => sum + (l.quotaTokens || 0), 0)
+    );
+  }, [donors, listings]);
+
+  const totalDonorsCount = donors.length > 0 ? donors.length : myListings.length > 0 ? 1 : 0;
 
   const handleShareToTwitter = () => {
-    const text = `I just rescued \$${currentDonor.totalRescuedUsd} of expiring AI compute from going to waste on @GenLayer using Kridge! Unlocked the ${TIER_CONFIG[currentDonor.highestTier]?.name} on-chain badge. 🌲💎 #GenLayer #Kridge #AICompute`;
+    const text = `I just rescued \$${currentDonor.totalRescuedUsd.toFixed(2)} of expiring AI compute from going to waste on @GenLayer using Kridge! Unlocked the ${TIER_CONFIG[currentDonor.highestTier]?.name} on-chain badge. 🌲💎 #GenLayer #Kridge #AICompute`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
     setShareSuccess(true);
     setTimeout(() => setShareSuccess(false), 3000);
@@ -102,7 +142,7 @@ export default function ImpactPage() {
 
         <div className="rounded-2xl border border-purple-500/20 bg-purple-950/10 p-6 shadow-xl">
           <span className="text-xs font-mono text-purple-400 uppercase tracking-wider block mb-1">Verified ESG Donors</span>
-          <div className="text-3xl sm:text-4xl font-bold font-mono text-purple-300">{donors.length + 142} Donors</div>
+          <div className="text-3xl sm:text-4xl font-bold font-mono text-purple-300">{totalDonorsCount} {totalDonorsCount === 1 ? "Donor" : "Donors"}</div>
           <p className="text-xs text-zinc-400 mt-1">On GenLayer, Base, zkSync & Solana</p>
         </div>
       </div>
@@ -237,21 +277,29 @@ export default function ImpactPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {donors.map((donor, i) => (
-                <tr key={donor.address} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="py-3.5 font-bold text-yellow-400">#{i + 1}</td>
-                  <td className="py-3.5 font-bold text-white">{formatAddress(donor.address, 6)}</td>
-                  <td className="py-3.5 text-zinc-400 uppercase text-[10px]">{donor.chain}</td>
-                  <td className="py-3.5">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-zinc-300">
-                      <span>{TIER_CONFIG[donor.highestTier]?.icon}</span>
-                      <span>{TIER_CONFIG[donor.highestTier]?.name}</span>
-                    </span>
+              {donors.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-zinc-400 font-mono text-xs">
+                    No donations registered yet. Donate expiring AI compute quota on Base Sepolia or GenLayer to join the Hall of Fame!
                   </td>
-                  <td className="py-3.5 text-right font-bold text-emerald-400">{formatCurrency(donor.totalRescuedUsd)}</td>
-                  <td className="py-3.5 text-right text-zinc-300">{formatTokens(donor.totalTokensDonated)}</td>
                 </tr>
-              ))}
+              ) : (
+                donors.map((donor, i) => (
+                  <tr key={donor.address} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="py-3.5 font-bold text-yellow-400">#{i + 1}</td>
+                    <td className="py-3.5 font-bold text-white">{formatAddress(donor.address, 6)}</td>
+                    <td className="py-3.5 text-zinc-400 uppercase text-[10px]">{donor.chain}</td>
+                    <td className="py-3.5">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-zinc-300">
+                        <span>{TIER_CONFIG[donor.highestTier]?.icon}</span>
+                        <span>{TIER_CONFIG[donor.highestTier]?.name}</span>
+                      </span>
+                    </td>
+                    <td className="py-3.5 text-right font-bold text-emerald-400">{formatCurrency(donor.totalRescuedUsd)}</td>
+                    <td className="py-3.5 text-right text-zinc-300">{formatTokens(donor.totalTokensDonated)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

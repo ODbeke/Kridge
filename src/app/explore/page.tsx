@@ -3,14 +3,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useKridgeStore } from "@/lib/store";
-import { KridgeListing, ProviderId, ListingType, SupportedChain, BadgeTier } from "@/lib/types";
+import { KridgeListing, ProviderId, ListingType, SupportedChain, BadgeTier, DonorProfile } from "@/lib/types";
 import {
   formatCurrency,
   formatTokens,
   formatTimeRemaining,
   formatAddress,
   TIER_CONFIG,
-  getNextTierProgress
+  getNextTierProgress,
+  getTierFromRescued
 } from "@/lib/utils";
 
 const TIERS_LIST: BadgeTier[] = ["WOOD", "BRONZE", "SILVER", "GOLD", "DIAMOND", "PLATINUM"];
@@ -239,33 +240,51 @@ export default function ExploreAppPage() {
 
   // Compute user's own published compute pools
   const myListings = useMemo(() => {
-    return listings.filter((l) => {
-      if (!walletAddress) return true;
-      return l.seller.toLowerCase() === walletAddress.toLowerCase();
-    });
+    if (!walletAddress) return [];
+    return listings.filter((l) => l.seller.toLowerCase() === walletAddress.toLowerCase());
   }, [listings, walletAddress]);
 
-  // Current donor reputation profile for Badges tab
-  const currentDonor = useMemo(() => {
-    return (
-      donors.find((d) => walletAddress && d.address.toLowerCase() === walletAddress.toLowerCase()) || {
-        address: walletAddress || "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
-        chain: wallet.chain,
-        totalRescuedUsd: 120.0,
-        totalTokensDonated: 4500000,
-        donationsCount: 2,
-        highestTier: "WOOD" as BadgeTier,
-        unlockedBadges: ["WOOD"] as BadgeTier[],
-        rank: 6,
-      }
+  // Current user's real compute rescue & on-chain reputation profile
+  const currentDonor: DonorProfile = useMemo(() => {
+    // 1. Any recorded donations in store
+    const recorded = donors.find(
+      (d) => walletAddress && d.address.toLowerCase() === walletAddress.toLowerCase()
     );
-  }, [donors, walletAddress, wallet.chain]);
+    const recordedRescuedUsd = recorded?.totalRescuedUsd || 0;
+    const recordedTokens = recorded?.totalTokensDonated || 0;
+    const donationsCount = recorded?.donationsCount || 0;
+
+    // 2. Real compute rescued from user's active/listed pools
+    const listedRescuedUsd = myListings.reduce(
+      (sum, l) => sum + (l.retailValueUsd || l.priceUsd || 0),
+      0
+    );
+    const listedTokens = myListings.reduce((sum, l) => sum + (l.quotaTokens || 0), 0);
+
+    const totalRescuedUsd = recordedRescuedUsd + listedRescuedUsd;
+    const totalTokensDonated = recordedTokens + listedTokens;
+    const highestTier = getTierFromRescued(totalRescuedUsd);
+
+    const allTiers: BadgeTier[] = ["WOOD", "BRONZE", "SILVER", "GOLD", "DIAMOND", "PLATINUM"];
+    const unlockedBadges = allTiers.filter((t) => totalRescuedUsd >= TIER_CONFIG[t].thresholdUsd);
+
+    return {
+      address: walletAddress || "",
+      chain: wallet.chain,
+      totalRescuedUsd,
+      totalTokensDonated,
+      donationsCount: donationsCount + (myListings.length > 0 ? myListings.length : 0),
+      highestTier,
+      unlockedBadges,
+      rank: totalRescuedUsd > 0 ? 1 : undefined,
+    };
+  }, [donors, walletAddress, wallet.chain, myListings]);
 
   const progressInfo = useMemo(() => {
     return getNextTierProgress(currentDonor.totalRescuedUsd);
   }, [currentDonor.totalRescuedUsd]);
 
-  const currentTierData = TIER_CONFIG[currentDonor.highestTier] || TIER_CONFIG.WOOD;
+  const currentTierData = TIER_CONFIG[currentDonor.highestTier] || TIER_CONFIG.NONE;
 
   const handleToggleRevealKey = (id: string) => {
     setRevealedKeys((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -280,7 +299,10 @@ export default function ExploreAppPage() {
   };
 
   const handleShareToTwitter = () => {
-    const text = `I am participating in Kridge decentralized AI credit marketplace! Holding the ${currentTierData.name} on-chain badge with $${currentDonor.totalRescuedUsd.toFixed(2)} of rescued AI compute. #GenLayer #Kridge #Base`;
+    const text =
+      currentDonor.totalRescuedUsd > 0
+        ? `I am participating in Kridge decentralized AI credit marketplace! Holding the ${currentTierData.name} on-chain badge with $${currentDonor.totalRescuedUsd.toFixed(2)} of rescued AI compute. #GenLayer #Kridge #Base`
+        : `I am participating in Kridge decentralized AI credit marketplace on Base Sepolia & GenLayer! Saving unused AI API compute from expiring at zero value. #GenLayer #Kridge #Base`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
     setShareSuccess(true);
     setTimeout(() => setShareSuccess(false), 3000);

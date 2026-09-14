@@ -15,8 +15,8 @@ export const INITIAL_CHAIN_BALANCES: Record<SupportedChain, ChainBalanceInfo> = 
 const STORAGE_KEYS = {
   LISTINGS: "kridge_listings_v2",
   RENTALS: "kridge_rentals_v2",
-  DISPUTES: "kridge_disputes_v2",
-  DONORS: "kridge_donors_v2",
+  DISPUTES: "kridge_disputes_v3",
+  DONORS: "kridge_donors_v3",
   WALLET: "kridge_wallet_v2",
 };
 
@@ -87,11 +87,28 @@ export function useKridgeStore() {
           setRentals(JSON.parse(savedRentals));
         }
 
+        // Purge legacy mock data cache keys
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("kridge_donors_v2");
+          localStorage.removeItem("kridge_disputes_v2");
+        }
+
         const savedDisputes = localStorage.getItem(STORAGE_KEYS.DISPUTES);
-        if (savedDisputes) setDisputes(JSON.parse(savedDisputes));
+        if (savedDisputes) {
+          try {
+            setDisputes(JSON.parse(savedDisputes));
+          } catch {}
+        }
 
         const savedDonors = localStorage.getItem(STORAGE_KEYS.DONORS);
-        if (savedDonors) setDonors(JSON.parse(savedDonors));
+        if (savedDonors) {
+          try {
+            const parsed = JSON.parse(savedDonors);
+            if (Array.isArray(parsed)) {
+              setDonors(parsed.filter((d) => d && d.totalRescuedUsd !== 24500));
+            }
+          } catch {}
+        }
 
         // 2. Auto-detect real MetaMask wallet
         if (typeof window !== "undefined" && (window as any).ethereum) {
