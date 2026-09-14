@@ -72,7 +72,7 @@ const CHAIN_CONFIGS: Record<
 };
 
 export default function ExploreAppPage() {
-  const { listings, rentListing, addListing, wallet, switchChain } = useKridgeStore();
+  const { listings, rentals, rentListing, addListing, wallet, switchChain } = useKridgeStore();
 
   // Navigation & View Mode
   const [viewMode, setViewMode] = useState<"buyer" | "seller">("buyer");
@@ -790,6 +790,84 @@ export default function ExploreAppPage() {
                   </div>
                 </div>
               </div>
+
+              {/* 3. Activity & Badges Hub Card */}
+              <Link
+                href="/activity"
+                className="panel-glass"
+                style={{
+                  display: "block",
+                  textDecoration: "none",
+                  padding: "14px 16px",
+                  background: "linear-gradient(135deg, rgba(124, 58, 237, 0.07) 0%, rgba(6, 182, 212, 0.05) 100%)",
+                  border: "1px solid rgba(124, 58, 237, 0.28)",
+                  borderRadius: "12px",
+                  transition: "all 0.2s ease",
+                  cursor: "pointer",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "14px" }}>⚡</span>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontFamily: "var(--font-accent)",
+                        fontWeight: "800",
+                        color: "#1e1e24",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      ACTIVITY & BADGES
+                    </span>
+                  </div>
+                  <span style={{ fontSize: "13px", color: "#7c3aed", fontWeight: "bold" }}>→</span>
+                </div>
+                <p style={{ margin: 0, fontSize: "10px", color: "#64748b", lineHeight: "1.4" }}>
+                  View rented sub-keys, active compute pools & on-chain reputation
+                </p>
+                <div style={{ marginTop: "10px", display: "flex", gap: "6px", alignItems: "center" }}>
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      fontFamily: "var(--font-accent)",
+                      background: "rgba(124, 58, 237, 0.12)",
+                      color: "#7c3aed",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {rentals.length} Keys Rented
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      fontFamily: "var(--font-accent)",
+                      background: "rgba(5, 150, 105, 0.12)",
+                      color: "#059669",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {listings.filter((l) => walletAddress && l.seller.toLowerCase() === walletAddress.toLowerCase()).length} Listed
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      fontFamily: "var(--font-accent)",
+                      background: "rgba(234, 179, 8, 0.12)",
+                      color: "#b45309",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Badges 🌲
+                  </span>
+                </div>
+              </Link>
             </aside>
 
             {/* Right Column: Main Capabilities List */}

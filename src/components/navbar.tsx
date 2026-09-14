@@ -19,7 +19,8 @@ import {
   Copy,
   Check,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Activity
 } from "lucide-react";
 import { useKridgeStore } from "@/lib/store";
 import { SupportedChain } from "@/lib/types";
@@ -28,6 +29,7 @@ import { formatAddress } from "@/lib/utils";
 const NAV_LINKS = [
   { href: "/explore", label: "Marketplace", icon: Layers },
   { href: "/sell", label: "List Quota", icon: PlusCircle, isCta: true },
+  { href: "/activity", label: "Activity & Badges", icon: Activity },
   { href: "/playground", label: "Playground", icon: Play },
   { href: "/tribunal", label: "AI Tribunal", icon: Scale },
   { href: "/impact", label: "Impact", icon: Award },
