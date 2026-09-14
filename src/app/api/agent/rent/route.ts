@@ -4,22 +4,39 @@ import { INITIAL_LISTINGS } from "@/lib/mock-data";
 
 export async function POST(req: NextRequest) {
   try {
-    const { listingId, agentWallet, durationHours } = await req.json();
+    const body = await req.json();
+    const { listingId, agentWallet, durationHours, listingDetails } = body;
 
-    const listing = INITIAL_LISTINGS.find((l) => l.id === Number(listingId));
-    if (!listing) {
-      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+    let provider = listingDetails?.provider;
+    let modelFamily = listingDetails?.modelFamily;
+    let allocatedTokens = listingDetails?.remainingTokens ?? listingDetails?.quotaTokens;
+    let sellerAddress = listingDetails?.seller;
+    let listingType = listingDetails?.listingType || "RENT";
+
+    if (!provider) {
+      const listing = INITIAL_LISTINGS.find((l) => l.id === Number(listingId));
+      if (listing) {
+        provider = listing.provider;
+        modelFamily = listing.modelFamily;
+        allocatedTokens = listing.remainingTokens || listing.quotaTokens;
+        sellerAddress = listing.seller;
+        listingType = listing.listingType;
+      }
+    }
+
+    if (!provider) {
+      return NextResponse.json({ error: "Listing not found or details missing" }, { status: 404 });
     }
 
     const session = KridgeProxyService.createSession({
-      listingId: listing.id,
-      provider: listing.provider,
+      listingId: Number(listingId) || 1,
+      provider: provider as any,
       upstreamApiKey: "sk-vault-" + Math.random().toString(36).substring(7),
-      allocatedTokens: listing.remainingTokens || listing.quotaTokens,
-      modelFamily: listing.modelFamily,
+      allocatedTokens: allocatedTokens || 500000,
+      modelFamily: modelFamily || "claude-3-5-sonnet",
       buyerAddress: agentWallet || "0xAgentAuto_Anon",
-      sellerAddress: listing.seller,
-      listingType: listing.listingType,
+      sellerAddress: sellerAddress || "0xSeller_Default",
+      listingType: listingType as any,
       durationHours: durationHours || 48
     });
 

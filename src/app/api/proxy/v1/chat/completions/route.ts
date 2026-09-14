@@ -28,6 +28,11 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const result = await KridgeProxyService.handleChatCompletion(subKey, body);
+    const session = KridgeProxyService.getSession(subKey);
+
+    const totalUsed = session ? session.usedTokens : (result.promptTokens + result.completionTokens);
+    const allocated = session ? session.allocatedTokens : 250000;
+    const remaining = Math.max(0, allocated - totalUsed);
 
     return NextResponse.json({
       id: "chatcmpl-krdg-" + Math.random().toString(36).substring(2, 9),
@@ -51,8 +56,11 @@ export async function POST(req: NextRequest) {
       },
       kridge_meta: {
         gateway_latency_ms: result.latencyMs,
-        escrow_status: "ACTIVE",
-        dispute_bond_secured: true
+        escrow_status: session?.status || "ACTIVE",
+        dispute_bond_secured: true,
+        used_tokens: totalUsed,
+        remaining_tokens: remaining,
+        allocated_tokens: allocated
       }
     });
   } catch (error: any) {

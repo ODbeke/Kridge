@@ -164,11 +164,11 @@ export function useKridgeStore() {
     saveDonors(updatedDonors);
   };
 
-  const rentListing = (listingId: number, durationHours: number = 48) => {
+  const rentListing = (listingId: number, durationHours: number = 48, customSubKey?: string) => {
     const listing = listings.find((l) => l.id === listingId);
     if (!listing) throw new Error("Listing not found");
 
-    const subKey = "krdg_live_" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+    const subKey = customSubKey || ("krdg_live_" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10));
     const newRentalId = rentals.length ? Math.max(...rentals.map((r) => r.rentalId)) + 1 : 1;
 
     const newRental: UserRentalSession = {
@@ -195,6 +195,21 @@ export function useKridgeStore() {
     saveListings(updatedListings);
 
     return newRental;
+  };
+
+  const updateRentalUsage = (subKey: string, additionalTokens: number) => {
+    const updatedRentals = rentals.map((r) => {
+      if (r.subKey === subKey) {
+        const newUsed = r.usedTokens + additionalTokens;
+        return {
+          ...r,
+          usedTokens: newUsed,
+          status: newUsed >= r.allocatedTokens ? ("EXHAUSTED" as const) : r.status,
+        };
+      }
+      return r;
+    });
+    saveRentals(updatedRentals);
   };
 
   const fileDispute = (rentalId: number, reason: string, errorTrace: string) => {
@@ -297,6 +312,7 @@ export function useKridgeStore() {
     fileDispute,
     resolveDisputeWithAI,
     switchChain,
-    updateDonorImpact
+    updateDonorImpact,
+    updateRentalUsage
   };
 }

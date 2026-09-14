@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Zap, Send, Code, Copy, Check, ShieldAlert, Cpu, Activity } from "lucide-react";
+import { Zap, Send, Code, Copy, Check, ShieldAlert, Cpu, Activity, Key } from "lucide-react";
 import { useKridgeStore } from "@/lib/store";
 import { formatTokens, formatCurrency } from "@/lib/utils";
 
@@ -14,11 +14,47 @@ interface ChatMessage {
 }
 
 export default function PlaygroundPage() {
-  const { rentals } = useKridgeStore();
-  const [selectedSubKey, setSelectedSubKey] = useState<string>(
-    rentals[0]?.subKey || "krdg_live_demo_claude_9a8f4c1e7b2d"
-  );
-  const activeRental = rentals.find((r) => r.subKey === selectedSubKey) || rentals[0];
+  const { rentals, updateRentalUsage } = useKridgeStore();
+  const [selectedSubKey, setSelectedSubKey] = useState<string>("krdg_live_demo_claude_9a8f4c1e7b2d");
+
+  // Read URL search param key if provided from Explore modal
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlKey = new URLSearchParams(window.location.search).get("key");
+      if (urlKey) {
+        setSelectedSubKey(urlKey);
+      } else if (rentals.length > 0) {
+        setSelectedSubKey(rentals[0].subKey);
+      }
+    }
+  }, [rentals]);
+
+  // Key catalogue
+  const availableKeys = [
+    ...rentals.map((r) => ({
+      subKey: r.subKey,
+      label: `${r.modelFamily} (${Math.max(0, r.allocatedTokens - r.usedTokens).toLocaleString()} tok left) - ${r.subKey.substring(0, 16)}...`,
+      allocatedTokens: r.allocatedTokens,
+      usedTokens: r.usedTokens,
+      modelFamily: r.modelFamily,
+      priceUsd: r.amountPaidUsd,
+      expiresAt: r.expiresAt
+    })),
+  ];
+  if (!availableKeys.some(k => k.subKey === "krdg_live_demo_claude_9a8f4c1e7b2d")) {
+    availableKeys.push({
+      subKey: "krdg_live_demo_claude_9a8f4c1e7b2d",
+      label: "Claude 3.5 Sonnet Demo Key (235,800 tok left)",
+      allocatedTokens: 250000,
+      usedTokens: 14200,
+      modelFamily: "claude-3-5-sonnet",
+      priceUsd: 3.50,
+      expiresAt: Date.now() + 172800000
+    });
+  }
+
+  const activeRental = availableKeys.find((r) => r.subKey === selectedSubKey) || availableKeys[0];
+
   const [prompt, setPrompt] = useState<string>("Explain how GenLayer Intelligent Contracts reach consensus on subjective disputes.");
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: "Hello! I am connected through the Kridge Secure Proxy Gateway. Send a prompt to test inference speed and observe live token quota metering." }
@@ -27,6 +63,19 @@ export default function PlaygroundPage() {
   const [lastMeta, setLastMeta] = useState<any>(null);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
+  // Live Token Tracking State
+  const [localUsedTokens, setLocalUsedTokens] = useState<number>(activeRental?.usedTokens || 14200);
+
+  useEffect(() => {
+    setLocalUsedTokens(activeRental?.usedTokens || 0);
+  }, [selectedSubKey, activeRental]);
+
+  const allocated = activeRental?.allocatedTokens || 250000;
+  const remainingTokens = Math.max(0, allocated - localUsedTokens);
+  const fuelPct = Math.max(0, Math.min(100, Math.round((remainingTokens / allocated) * 100)));
+  const estRemainingUsd = ((remainingTokens / allocated) * (activeRental?.priceUsd || 3.50)).toFixed(2);
+  const hoursLeft = activeRental?.expiresAt ? Math.max(0, Math.round((activeRental.expiresAt - Date.now()) / 3600000)) : 48;
+
   const handleSendPrompt = async () => {
     if (!prompt.trim() || isLoading) return;
     const userMessage: ChatMessage = { role: "user", content: prompt };
@@ -34,21 +83,59 @@ export default function PlaygroundPage() {
     setMessages(newMessages);
     setPrompt("");
     setIsLoading(true);
+
     try {
       const res = await fetch("/api/proxy/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer " + selectedSubKey },
-        body: JSON.stringify({ model: activeRental?.modelFamily || "claude-3-5-sonnet", messages: newMessages.map((m) => ({ role: m.role, content: m.content })) })
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + selectedSubKey
+        },
+        body: JSON.stringify({
+          model: activeRental?.modelFamily || "claude-3-5-sonnet",
+          messages: newMessages.map((m) => ({ role: m.role, content: m.content }))
+        })
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error?.message || "Gateway Error");
+
       const assistantReply = data.choices[0]?.message?.content || "No response received";
-      const meta = { promptTokens: data.usage?.prompt_tokens || 20, completionTokens: data.usage?.completion_tokens || 45, latencyMs: data.kridge_meta?.gateway_latency_ms || 142, receiptSignature: "SIG_0x" + Math.random().toString(16).substring(2, 10) };
+      const meta = {
+        promptTokens: data.usage?.prompt_tokens || 20,
+        completionTokens: data.usage?.completion_tokens || 45,
+        latencyMs: data.kridge_meta?.gateway_latency_ms || 142,
+        receiptSignature: "SIG_0x" + Math.random().toString(16).substring(2, 10),
+        usedTokens: data.kridge_meta?.used_tokens,
+        remainingTokens: data.kridge_meta?.remaining_tokens
+      };
+
       setLastMeta(meta);
-      setMessages((prev) => [...prev, { role: "assistant", content: assistantReply, tokens: meta.completionTokens, latencyMs: meta.latencyMs }]);
+
+      const tokensConsumed = meta.promptTokens + meta.completionTokens;
+      setLocalUsedTokens((prev) => prev + tokensConsumed);
+      updateRentalUsage(selectedSubKey, tokensConsumed);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: assistantReply,
+          tokens: meta.completionTokens,
+          latencyMs: meta.latencyMs
+        }
+      ]);
     } catch (e: any) {
-      setMessages((prev) => [...prev, { role: "system", content: "Gateway Error: " + (e?.message || "Unknown error") }]);
-    } finally { setIsLoading(false); }
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "system",
+          content: "Gateway Error: " + (e?.message || "Unknown error")
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -65,12 +152,27 @@ export default function PlaygroundPage() {
           <ShieldAlert className="h-3.5 w-3.5 text-rose-400" /><span>File Dispute on GenLayer</span>
         </Link>
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-7 flex flex-col rounded-2xl border border-white/10 bg-[#0E131F] shadow-2xl overflow-hidden h-[650px]">
-          <div className="flex items-center justify-between border-b border-white/10 bg-black/40 px-4 py-3 font-mono text-xs">
-            <div><span className="text-zinc-400">Active Key: </span><span className="text-cyan-300 font-bold">{selectedSubKey.substring(0, 18)}...</span></div>
+          <div className="flex items-center justify-between border-b border-white/10 bg-black/40 px-4 py-3 font-mono text-xs flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-zinc-400 flex items-center gap-1"><Key className="h-3.5 w-3.5 text-cyan-400" />Active Key:</span>
+              <select
+                value={selectedSubKey}
+                onChange={(e) => setSelectedSubKey(e.target.value)}
+                className="bg-black/60 border border-white/20 rounded-lg px-2 py-1 text-xs text-cyan-300 font-mono focus:border-cyan-400 focus:outline-none max-w-[260px] truncate"
+              >
+                {availableKeys.map((k) => (
+                  <option key={k.subKey} value={k.subKey}>
+                    {k.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />Gateway Live</span>
           </div>
+
           <div className="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-xs">
             {messages.map((m, i) => (
               <div key={i} className={"flex flex-col " + (m.role === "user" ? "items-end" : m.role === "system" ? "items-center" : "items-start")}>
@@ -83,6 +185,7 @@ export default function PlaygroundPage() {
             ))}
             {isLoading && (<div className="flex items-center gap-2 text-cyan-400 text-xs font-mono"><Activity className="h-4 w-4 animate-spin" /><span>Streaming response through Kridge Gateway...</span></div>)}
           </div>
+
           <div className="border-t border-white/10 p-4 bg-black/40">
             <form onSubmit={(e) => { e.preventDefault(); handleSendPrompt(); }} className="flex gap-2">
               <input type="text" placeholder="Ask anything or test prompt completion..." value={prompt} onChange={(e) => setPrompt(e.target.value)} disabled={isLoading} className="flex-1 rounded-xl border border-white/10 bg-[#080B10] px-4 py-2.5 text-xs text-white placeholder:text-zinc-500 focus:border-cyan-500 focus:outline-none font-mono" />
@@ -90,17 +193,20 @@ export default function PlaygroundPage() {
             </form>
           </div>
         </div>
+
         <div className="lg:col-span-5 space-y-6">
           <div className="rounded-2xl border border-white/10 bg-[#0E131F] p-6 space-y-4 shadow-xl">
             <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold flex items-center gap-2"><Cpu className="h-4 w-4 text-cyan-400" /><span>Virtual Sub-Key Fuel Gauge</span></h3>
             <div className="space-y-1.5 font-mono text-xs">
-              <div className="flex justify-between text-zinc-400"><span>Remaining Balance:</span><span className="text-emerald-400 font-bold">235,800 / 250,000 Tokens</span></div>
-              <div className="h-2 w-full rounded-full bg-black/60 overflow-hidden border border-white/5"><div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 w-[94%]" /></div>
+              <div className="flex justify-between text-zinc-400"><span>Remaining Balance:</span><span className="text-emerald-400 font-bold">{remainingTokens.toLocaleString()} / {allocated.toLocaleString()} Tokens</span></div>
+              <div className="h-2 w-full rounded-full bg-black/60 overflow-hidden border border-white/5"><div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-500" style={{ width: `${fuelPct}%` }} /></div>
             </div>
+
             <div className="grid grid-cols-2 gap-2 text-xs font-mono pt-2">
-              <div className="p-3 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] text-zinc-500 block">EST. REMAINING USD</span><span className="text-white font-bold text-sm">$4.71</span></div>
-              <div className="p-3 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] text-zinc-500 block">TTL EXPIRATION</span><span className="text-white font-bold text-sm">47h 14m</span></div>
+              <div className="p-3 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] text-zinc-500 block">EST. REMAINING USD</span><span className="text-white font-bold text-sm">${estRemainingUsd}</span></div>
+              <div className="p-3 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] text-zinc-500 block">TTL EXPIRATION</span><span className="text-white font-bold text-sm">{hoursLeft}h left</span></div>
             </div>
+
             {lastMeta && (
               <div className="rounded-xl border border-white/5 bg-black/40 p-3 font-mono text-[11px] text-zinc-400 space-y-1">
                 <div className="text-zinc-500 text-[10px] uppercase font-bold">Latest Request Trace</div>
@@ -110,10 +216,11 @@ export default function PlaygroundPage() {
               </div>
             )}
           </div>
+
           <div className="rounded-2xl border border-white/10 bg-[#0E131F] p-6 space-y-4 shadow-xl">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold flex items-center gap-2"><Code className="h-4 w-4 text-purple-400" /><span>Drop-In Python SDK</span></h3>
-              <button onClick={() => { navigator.clipboard.writeText("from openai import OpenAI\nclient = OpenAI(api_key=\"" + selectedSubKey + "\", base_url=\"http://localhost:3000/api/proxy/v1\")"); setCopiedCode(true); setTimeout(() => setCopiedCode(false), 2000); }} className="flex items-center gap-1 text-[11px] font-mono text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20">
+              <button onClick={() => { navigator.clipboard.writeText("from openai import OpenAI\n\nclient = OpenAI(\n    api_key=\"" + selectedSubKey + "\",\n    base_url=\"http://localhost:3000/api/proxy/v1\"\n)\n\nresponse = client.chat.completions.create(\n    model=\"" + (activeRental?.modelFamily || 'claude-3-5-sonnet') + "\",\n    messages=[{\"role\": \"user\", \"content\": \"Hello Kridge!\"}]\n)\nprint(response.choices[0].message.content)"); setCopiedCode(true); setTimeout(() => setCopiedCode(false), 2000); }} className="flex items-center gap-1 text-[11px] font-mono text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20">
                 {copiedCode ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}<span>{copiedCode ? "Copied" : "Copy Code"}</span>
               </button>
             </div>

@@ -38,7 +38,7 @@ export interface UserRentalSession {
   amountPaidUsd: number;
   allocatedTokens: number;
   usedTokens: number;
-  status: "ACTIVE" | "COMPLETED" | "DISPUTED" | "REFUNDED";
+  status: "ACTIVE" | "COMPLETED" | "DISPUTED" | "REFUNDED" | "EXHAUSTED";
   expiresAt: number;
   createdAt: number;
 }
