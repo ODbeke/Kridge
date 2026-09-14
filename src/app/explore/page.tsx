@@ -899,20 +899,17 @@ export default function ExploreAppPage() {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "14px" }}>⚡</span>
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        fontFamily: "var(--font-accent)",
-                        fontWeight: "800",
-                        color: "#1e1e24",
-                        letterSpacing: "0.06em",
-                      }}
-                    >
-                      ACTIVITY & BADGES
-                    </span>
-                  </div>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontFamily: "var(--font-accent)",
+                      fontWeight: "800",
+                      color: "#1e1e24",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    ACTIVITY & BADGES
+                  </span>
                   <span style={{ fontSize: "12px", color: "#7c3aed", fontWeight: "bold" }}>
                     →
                   </span>
@@ -1602,7 +1599,6 @@ export default function ExploreAppPage() {
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "6px",
                       padding: "4px 10px",
                       borderRadius: "6px",
                       background: "rgba(124, 58, 237, 0.1)",
@@ -1615,7 +1611,6 @@ export default function ExploreAppPage() {
                       marginBottom: "10px",
                     }}
                   >
-                    <span>⚡</span>
                     <span>PERSONAL PASSPORT & ON-CHAIN REPUTATION</span>
                   </div>
                   <h2
@@ -1692,7 +1687,7 @@ export default function ExploreAppPage() {
                     REPUTATION TIER
                   </span>
                   <div style={{ fontFamily: "var(--font-accent)", fontSize: "20px", fontWeight: "800", color: "#b45309", marginTop: "2px" }}>
-                    {currentTierData.icon} {currentTierData.name}
+                    {currentTierData.name}
                   </div>
                   <span style={{ fontSize: "10px", color: "#71717a" }}>Proof-of-Donation</span>
                 </div>
@@ -1715,21 +1710,21 @@ export default function ExploreAppPage() {
                   onClick={() => setActivityTab("purchases")}
                   style={{ padding: "8px 18px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
                 >
-                  🔑 Purchases & Sub-Keys ({rentals.length})
+                  Purchases & Sub-Keys ({rentals.length})
                 </button>
                 <button
                   className={`cat-btn ${activityTab === "listings" ? "active" : ""}`}
                   onClick={() => setActivityTab("listings")}
                   style={{ padding: "8px 18px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
                 >
-                  ⚡ My Listings ({myListings.length})
+                  My Listings ({myListings.length})
                 </button>
                 <button
                   className={`cat-btn ${activityTab === "badges" ? "active" : ""}`}
                   onClick={() => setActivityTab("badges")}
                   style={{ padding: "8px 18px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
                 >
-                  🏆 Badges & Reputation ({currentDonor.unlockedBadges.length})
+                  Badges & Reputation ({currentDonor.unlockedBadges.length})
                 </button>
               </div>
             </div>
@@ -1752,7 +1747,6 @@ export default function ExploreAppPage() {
                       gap: "12px",
                     }}
                   >
-                    <div style={{ fontSize: "32px" }}>🔑</div>
                     <div style={{ fontSize: "16px", fontWeight: "700", color: "#1e1e24" }}>
                       No Active Sub-Keys Found
                     </div>
@@ -1924,7 +1918,6 @@ export default function ExploreAppPage() {
                       gap: "12px",
                     }}
                   >
-                    <div style={{ fontSize: "32px" }}>⚡</div>
                     <div style={{ fontSize: "16px", fontWeight: "700", color: "#1e1e24" }}>
                       No Active Pools Listed Yet
                     </div>
@@ -2048,7 +2041,6 @@ export default function ExploreAppPage() {
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: "6px",
                           padding: "3px 8px",
                           borderRadius: "6px",
                           background: "rgba(234, 179, 8, 0.15)",
@@ -2061,7 +2053,6 @@ export default function ExploreAppPage() {
                           marginBottom: "8px",
                         }}
                       >
-                        <span>🏆</span>
                         <span>ON-CHAIN ESG CREDENTIAL LEVEL</span>
                       </div>
                       <h2
@@ -2071,13 +2062,9 @@ export default function ExploreAppPage() {
                           fontWeight: "800",
                           color: "#1e1e24",
                           margin: "0 0 6px 0",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
                         }}
                       >
-                        <span>{currentTierData.icon}</span>
-                        <span>{currentTierData.name}</span>
+                        {currentTierData.name}
                       </h2>
                       <p style={{ color: "var(--ink-secondary)", fontSize: "13px", margin: 0, maxWidth: "560px" }}>
                         {currentTierData.description} Verified on GenLayer Intelligent Contracts.
@@ -2146,7 +2133,20 @@ export default function ExploreAppPage() {
                         }}
                       >
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: "24px" }}>{cfg.icon}</span>
+                          <span
+                            style={{
+                              fontSize: "10px",
+                              fontFamily: "var(--font-accent)",
+                              fontWeight: "800",
+                              color: isUnlocked ? "#b45309" : "#7c3aed",
+                              background: isUnlocked ? "rgba(234, 179, 8, 0.12)" : "rgba(124, 58, 237, 0.08)",
+                              padding: "2px 7px",
+                              borderRadius: "4px",
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            LEVEL {TIERS_LIST.indexOf(tier) + 1}
+                          </span>
                           <span
                             style={{
                               fontSize: "9px",
