@@ -68,6 +68,7 @@ export function useKridgeStore() {
           if (accounts && accounts.length > 0) {
             const addr = accounts[0];
             let ethAmount = 0;
+            let usdcAmount = 0;
             try {
               const balHex = await (window as any).ethereum.request({
                 method: "eth_getBalance",
@@ -78,17 +79,33 @@ export function useKridgeStore() {
               console.warn("Could not fetch ETH balance:", balErr);
             }
 
+            try {
+              const cleanAddr = addr.toLowerCase().replace("0x", "").padStart(64, "0");
+              const usdcHex = await (window as any).ethereum.request({
+                method: "eth_call",
+                params: [
+                  { to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", data: "0x70a08231" + cleanAddr },
+                  "latest",
+                ],
+              });
+              if (usdcHex && usdcHex !== "0x") {
+                usdcAmount = parseInt(usdcHex, 16) / 1e6;
+              }
+            } catch (usdcErr) {
+              console.warn("Could not fetch USDC balance:", usdcErr);
+            }
+
             setWallet((prev) => ({
               ...prev,
               isConnected: true,
               address: addr,
-              balanceUsd: ethAmount * 2800,
+              balanceUsd: usdcAmount,
               chainBalances: {
                 ...prev.chainBalances,
                 base: {
                   ...prev.chainBalances.base,
                   nativeAmount: ethAmount,
-                  usdValue: ethAmount * 2800,
+                  usdValue: usdcAmount,
                 },
               },
             }));

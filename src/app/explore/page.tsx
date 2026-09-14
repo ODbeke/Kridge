@@ -90,10 +90,52 @@ export default function ExploreAppPage() {
 
   // Wallet State (Real Web3 connection, starts unauthenticated)
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [walletBalance, setWalletBalance] = useState("0.00");
+  const [ethBalance, setEthBalance] = useState("0.0000");
+  const [usdcBalance, setUsdcBalance] = useState("0.00");
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
 
+  // Helper to fetch real on-chain ETH and official Circle USDC balance on Base Sepolia
+  const fetchWalletBalances = async (address: string) => {
+    let eth = "0.0000";
+    let usdc = "0.00";
 
+    if (typeof window === "undefined" || !(window as any).ethereum) {
+      return { eth, usdc };
+    }
+
+    try {
+      const balHex = await (window as any).ethereum.request({
+        method: "eth_getBalance",
+        params: [address, "latest"],
+      });
+      eth = (parseInt(balHex, 16) / 1e18).toFixed(4);
+    } catch (e) {
+      console.warn("Error fetching ETH balance:", e);
+    }
+
+    try {
+      const cleanAddr = address.toLowerCase().replace("0x", "").padStart(64, "0");
+      const data = "0x70a08231" + cleanAddr;
+      const usdcHex = await (window as any).ethereum.request({
+        method: "eth_call",
+        params: [
+          {
+            to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+            data,
+          },
+          "latest",
+        ],
+      });
+      if (usdcHex && usdcHex !== "0x") {
+        const rawUnits = parseInt(usdcHex, 16);
+        usdc = (rawUnits / 1e6).toFixed(2);
+      }
+    } catch (e) {
+      console.warn("Error fetching USDC balance:", e);
+    }
+
+    return { eth, usdc };
+  };
 
   // Seller Form State
   const [sellerForm, setSellerForm] = useState({
@@ -157,14 +199,9 @@ export default function ExploreAppPage() {
           const accounts = await (window as any).ethereum.request({ method: "eth_accounts" });
           if (accounts && accounts.length > 0) {
             setWalletAddress(accounts[0]);
-            try {
-              const balHex = await (window as any).ethereum.request({
-                method: "eth_getBalance",
-                params: [accounts[0], "latest"],
-              });
-              const ethVal = (parseInt(balHex, 16) / 1e18).toFixed(4);
-              setWalletBalance(ethVal);
-            } catch {}
+            const { eth, usdc } = await fetchWalletBalances(accounts[0]);
+            setEthBalance(eth);
+            setUsdcBalance(usdc);
           }
         } catch (err) {
           console.error("MetaMask detection error:", err);
@@ -274,17 +311,13 @@ export default function ExploreAppPage() {
     const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts && accounts.length > 0) {
         setWalletAddress(accounts[0]);
-        try {
-          const balHex = await (window as any).ethereum.request({
-            method: "eth_getBalance",
-            params: [accounts[0], "latest"],
-          });
-          const ethVal = (parseInt(balHex, 16) / 1e18).toFixed(4);
-          setWalletBalance(ethVal);
-        } catch {}
+        const { eth, usdc } = await fetchWalletBalances(accounts[0]);
+        setEthBalance(eth);
+        setUsdcBalance(usdc);
       } else {
         setWalletAddress(null);
-        setWalletBalance("0.00");
+        setEthBalance("0.0000");
+        setUsdcBalance("0.00");
       }
     };
 
@@ -327,14 +360,9 @@ export default function ExploreAppPage() {
             }
           }
 
-          try {
-            const balHex = await (window as any).ethereum.request({
-              method: "eth_getBalance",
-              params: [addr, "latest"],
-            });
-            const ethVal = (parseInt(balHex, 16) / 1e18).toFixed(4);
-            setWalletBalance(ethVal);
-          } catch {}
+          const { eth, usdc } = await fetchWalletBalances(addr);
+          setEthBalance(eth);
+          setUsdcBalance(usdc);
         }
       } catch (err) {
         console.error("Wallet connect failed:", err);
@@ -346,7 +374,8 @@ export default function ExploreAppPage() {
 
   const handleDisconnect = () => {
     setWalletAddress(null);
-    setWalletBalance("0.00");
+    setEthBalance("0.0000");
+    setUsdcBalance("0.00");
     setIsWalletDropdownOpen(false);
   };
 
@@ -604,11 +633,19 @@ export default function ExploreAppPage() {
                   fontSize: "11px",
                   letterSpacing: "0.05em",
                   cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
                 }}
               >
-                {walletAddress.length > 12
-                  ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
-                  : walletAddress}
+                <span>
+                  {walletAddress.length > 12
+                    ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+                    : walletAddress}
+                </span>
+                <span style={{ color: "#059669", fontWeight: "bold" }}>
+                  ({usdcBalance} USDC)
+                </span>
               </button>
             ) : (
               <button
@@ -621,10 +658,16 @@ export default function ExploreAppPage() {
             )}
 
             {walletAddress && isWalletDropdownOpen && (
-              <div className="wallet-dropdown">
+              <div className="wallet-dropdown" style={{ minWidth: "210px" }}>
                 <div className="dropdown-item">
-                  <span className="dropdown-lbl">Balance</span>
-                  <span className="dropdown-val">{Number(walletBalance).toFixed(2)} USDC</span>
+                  <span className="dropdown-lbl">Circle USDC</span>
+                  <span className="dropdown-val" style={{ color: "#059669", fontWeight: "bold" }}>
+                    {usdcBalance} USDC
+                  </span>
+                </div>
+                <div className="dropdown-item">
+                  <span className="dropdown-lbl">Base Sepolia ETH</span>
+                  <span className="dropdown-val">{ethBalance} ETH</span>
                 </div>
                 <hr className="dropdown-divider" />
                 <button className="dropdown-btn" onClick={handleDisconnect}>
@@ -684,16 +727,18 @@ export default function ExploreAppPage() {
                   </span>
                 </div>
                 <div className="wallet-card-body">
-                  {/* Dynamic Native Chain Balance */}
-                  {wallet.chainBalances?.[wallet.chain] && (
-                    <div
-                      style={{
-                        padding: "8px 12px",
-                        background: "#f7f5fc",
-                        border: "1px solid #e2dbf3",
-                        borderRadius: "8px",
-                      }}
-                    >
+                  <div
+                    style={{
+                      padding: "10px 12px",
+                      background: "#f7f5fc",
+                      border: "1px solid #e2dbf3",
+                      borderRadius: "8px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                    }}
+                  >
+                    <div>
                       <div
                         style={{
                           fontSize: "9px",
@@ -703,32 +748,46 @@ export default function ExploreAppPage() {
                           letterSpacing: "0.06em",
                         }}
                       >
-                        CHAIN NATIVE BALANCE
+                        OFFICIAL CIRCLE USDC
                       </div>
                       <div
                         style={{
                           fontFamily: "var(--font-accent)",
-                          fontSize: "13px",
+                          fontSize: "16px",
                           fontWeight: "bold",
-                          color: "#000000",
+                          color: "#059669",
                           marginTop: "2px",
                         }}
                       >
-                        {wallet.chainBalances[wallet.chain].nativeAmount}{" "}
-                        {wallet.chainBalances[wallet.chain].symbol}
-                        <span
-                          style={{
-                            fontSize: "10px",
-                            fontWeight: "normal",
-                            color: "#71717a",
-                            marginLeft: "6px",
-                          }}
-                        >
-                          (${wallet.chainBalances[wallet.chain].usdValue.toFixed(2)})
-                        </span>
+                        {walletAddress ? usdcBalance : "0.00"} USDC
                       </div>
                     </div>
-                  )}
+
+                    <div style={{ borderTop: "1px dashed #e2dbf3", paddingTop: "8px" }}>
+                      <div
+                        style={{
+                          fontSize: "9px",
+                          fontFamily: "var(--font-accent)",
+                          color: "#71717a",
+                          fontWeight: "bold",
+                          letterSpacing: "0.06em",
+                        }}
+                      >
+                        BASE SEPOLIA GAS (ETH)
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "var(--font-accent)",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          color: "#1e1e24",
+                          marginTop: "2px",
+                        }}
+                      >
+                        {walletAddress ? ethBalance : "0.0000"} ETH
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </aside>
