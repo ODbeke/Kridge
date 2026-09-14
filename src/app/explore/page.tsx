@@ -808,7 +808,7 @@ export default function ExploreAppPage() {
                     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
                     : walletAddress}
                 </span>
-                <span style={{ color: "#059669", fontWeight: "bold" }}>
+                <span className="wallet-bal-pill" style={{ color: "#059669", fontWeight: "bold" }}>
                   ({usdcBalance} USDC)
                 </span>
               </button>
@@ -1130,7 +1130,7 @@ export default function ExploreAppPage() {
                     gap: "12px",
                   }}
                 >
-                  <div style={{ fontSize: "32px" }}>⚡</div>
+                  <div style={{ fontSize: "24px", color: "#422624" }}>[ + ]</div>
                   <div style={{ fontSize: "16px", fontWeight: "700", color: "#1e1e24" }}>
                     No Active Compute Pools Yet
                   </div>
@@ -1521,7 +1521,7 @@ export default function ExploreAppPage() {
               )}
 
               <form onSubmit={handleRegisterQuota}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div className="form-row-2col">
                   <div className="form-group-cell">
                     <label className="label-cell">Model Family</label>
                     <input
@@ -1552,7 +1552,7 @@ export default function ExploreAppPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div className="form-row-2col">
                   <div className="form-group-cell">
                     <label className="label-cell">Listing Type</label>
                     <select
@@ -1581,7 +1581,7 @@ export default function ExploreAppPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+                <div className="form-row-3col">
                   <div className="form-group-cell">
                     <label className="label-cell">Rental Price (USDC)</label>
                     <input
@@ -1626,16 +1626,17 @@ export default function ExploreAppPage() {
 
                 {/* Upstream API Key Input & Probe Diagnostic */}
                 <div className="form-group-cell">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "4px", marginBottom: "6px" }}>
                     <label className="label-cell" style={{ margin: 0 }}>Upstream Provider API Key</label>
-                    <span style={{ fontSize: "11px", color: "#422624", fontWeight: "700" }}>
-                      🔒 Vaulted & Never Revealed to Buyer
+                    <span style={{ fontSize: "10px", color: "#422624", fontWeight: "700" }}>
+                      Vaulted &amp; Never Revealed to Buyer
                     </span>
                   </div>
-                  <div style={{ display: "flex", gap: "8px" }}>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                     <input
                       type="password"
                       className="input-cell"
+                      style={{ flex: "1 1 200px" }}
                       placeholder="sk-ant-api03-... or sk-proj-..."
                       value={sellerForm.apiKey}
                       onChange={(e) => setSellerForm({ ...sellerForm, apiKey: e.target.value })}
@@ -1653,9 +1654,10 @@ export default function ExploreAppPage() {
                         color: "#422624",
                         fontWeight: "700",
                         cursor: isProbing || !sellerForm.apiKey ? "not-allowed" : "pointer",
+                        height: "42px",
                       }}
                     >
-                      {isProbing ? "Probing..." : "⚡ Probe Key"}
+                      {isProbing ? "Probing..." : "Probe Key"}
                     </button>
                   </div>
                   {probeResult && (
@@ -1796,14 +1798,7 @@ export default function ExploreAppPage() {
               </div>
 
               {/* 4 Summary Stats */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-                  gap: "14px",
-                  marginTop: "24px",
-                }}
-              >
+              <div className="stats-summary-grid">
                 <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
                   <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#422624", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
                     RENTED SUB-KEYS
@@ -1907,7 +1902,7 @@ export default function ExploreAppPage() {
                     </button>
                   </div>
                 ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "16px" }}>
+                  <div className="activity-card-grid">
                     {rentals.map((rental) => {
                       const isRevealed = !!revealedKeys[rental.subKey];
                       const displayKey = isRevealed
@@ -2078,7 +2073,7 @@ export default function ExploreAppPage() {
                     </button>
                   </div>
                 ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "16px" }}>
+                  <div className="activity-card-grid">
                     {myListings.map((listing) => (
                       <div
                         key={listing.id}
@@ -2254,7 +2249,7 @@ export default function ExploreAppPage() {
                 </div>
 
                 {/* All Tiers Grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "14px" }}>
+                <div className="badges-card-grid">
                   {TIERS_LIST.map((tier) => {
                     const cfg = TIER_CONFIG[tier];
                     const isUnlocked = currentDonor.unlockedBadges.includes(tier);
@@ -2329,7 +2324,7 @@ export default function ExploreAppPage() {
         {viewMode === "tribunal" && (
           <div style={{ maxWidth: "1120px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
             {/* Top Control Panel */}
-            <div className="panel-glass" style={{ padding: "32px 36px", borderRadius: "16px" }}>
+            <div className="panel-glass tribunal-top-panel">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
                 <div>
                   <div
@@ -2399,14 +2394,7 @@ export default function ExploreAppPage() {
               </div>
 
               {/* Summary Stats */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                  gap: "14px",
-                  marginTop: "24px",
-                }}
-              >
+              <div className="stats-summary-grid">
                 <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
                   <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#be123c", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
                     ACTIVE &amp; HISTORICAL CASES
@@ -2533,7 +2521,7 @@ export default function ExploreAppPage() {
                 </div>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "330px 1fr", gap: "20px", alignItems: "start" }}>
+              <div className="tribunal-court-grid">
                 {/* Left Column: Cases List & Bond Rules */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   <div className="panel-glass" style={{ padding: "20px", borderRadius: "16px" }}>

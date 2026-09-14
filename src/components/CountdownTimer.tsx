@@ -34,10 +34,10 @@ export function CountdownTimer({
       style={{
         fontVariantNumeric: "tabular-nums",
         fontFeatureSettings: "'tnum'",
+        whiteSpace: "nowrap",
         ...style,
       }}
     >
-      {showIcon && "⏱ "}
       {timeStr}
     </span>
   );

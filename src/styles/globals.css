@@ -1844,3 +1844,233 @@ body.memoriada-app-body .btn-publish:hover {
   color: #000000;
 }
 
+/* ==========================================================================
+   Comprehensive Mobile & Tablet Responsiveness for Kridge App
+   ========================================================================== */
+
+.form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-row-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.stats-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.tribunal-court-grid {
+  display: grid;
+  grid-template-columns: 330px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.activity-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.badges-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .tribunal-court-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    padding: 0 12px 60px !important;
+  }
+
+  .nav-terminal {
+    padding: 12px 14px !important;
+    margin-top: 8px !important;
+    top: 8px !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+
+  .brand-title {
+    font-size: 20px !important;
+  }
+
+  .nav-actions {
+    gap: 6px !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+  }
+
+  .btn-terminal {
+    padding: 6px 12px !important;
+    font-size: 10px !important;
+    letter-spacing: 0.04em !important;
+    gap: 4px !important;
+  }
+
+  .cat-filters-sidebar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .cat-btn {
+    padding: 6px 12px !important;
+    font-size: 10.5px !important;
+  }
+
+  .filter-card-premium {
+    padding: 16px !important;
+  }
+
+  .seller-panel {
+    padding: 20px 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .footer-admon {
+    flex-direction: column !important;
+    gap: 12px !important;
+    text-align: center !important;
+    padding-top: 24px !important;
+    margin-top: 36px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .form-row-2col,
+  .form-row-3col {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .service-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .card-service {
+    padding: 16px !important;
+    min-height: auto !important;
+    min-width: 0 !important;
+  }
+
+  .card-title {
+    font-size: 16px !important;
+  }
+
+  .card-description {
+    font-size: 11.5px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .metrics-row {
+    padding: 8px 10px !important;
+    gap: 6px !important;
+  }
+
+  .metric-lbl {
+    font-size: 7.5px !important;
+  }
+
+  .metric-val {
+    font-size: 11px !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .activity-card-grid,
+  .badges-card-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .stats-summary-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-top: 16px !important;
+  }
+
+  body.memoriada-app-body .modal-content {
+    padding: 20px 16px !important;
+    width: 94% !important;
+    max-height: 90vh !important;
+    border-radius: 16px !important;
+  }
+
+  .modal-title {
+    font-size: 18px !important;
+  }
+
+  .modal-desc {
+    font-size: 11.5px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .modal-info-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .wallet-card-premium {
+    padding: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-shell {
+    padding: 0 8px 48px !important;
+  }
+
+  .nav-terminal {
+    padding: 8px 10px !important;
+    gap: 8px !important;
+  }
+
+  .nav-brand {
+    gap: 6px !important;
+  }
+
+  .brand-title {
+    font-size: 17px !important;
+  }
+
+  .btn-terminal {
+    padding: 5px 8px !important;
+    font-size: 9px !important;
+  }
+
+  .nav-actions {
+    gap: 4px !important;
+  }
+
+  .wallet-bal-pill {
+    display: none !important;
+  }
+
+  .section-h2 {
+    font-size: 17px !important;
+  }
+
+  .section-p {
+    font-size: 11px !important;
+  }
+}
+
