@@ -2521,7 +2521,7 @@ export default function ExploreAppPage() {
                 >
                   <strong style={{ color: "#7c3aed" }}>How Escrow Disputes Work:</strong>
                   <div style={{ marginTop: "4px" }}>
-                    If an upstream API key is invalidated early or encounters server-side 401/403/429 errors during your rental session, you can stake a <strong>$1.00 Anti-Spam Bond</strong> to summon the GenLayer Multi-LLM Jury (Llama-3-70B, DeepSeek-V3, Claude-3.5-Sonnet). Verified claims automatically refund 100% of your rental fee plus return your full bond.
+                    If an upstream API key is invalidated early or encounters server-side 401/403/429 errors during your rental session, you can stake a <strong>$1.00 Anti-Spam Bond</strong> to summon the GenLayer Multi-LLM Jury. Verified claims automatically refund 100% of your rental fee plus return your full bond.
                   </div>
                 </div>
 
