@@ -336,6 +336,9 @@ export class KridgeProxyService {
               latencyMs = Date.now() - startTime;
               realSuccess = true;
             }
+          } else {
+            const errData = await geminiRes.json().catch(() => ({}));
+            console.warn("Gemini API rejected request:", geminiRes.status, errData);
           }
         } else if (isOpenAIKey || isGroqKey) {
           const endpoint = isGroqKey ? "https://api.groq.com/openai/v1/chat/completions" : "https://api.openai.com/v1/chat/completions";
