@@ -136,14 +136,13 @@ export default function LandingPage() {
             ))}
           </nav>
 
-          <button
-            type="button"
+          <Link
+            href="/explore"
             className="desktop-signin"
-            onClick={() => setWalletModalOpen(true)}
           >
-            <Wallet className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{connectedWallet ? connectedWallet : "Connect Wallet"}</span>
-          </button>
+            <span>Launch App</span>
+            <ArrowRight className="w-3.5 h-3.5 text-cyan-400" />
+          </Link>
 
           <button
             className="mobile-burger"
@@ -178,16 +177,14 @@ export default function LandingPage() {
                   {item.name}
                 </Link>
               ))}
-              <button
-                type="button"
+              <Link
+                href="/explore"
                 className="mobile-signin"
-                onClick={() => {
-                  setMenuOpen(false);
-                  setWalletModalOpen(true);
-                }}
+                onClick={() => setMenuOpen(false)}
               >
-                {connectedWallet ? connectedWallet : "Connect Wallet"}
-              </button>
+                <span>Launch App</span>
+                <ArrowRight className="w-4 h-4 ml-1 inline text-cyan-400" />
+              </Link>
             </nav>
           </>
         )}
