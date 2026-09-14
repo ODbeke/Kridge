@@ -81,7 +81,7 @@ export default function LandingPage() {
 
   const navItems = [
     { name: "Explore", href: "/explore", icon: Layers },
-    { name: "Sell Quota", href: "/sell", icon: PlusCircle },
+    { name: "Sell Quota", href: "/explore?view=seller", icon: PlusCircle },
     { name: "Playground", href: "/playground", icon: Play },
     { name: "AI Tribunal", href: "/tribunal", icon: Scale },
     { name: "Impact Badges", href: "/impact", icon: Award },
@@ -240,7 +240,7 @@ export default function LandingPage() {
               <span>Explore Marketplace</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/sell" className="cta-secondary">
+            <Link href="/explore?view=seller" className="cta-secondary">
               <DollarSign className="w-4 h-4 text-emerald-400" />
               <span>List Credits (Rent / Free)</span>
             </Link>
@@ -258,7 +258,7 @@ export default function LandingPage() {
               </div>
             </Link>
 
-            <Link href="/sell" className="stat-item anim" style={{ "--d": "0.54s" } as React.CSSProperties}>
+            <Link href="/explore?view=seller" className="stat-item anim" style={{ "--d": "0.54s" } as React.CSSProperties}>
               <span className="stat-icon">%</span>
               <div className="stat-content">
                 <span className="stat-value">{stats.sellerYield}</span>

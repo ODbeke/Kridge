@@ -28,7 +28,7 @@ import { formatAddress } from "@/lib/utils";
 
 const NAV_LINKS = [
   { href: "/explore", label: "Marketplace", icon: Layers },
-  { href: "/sell", label: "List Quota", icon: PlusCircle, isCta: true },
+  { href: "/explore?view=seller", label: "List Quota", icon: PlusCircle, isCta: true },
   { href: "/explore?view=activity", label: "Activity & Badges", icon: Activity },
   { href: "/playground", label: "Playground", icon: Play },
   { href: "/tribunal", label: "AI Tribunal", icon: Scale },

@@ -118,7 +118,7 @@ export default function ImpactPage() {
         </div>
 
         <Link
-          href="/sell"
+          href="/explore?view=seller"
           className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2.5 text-xs font-bold text-black shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-all self-start sm:self-auto"
         >
           <HeartHandshake className="h-4 w-4" />
