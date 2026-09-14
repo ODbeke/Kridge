@@ -145,37 +145,37 @@ export default function LandingPage() {
         {/* 3. Stats Footer (Bottom of Hero Viewport) */}
         <footer className="stats">
           <div className="stats-grid">
-            <Link href="/explore" className="stat-item anim" style={{ "--d": "0.48s" } as React.CSSProperties}>
+            <div className="stat-item anim" style={{ "--d": "0.48s" } as React.CSSProperties}>
               <span className="stat-icon">&lt;</span>
               <div className="stat-content">
                 <span className="stat-value">{stats.discount}</span>
                 <span className="stat-label">Average Compute Discount</span>
               </div>
-            </Link>
+            </div>
 
-            <Link href="/explore?view=seller" className="stat-item anim" style={{ "--d": "0.54s" } as React.CSSProperties}>
+            <div className="stat-item anim" style={{ "--d": "0.54s" } as React.CSSProperties}>
               <span className="stat-icon">%</span>
               <div className="stat-content">
                 <span className="stat-value">{stats.sellerYield}</span>
                 <span className="stat-label">Seller Yield (5% Fee)</span>
               </div>
-            </Link>
+            </div>
 
-            <Link href="/tribunal" className="stat-item anim" style={{ "--d": "0.60s" } as React.CSSProperties}>
+            <div className="stat-item anim" style={{ "--d": "0.60s" } as React.CSSProperties}>
               <span className="stat-icon">*</span>
               <div className="stat-content">
                 <span className="stat-value">{stats.bond}</span>
                 <span className="stat-label">Anti-Spam Dispute Bond</span>
               </div>
-            </Link>
+            </div>
 
-            <Link href="/impact" className="stat-item anim" style={{ "--d": "0.66s" } as React.CSSProperties}>
+            <div className="stat-item anim" style={{ "--d": "0.66s" } as React.CSSProperties}>
               <span className="stat-icon">#</span>
               <div className="stat-content">
                 <span className="stat-value">{stats.badges}</span>
                 <span className="stat-label">ESG Badges ($50–$20k)</span>
               </div>
-            </Link>
+            </div>
           </div>
         </footer>
       </div>
