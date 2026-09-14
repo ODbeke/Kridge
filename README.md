@@ -377,6 +377,19 @@ KRIDGE/
 
 ---
 
+## 🌐 Live Deployments & Network Support
+
+| Network | Contract / Component | Address | Status |
+| :--- | :--- | :--- | :--- |
+| **GenLayer Studio / Testnet** | `KridgeMarketplace` (Intelligent Contract) | [`0xC54DCDCBeB99E5773693F894285756E78EdAf242`](https://studio-next.genlayer.com/) | **Live & Deployed** |
+| **Base Sepolia** | `KridgeHyperlaneReceiver` (Escrow) | `0x91834eC952136067C0877994EAbFE89a05F4A801` | **Live & Active** |
+| **zkSync Era Sepolia** | `KridgeHyperlaneReceiver` | `0x12a99C048A463c647b0197dFa36D4FF3924f7988` | *Coming Soon* |
+| **Solana Devnet** | `KrdgSolanaMailboxReceiver` | `KrdgSolanaMailboxReceiver11111111111111111` | *Coming Soon* |
+
+> **Multi-Chain Rollout Note**: Kridge is currently focused and live on **Base Sepolia** (for payments and escrow) and **GenLayer** (for intelligent key health verification and dispute arbitration). Additional L2s (zkSync Era) and SVM (Solana) integrations are coming soon.
+
+---
+
 ## 🚀 Quickstart & Local Development
 
 ### Prerequisites
