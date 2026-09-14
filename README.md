@@ -11,6 +11,12 @@
 
 ---
 
+<p align="center">
+  <img src="public/assets/preview.png" alt="Kridge - Decentralized AI Credit Market" width="100%" />
+</p>
+
+---
+
 ## About Kridge
 
 Kridge is a decentralized secondary compute marketplace and public compute faucet built to solve the recurring waste of monthly AI subscription quotas. Millions of developers and enterprises subscribe to high-tier AI plans (such as OpenAI Scale, Anthropic Claude Team, and Google Gemini Advanced) where unspent tokens reset to zero at the close of every billing cycle.
