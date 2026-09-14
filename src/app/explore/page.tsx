@@ -799,9 +799,9 @@ export default function ExploreAppPage() {
           <div className="dashboard-grid">
             {/* Left Column: Settings and Wallet Config */}
             <aside className="dashboard-sidebar">
-              {/* 1. Model Ecosystems Filter Widget */}
+              {/* 1. Model Filter Widget */}
               <div className="panel-glass filter-card-premium">
-                <h3 className="sidebar-h3">⚡ Model Ecosystems</h3>
+                <h3 className="sidebar-h3">Model</h3>
                 <p className="sidebar-p">Filter compute quotas & endpoints by model provider</p>
                 <div className="cat-filters-sidebar">
                   {MODEL_PROVIDERS.map((provider) => (
