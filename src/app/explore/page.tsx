@@ -64,12 +64,12 @@ const CHAIN_CONFIGS: Record<
     status: "active",
   },
   genlayer: {
-    chainIdHex: "0xa179", // GenLayer Testnet
+    chainIdHex: "0xf22d", // 61997 GenLayer Studio Next
     chainName: "GenLayer",
-    networkTag: "GENLAYER_TESTNET",
-    rpcUrls: ["https://testnet.genlayer.network"],
+    networkTag: "GENLAYER_STUDIO_NEXT",
+    rpcUrls: ["https://studio-next.genlayer.com/api"],
     nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
-    blockExplorerUrls: ["https://scan.genlayer.network"],
+    blockExplorerUrls: ["https://explorer-studio-dev.genlayer.com"],
     isEvm: true,
     status: "active",
   },

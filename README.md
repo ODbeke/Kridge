@@ -392,7 +392,7 @@ KRIDGE/
 
 | Network | Contract / Component | Address | Status |
 | :--- | :--- | :--- | :--- |
-| **GenLayer Studio / Testnet** | `KridgeMarketplace` (Intelligent Contract) | [`0xC54DCDCBeB99E5773693F894285756E78EdAf242`](https://studio-next.genlayer.com/) | **Live and Deployed** |
+| **GenLayer Studio Next** | `KridgeMarketplace` (Intelligent Contract) | [`0xC54DCDCBeB99E5773693F894285756E78EdAf242`](https://explorer-studio-dev.genlayer.com/address/0xC54DCDCBeB99E5773693F894285756E78EdAf242) | **Live and Deployed** |
 | **Base Sepolia** | `KridgeHyperlaneReceiver` (Escrow) | [`0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf`](https://sepolia.basescan.org/address/0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf) | **Live and Active** |
 | **zkSync Era Sepolia** | `KridgeHyperlaneReceiver` | `0x12a99C048A463c647b0197dFa36D4FF3924f7988` | *Coming Soon* |
 | **Solana Devnet** | `KrdgSolanaMailboxReceiver` | `KrdgSolanaMailboxReceiver11111111111111111` | *Coming Soon* |
@@ -423,7 +423,7 @@ npm install
 Create a `.env.local` file in the project root:
 ```env
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_GENLAYER_RPC=https://testnet.genlayer.network
+NEXT_PUBLIC_GENLAYER_RPC=https://studio-next.genlayer.com/api
 ```
 
 ### 4. Launch Development Server
