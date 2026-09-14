@@ -816,11 +816,11 @@ export default function ExploreAppPage() {
                 </div>
               </div>
 
-              {/* 2. Circle Wallet Spend Limit Guardrails */}
+              {/* 2. Wallet Spend Limit Guardrails */}
               <div className="panel-glass wallet-card-premium">
                 <div className="wallet-card-header">
                   <span className="pulse-dot active-glow"></span>
-                  <span className="wallet-card-title">ESCROW WALLET</span>
+                  <span className="wallet-card-title">WALLET</span>
                   <span className="wallet-card-net">
                     {CHAIN_CONFIGS[wallet.chain]?.networkTag || "BASE_SEPOLIA"}
                   </span>
@@ -840,22 +840,10 @@ export default function ExploreAppPage() {
                     <div>
                       <div
                         style={{
-                          fontSize: "9px",
                           fontFamily: "var(--font-accent)",
-                          color: "#7c3aed",
-                          fontWeight: "bold",
-                          letterSpacing: "0.06em",
-                        }}
-                      >
-                        OFFICIAL CIRCLE USDC
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: "var(--font-accent)",
-                          fontSize: "16px",
+                          fontSize: "18px",
                           fontWeight: "bold",
                           color: "#059669",
-                          marginTop: "2px",
                         }}
                       >
                         {walletAddress ? usdcBalance : "0.00"} USDC
