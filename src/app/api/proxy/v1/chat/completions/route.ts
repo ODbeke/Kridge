@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const result = await KridgeProxyService.handleChatCompletion(subKey, body);
-    const session = KridgeProxyService.getSession(subKey);
+    const session = KridgeProxyService.getSession(subKey, body.model);
 
     const totalUsed = session ? session.usedTokens : (result.promptTokens + result.completionTokens);
     const allocated = session ? session.allocatedTokens : 250000;

@@ -141,7 +141,11 @@ export default function PlaygroundPage() {
       setLastMeta(meta);
 
       const tokensConsumed = meta.promptTokens + meta.completionTokens;
-      setLocalUsedTokens((prev) => prev + tokensConsumed);
+      if (typeof meta.usedTokens === "number") {
+        setLocalUsedTokens(meta.usedTokens);
+      } else {
+        setLocalUsedTokens((prev) => prev + tokensConsumed);
+      }
       updateRentalUsage(selectedSubKey, tokensConsumed);
 
       setMessages((prev) => [

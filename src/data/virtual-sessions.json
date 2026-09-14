@@ -1,0 +1,32 @@
+[
+  {
+    "subKey": "krdg_live_da15e8846256922b0af33ceb3053cd6d",
+    "listingId": 1,
+    "provider": "gemini",
+    "upstreamApiKey": "sk-vault-mock-gemini-key-84192",
+    "allocatedTokens": 1000000,
+    "usedTokens": 0,
+    "modelFamily": "Gemini 3.8 Flash",
+    "buyerAddress": "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
+    "sellerAddress": "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
+    "listingType": "RENT",
+    "createdAt": 1742078000000,
+    "expiresAt": 1742250800000,
+    "status": "ACTIVE"
+  },
+  {
+    "subKey": "krdg_live_demo_claude_9a8f4c1e7b2d",
+    "listingId": 2,
+    "provider": "anthropic",
+    "upstreamApiKey": "sk-ant-api03-mock-kridge-vaulted-key-77189",
+    "allocatedTokens": 250000,
+    "usedTokens": 14200,
+    "modelFamily": "claude-3-5-sonnet",
+    "buyerAddress": "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
+    "sellerAddress": "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
+    "listingType": "RENT",
+    "createdAt": 1742078000000,
+    "expiresAt": 1742250800000,
+    "status": "ACTIVE"
+  }
+]
