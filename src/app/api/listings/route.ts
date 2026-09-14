@@ -67,6 +67,29 @@ export async function POST(req: NextRequest) {
     if (body.apiKey) {
       const { vaultApiKey } = await import("@/lib/vault");
       vaultApiKey(newListing.id, provider, body.apiKey);
+
+      // Backfill any active sessions waiting for this provider's real upstream key
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+        const DATA_FILE = path.join(process.cwd(), "src/data/virtual-sessions.json");
+        if (fs.existsSync(DATA_FILE)) {
+          const stored = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+          if (Array.isArray(stored)) {
+            stored.forEach((s: any) => {
+              if (
+                s.provider === provider &&
+                (s.upstreamApiKey.startsWith("sk-vault-") || s.upstreamApiKey.startsWith("sk-ant-api03-mock-"))
+              ) {
+                s.upstreamApiKey = body.apiKey.trim();
+              }
+            });
+            fs.writeFileSync(DATA_FILE, JSON.stringify(stored, null, 2), "utf-8");
+          }
+        }
+      } catch (backfillErr) {
+        console.warn("Could not backfill virtual sessions with vaulted key:", backfillErr);
+      }
     }
 
     return NextResponse.json({

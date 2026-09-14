@@ -182,11 +182,17 @@ export class KridgeProxyService {
         ? "deepseek"
         : "groq";
 
+      let vaultedKey: string | undefined;
+      try {
+        const { getVaultedApiKey } = require("../lib/vault");
+        vaultedKey = getVaultedApiKey(1);
+      } catch {}
+
       session = {
         subKey,
         listingId: 1,
         provider: provider as any,
-        upstreamApiKey: "sk-vault-" + crypto.randomBytes(8).toString("hex"),
+        upstreamApiKey: vaultedKey || ("sk-vault-" + crypto.randomBytes(8).toString("hex")),
         allocatedTokens: 1000000,
         usedTokens: 0,
         modelFamily: model,
@@ -200,6 +206,20 @@ export class KridgeProxyService {
 
       map.set(subKey, session);
       syncSessions();
+    }
+
+    if (
+      session &&
+      (session.upstreamApiKey.startsWith("sk-vault-") || session.upstreamApiKey.startsWith("sk-ant-api03-mock-"))
+    ) {
+      try {
+        const { getVaultedApiKey } = require("../lib/vault");
+        const vaulted = getVaultedApiKey(session.listingId) || getVaultedApiKey(1);
+        if (vaulted) {
+          session.upstreamApiKey = vaulted;
+          syncSessions();
+        }
+      } catch {}
     }
 
     return session;
