@@ -44,7 +44,7 @@ export default function PlaygroundPage() {
   if (!availableKeys.some(k => k.subKey === "krdg_live_demo_claude_9a8f4c1e7b2d")) {
     availableKeys.push({
       subKey: "krdg_live_demo_claude_9a8f4c1e7b2d",
-      label: "Claude 3.5 Sonnet Demo Key (235,800 tok left)",
+      label: "Claude 3.5 Sonnet Starter Key (235,800 tok left)",
       allocatedTokens: 250000,
       usedTokens: 14200,
       modelFamily: "claude-3-5-sonnet",

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { INITIAL_LISTINGS } from "@/lib/mock-data";
+import { getLiveListings } from "@/lib/live-listings";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const provider = searchParams.get("provider");
   const type = searchParams.get("type");
 
-  let filtered = [...INITIAL_LISTINGS];
+  let filtered = [...getLiveListings()];
 
   if (provider) {
     filtered = filtered.filter((l) => l.provider.toLowerCase() === provider.toLowerCase());
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       expiryTimestamp: l.expiryTimestamp,
       isVerified: l.isVerified,
       verificationScore: l.verificationScore,
-      checkoutEndpoint: "/api/agent/rent"
-    }))
+      checkoutEndpoint: "/api/agent/rent",
+    })),
   });
 }

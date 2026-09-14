@@ -6,18 +6,18 @@ import { INITIAL_LISTINGS, INITIAL_DISPUTES, INITIAL_DONORS } from "./mock-data"
 import { getTierFromRescued } from "./utils";
 
 export const INITIAL_CHAIN_BALANCES: Record<SupportedChain, ChainBalanceInfo> = {
-  base: { name: "Base", symbol: "ETH", nativeAmount: 0.052, usdValue: 145.50, icon: "🔵" },
-  zksync: { name: "zkSync Era", symbol: "ETH", nativeAmount: 0.115, usdValue: 320.80, icon: "⚡" },
-  solana: { name: "Solana", symbol: "SOL", nativeAmount: 0.58, usdValue: 84.20, icon: "🟣" },
-  genlayer: { name: "GenLayer", symbol: "GEN", nativeAmount: 450.0, usdValue: 225.00, icon: "🧠" },
+  base: { name: "Base", symbol: "ETH", nativeAmount: 0.0, usdValue: 0.0, icon: "🔵" },
+  zksync: { name: "zkSync Era", symbol: "ETH", nativeAmount: 0.0, usdValue: 0.0, icon: "⚡" },
+  solana: { name: "Solana", symbol: "SOL", nativeAmount: 0.0, usdValue: 0.0, icon: "🟣" },
+  genlayer: { name: "GenLayer", symbol: "GEN", nativeAmount: 0.0, usdValue: 0.0, icon: "🧠" },
 };
 
 const STORAGE_KEYS = {
-  LISTINGS: "kridge_listings_v1",
-  RENTALS: "kridge_rentals_v1",
-  DISPUTES: "kridge_disputes_v1",
-  DONORS: "kridge_donors_v1",
-  WALLET: "kridge_wallet_v1",
+  LISTINGS: "kridge_listings_v2",
+  RENTALS: "kridge_rentals_v2",
+  DISPUTES: "kridge_disputes_v2",
+  DONORS: "kridge_donors_v2",
+  WALLET: "kridge_wallet_v2",
 };
 
 export function useKridgeStore() {
@@ -26,51 +26,81 @@ export function useKridgeStore() {
   const [disputes, setDisputes] = useState<DisputeItem[]>(INITIAL_DISPUTES);
   const [donors, setDonors] = useState<DonorProfile[]>(INITIAL_DONORS);
   const [wallet, setWallet] = useState<WalletState>({
-    isConnected: true,
-    address: "0xAgent_Charlie_77b9A",
+    isConnected: false,
+    address: "",
     chain: "base" as SupportedChain,
-    balanceUsd: 145.50,
+    balanceUsd: 0,
     chainBalances: INITIAL_CHAIN_BALANCES,
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
-
+  // Synchronize with live server API and local storage
   useEffect(() => {
-    try {
-      const savedListings = localStorage.getItem(STORAGE_KEYS.LISTINGS);
-      if (savedListings) setListings(JSON.parse(savedListings));
+    async function loadData() {
+      try {
+        // 1. Fetch live listings from /api/listings
+        const res = await fetch("/api/listings");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.listings)) {
+            setListings(data.listings);
+            localStorage.setItem(STORAGE_KEYS.LISTINGS, JSON.stringify(data.listings));
+          }
+        } else {
+          const savedListings = localStorage.getItem(STORAGE_KEYS.LISTINGS);
+          if (savedListings) setListings(JSON.parse(savedListings));
+        }
 
-      const savedRentals = localStorage.getItem(STORAGE_KEYS.RENTALS);
-      if (savedRentals) {
-        setRentals(JSON.parse(savedRentals));
-      } else {
-        // Provide 1 initial active session for instant playground testing
-        const defaultRental: UserRentalSession = {
-          rentalId: 1,
-          listingId: 1,
-          subKey: "krdg_live_demo_claude_9a8f4c1e7b2d",
-          provider: "anthropic",
-          modelFamily: "claude-3-5-sonnet",
-          listingType: "RENT",
-          amountPaidUsd: 3.50,
-          allocatedTokens: 250000,
-          usedTokens: 14200,
-          status: "ACTIVE",
-          expiresAt: Date.now() + 172800000,
-          createdAt: Date.now() - 3600000
-        };
-        setRentals([defaultRental]);
+        const savedRentals = localStorage.getItem(STORAGE_KEYS.RENTALS);
+        if (savedRentals) {
+          setRentals(JSON.parse(savedRentals));
+        }
+
+        const savedDisputes = localStorage.getItem(STORAGE_KEYS.DISPUTES);
+        if (savedDisputes) setDisputes(JSON.parse(savedDisputes));
+
+        const savedDonors = localStorage.getItem(STORAGE_KEYS.DONORS);
+        if (savedDonors) setDonors(JSON.parse(savedDonors));
+
+        // 2. Auto-detect real MetaMask wallet
+        if (typeof window !== "undefined" && (window as any).ethereum) {
+          const accounts = await (window as any).ethereum.request({ method: "eth_accounts" });
+          if (accounts && accounts.length > 0) {
+            const addr = accounts[0];
+            let ethAmount = 0;
+            try {
+              const balHex = await (window as any).ethereum.request({
+                method: "eth_getBalance",
+                params: [addr, "latest"],
+              });
+              ethAmount = parseInt(balHex, 16) / 1e18;
+            } catch (balErr) {
+              console.warn("Could not fetch ETH balance:", balErr);
+            }
+
+            setWallet((prev) => ({
+              ...prev,
+              isConnected: true,
+              address: addr,
+              balanceUsd: ethAmount * 2800,
+              chainBalances: {
+                ...prev.chainBalances,
+                base: {
+                  ...prev.chainBalances.base,
+                  nativeAmount: ethAmount,
+                  usdValue: ethAmount * 2800,
+                },
+              },
+            }));
+          }
+        }
+      } catch (e) {
+        console.error("Initialization error:", e);
       }
-
-      const savedDisputes = localStorage.getItem(STORAGE_KEYS.DISPUTES);
-      if (savedDisputes) setDisputes(JSON.parse(savedDisputes));
-
-      const savedDonors = localStorage.getItem(STORAGE_KEYS.DONORS);
-      if (savedDonors) setDonors(JSON.parse(savedDonors));
-    } catch (e) {
-      console.error("Failed loading from localStorage:", e);
+      setIsLoaded(true);
     }
-    setIsLoaded(true);
+
+    loadData();
   }, []);
 
   const saveListings = (items: KridgeListing[]) => {
@@ -93,21 +123,34 @@ export function useKridgeStore() {
     localStorage.setItem(STORAGE_KEYS.DONORS, JSON.stringify(items));
   };
 
-  const addListing = (listing: Omit<KridgeListing, "id" | "isVerified" | "verificationScore" | "lastVerifiedMinutesAgo">) => {
+  const addListing = async (
+    listing: Omit<KridgeListing, "id" | "isVerified" | "verificationScore" | "lastVerifiedMinutesAgo">
+  ) => {
     const newId = listings.length ? Math.max(...listings.map((l) => l.id)) + 1 : 1;
     const fullListing: KridgeListing = {
       ...listing,
       id: newId,
       isVerified: true,
-      verificationScore: 0.99,
-      lastVerifiedMinutesAgo: 1
+      verificationScore: 1.0,
+      lastVerifiedMinutesAgo: 0,
     };
 
     const updated = [fullListing, ...listings];
     saveListings(updated);
 
+    // Persist to live server registry
+    try {
+      await fetch("/api/listings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fullListing),
+      });
+    } catch (err) {
+      console.warn("Failed persisting listing to server:", err);
+    }
+
     // If it is a donation, update donor profile & badges
-    if (listing.listingType === "DONATION") {
+    if (listing.listingType === "DONATION" && wallet.address) {
       updateDonorImpact(wallet.address, wallet.chain, listing.retailValueUsd, listing.quotaTokens);
     }
 
@@ -138,7 +181,7 @@ export function useKridgeStore() {
         totalTokensDonated: newTokens,
         donationsCount: donor.donationsCount + 1,
         highestTier: newTier,
-        unlockedBadges: unlocked
+        unlockedBadges: unlocked,
       };
       updatedDonors = updatedDonors.map((d) => (d.address.toLowerCase() === donorAddress.toLowerCase() ? donor! : d));
     } else {
@@ -150,7 +193,7 @@ export function useKridgeStore() {
         totalTokensDonated: tokensAmount,
         donationsCount: 1,
         highestTier: newTier,
-        unlockedBadges: newTier !== "NONE" ? [newTier] : []
+        unlockedBadges: newTier !== "NONE" ? [newTier] : [],
       };
       updatedDonors.push(newDonor);
     }
@@ -168,7 +211,9 @@ export function useKridgeStore() {
     const listing = listings.find((l) => l.id === listingId);
     if (!listing) throw new Error("Listing not found");
 
-    const subKey = customSubKey || ("krdg_live_" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10));
+    const subKey =
+      customSubKey ||
+      "krdg_live_" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
     const newRentalId = rentals.length ? Math.max(...rentals.map((r) => r.rentalId)) + 1 : 1;
 
     const newRental: UserRentalSession = {
@@ -183,12 +228,12 @@ export function useKridgeStore() {
       usedTokens: 0,
       status: "ACTIVE",
       expiresAt: Date.now() + durationHours * 3600000,
-      createdAt: Date.now()
+      createdAt: Date.now(),
     };
 
     saveRentals([newRental, ...rentals]);
 
-    // Update listing status or remaining
+    // Update listing remaining
     const updatedListings = listings.map((l) =>
       l.id === listingId ? { ...l, remainingTokens: 0 } : l
     );
@@ -222,17 +267,16 @@ export function useKridgeStore() {
       disputeId,
       rentalId,
       listingId: rental.listingId,
-      complainant: wallet.address,
+      complainant: wallet.address || "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
       provider: rental.provider,
       reason,
       errorTrace,
-      bondAmountUsd: 1.00,
-      status: "PENDING"
+      bondAmountUsd: 1.0,
+      status: "PENDING",
     };
 
     saveDisputes([newDispute, ...disputes]);
 
-    // Mark rental as disputed
     const updatedRentals = rentals.map((r) =>
       r.rentalId === rentalId ? { ...r, status: "DISPUTED" as const } : r
     );
@@ -255,23 +299,23 @@ export function useKridgeStore() {
               model: "Llama-3-70B-Instruct",
               vote: verdict,
               confidence: 0.98,
-              statement: reasoning
+              statement: reasoning,
             },
             {
               validator: "GenLayer-Validator-02 (DeepSeek-V3)",
               model: "DeepSeek-V3",
               vote: verdict,
               confidence: 0.96,
-              statement: "Consensus reached based on HTTP error signature & gateway audit trail."
+              statement: "Consensus reached based on cryptographic receipts & gateway audit trail.",
             },
             {
               validator: "GenLayer-Validator-03 (Claude-3.5-Sonnet)",
               model: "Claude-3.5-Sonnet",
               vote: verdict,
               confidence: 0.99,
-              statement: "Optimistic democracy appeals ladder finalized with unanimous verdict."
-            }
-          ]
+              statement: "GenLayer subjective consensus finalized with unanimous AI validator verdict.",
+            },
+          ],
         };
       }
       return d;
@@ -299,7 +343,6 @@ export function useKridgeStore() {
     }));
   };
 
-
   return {
     isLoaded,
     listings,
@@ -313,6 +356,6 @@ export function useKridgeStore() {
     resolveDisputeWithAI,
     switchChain,
     updateDonorImpact,
-    updateRentalUsage
+    updateRentalUsage,
   };
 }

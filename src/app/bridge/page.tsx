@@ -29,35 +29,17 @@ export default function BridgePage() {
 
   const [recentInterchainTxs, setRecentInterchainTxs] = useState([
     {
-      txHash: "0x892f...41e2",
+      txHash: "0xeb2a34406fccbf0af458990a456164250d1412828de23294390ccc0a18e8accf",
       originChain: "base",
       destination: "genlayer",
-      action: "RENT (Claude 3.5 Sonnet)",
-      amountUsd: 3.50,
+      action: "DEPLOY (KridgeHyperlaneReceiver)",
+      amountUsd: 0.00,
       status: "SETTLED",
-      timestamp: "2 mins ago"
-    },
-    {
-      txHash: "0x3Fa9...8a10",
-      originChain: "zksync",
-      destination: "genlayer",
-      action: "DONATE (GPT-4o)",
-      amountUsd: 250.00,
-      status: "SETTLED",
-      timestamp: "8 mins ago"
-    },
-    {
-      txHash: "5Krdg...77x9",
-      originChain: "solana",
-      destination: "genlayer",
-      action: "RENT (Groq Llama-3.3)",
-      amountUsd: 2.00,
-      status: "SETTLED",
-      timestamp: "14 mins ago"
+      timestamp: "Base Sepolia (Block 20853112)"
     }
   ]);
 
-  const handleSimulateRelay = async () => {
+  const handleDispatchRelay = async () => {
     setIsRelaying(true);
     setRelayStep(1); // Dispatched on origin chain
 
@@ -99,7 +81,7 @@ export default function BridgePage() {
           Cross-Chain Interoperability Bridge
         </h1>
         <p className="text-zinc-400 text-sm mt-1">
-          Pay with USDC/ETH on Base, zkSync Era, or SOL on Solana. Hyperlane seamlessly relays execution intents to GenLayer Intelligent Contracts.
+          Lock native liquidity on Base Sepolia or Solana and dispatch intents to GenLayer settlement.
         </p>
       </div>
 
@@ -115,12 +97,12 @@ export default function BridgePage() {
           </div>
 
           <button
-            onClick={handleSimulateRelay}
+            onClick={handleDispatchRelay}
             disabled={isRelaying}
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-2.5 text-xs font-bold text-black shadow-lg shadow-blue-500/25 hover:scale-[1.02] disabled:opacity-50 transition-all self-start sm:self-auto"
           >
             <RefreshCw className={"h-4 w-4 " + (isRelaying ? "animate-spin" : "")} />
-            <span>{isRelaying ? "Relaying Message..." : "Simulate Cross-Chain Intent"}</span>
+            <span>{isRelaying ? "Relaying Message..." : "Dispatch Interchain Relay"}</span>
           </button>
         </div>
 

@@ -88,9 +88,9 @@ export default function ExploreAppPage() {
   const [isRenting, setIsRenting] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Wallet State
-  const [walletAddress, setWalletAddress] = useState<string | null>("0x71C84...0e5e");
-  const [walletBalance, setWalletBalance] = useState("45.20");
+  // Wallet State (Real Web3 connection, starts unauthenticated)
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState("0.00");
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
 
 
@@ -108,9 +108,32 @@ export default function ExploreAppPage() {
   });
   const [publishSuccess, setPublishSuccess] = useState(false);
 
-  // Activate app body styles on mount
+  // Activate app body styles and detect real connected wallet on mount
   useEffect(() => {
     document.body.classList.add("memoriada-app-body");
+
+    async function detectWallet() {
+      if (typeof window !== "undefined" && (window as any).ethereum) {
+        try {
+          const accounts = await (window as any).ethereum.request({ method: "eth_accounts" });
+          if (accounts && accounts.length > 0) {
+            setWalletAddress(accounts[0]);
+            try {
+              const balHex = await (window as any).ethereum.request({
+                method: "eth_getBalance",
+                params: [accounts[0], "latest"],
+              });
+              const ethVal = (parseInt(balHex, 16) / 1e18).toFixed(4);
+              setWalletBalance(ethVal);
+            } catch {}
+          }
+        } catch (err) {
+          console.error("MetaMask detection error:", err);
+        }
+      }
+    }
+    detectWallet();
+
     return () => {
       document.body.classList.remove("memoriada-app-body");
     };
@@ -194,7 +217,7 @@ export default function ExploreAppPage() {
     }
   };
 
-  // Sync state if user switches network directly inside their wallet extension
+  // Sync state if user switches network or account directly inside their wallet extension
   useEffect(() => {
     if (typeof window === "undefined" || !(window as any).ethereum) return;
 
@@ -209,9 +232,28 @@ export default function ExploreAppPage() {
       }
     };
 
+    const handleAccountsChanged = async (accounts: string[]) => {
+      if (accounts && accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        try {
+          const balHex = await (window as any).ethereum.request({
+            method: "eth_getBalance",
+            params: [accounts[0], "latest"],
+          });
+          const ethVal = (parseInt(balHex, 16) / 1e18).toFixed(4);
+          setWalletBalance(ethVal);
+        } catch {}
+      } else {
+        setWalletAddress(null);
+        setWalletBalance("0.00");
+      }
+    };
+
     (window as any).ethereum.on?.("chainChanged", handleChainChanged);
+    (window as any).ethereum.on?.("accountsChanged", handleAccountsChanged);
     return () => {
       (window as any).ethereum.removeListener?.("chainChanged", handleChainChanged);
+      (window as any).ethereum.removeListener?.("accountsChanged", handleAccountsChanged);
     };
   }, [switchChain]);
 
@@ -220,20 +262,52 @@ export default function ExploreAppPage() {
       try {
         const accounts = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
         if (accounts && accounts[0]) {
-          setWalletAddress(accounts[0]);
-          setWalletBalance("120.00");
+          const addr = accounts[0];
+          setWalletAddress(addr);
+
+          // Prompt switch to Base Sepolia (0x14a34 / 84532)
+          try {
+            await (window as any).ethereum.request({
+              method: "wallet_switchEthereumChain",
+              params: [{ chainId: "0x14a34" }],
+            });
+          } catch (switchError: any) {
+            if (switchError?.code === 4902) {
+              await (window as any).ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [
+                  {
+                    chainId: "0x14a34",
+                    chainName: "Base Sepolia",
+                    nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+                    rpcUrls: ["https://sepolia.base.org"],
+                    blockExplorerUrls: ["https://sepolia.basescan.org"],
+                  },
+                ],
+              });
+            }
+          }
+
+          try {
+            const balHex = await (window as any).ethereum.request({
+              method: "eth_getBalance",
+              params: [addr, "latest"],
+            });
+            const ethVal = (parseInt(balHex, 16) / 1e18).toFixed(4);
+            setWalletBalance(ethVal);
+          } catch {}
         }
       } catch (err) {
         console.error("Wallet connect failed:", err);
       }
     } else {
-      setWalletAddress("0x892a...1092");
-      setWalletBalance("84.50");
+      alert("Please install MetaMask to connect your wallet to Base Sepolia Escrow.");
     }
   };
 
   const handleDisconnect = () => {
     setWalletAddress(null);
+    setWalletBalance("0.00");
     setIsWalletDropdownOpen(false);
   };
 
@@ -250,49 +324,50 @@ export default function ExploreAppPage() {
     let onChainTxHash = "";
 
     try {
-      // 1. If connected with an EVM browser wallet (e.g. MetaMask) on Base, request escrow deposit transaction
+      // 1. If connected with an EVM browser wallet on Base and rental requires funds, trigger on-chain deposit
       if (typeof window !== "undefined" && (window as any).ethereum && walletAddress && selectedListing.priceUsd > 0) {
         try {
           const txParams = {
             from: walletAddress,
             to: process.env.NEXT_PUBLIC_BASE_SEPOLIA_RECEIVER || "0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf", // Kridge Base Sepolia Escrow Receiver
             value: "0x0",
-            data: "0x436865636b6f7574"
+            data: "0x436865636b6f7574",
           };
           onChainTxHash = await (window as any).ethereum.request({
             method: "eth_sendTransaction",
             params: [txParams],
           });
         } catch (walletErr) {
-          console.warn("Wallet prompt declined or simulation active; using verified Base Sepolia receipt:", walletErr);
-          onChainTxHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+          console.warn("User declined or transaction failed:", walletErr);
         }
-      } else {
-        onChainTxHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
       }
-      setRentalTxHash(onChainTxHash);
 
-      // 2. Call /api/agent/rent to dynamically register virtual sub-key in KridgeProxyService
+      setRentalTxHash(onChainTxHash || null);
+
+      // 2. Register virtual sub-key in KridgeProxyService
       const res = await fetch("/api/agent/rent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           listingId: selectedListing.id,
-          agentWallet: walletAddress || "0xBuyer_Base_User",
+          agentWallet: walletAddress || "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
           durationHours: 48,
-          listingDetails: selectedListing
-        })
+          listingDetails: selectedListing,
+        }),
       });
 
       const data = await res.json();
-      const subKeyToUse = data?.subKey || ("krdg_live_" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10));
+      const subKeyToUse =
+        data?.subKey ||
+        "krdg_live_" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
 
       // 3. Save into local Kridge store
       const session = rentListing(selectedListing.id, 48, subKeyToUse);
       setRentedSubKey(session.subKey);
     } catch (err: any) {
-      console.error("Rental execution fallback:", err);
-      const fallbackKey = "krdg_live_" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+      console.error("Rental execution error:", err);
+      const fallbackKey =
+        "krdg_live_" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
       try {
         const session = rentListing(selectedListing.id, 48, fallbackKey);
         setRentedSubKey(session.subKey);
@@ -304,7 +379,7 @@ export default function ExploreAppPage() {
     }
   };
 
-  const handleRegisterQuota = (e: React.FormEvent) => {
+  const handleRegisterQuota = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sellerForm.modelFamily) return;
 
@@ -314,8 +389,8 @@ export default function ExploreAppPage() {
     const discount = retail > 0 && price < retail ? Math.round(((retail - price) / retail) * 100) : 0;
     const hours = parseInt(sellerForm.durationHours) || 48;
 
-    addListing({
-      seller: walletAddress || "0xMySellerAgent_Wallet",
+    await addListing({
+      seller: walletAddress || "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
       sellerChain: "base",
       provider: sellerForm.provider,
       modelFamily: sellerForm.modelFamily,
@@ -328,7 +403,7 @@ export default function ExploreAppPage() {
       expiryTimestamp: Date.now() + hours * 3600000,
       description:
         sellerForm.description ||
-        `Unspent ${sellerForm.modelFamily} quota listed for rental on Kridge Escrow.`,
+        `Unspent ${sellerForm.modelFamily} quota listed for rental on Kridge Base Sepolia Escrow.`,
       tags: ["High Speed", "Escrow Verified"],
     });
 
@@ -629,15 +704,31 @@ export default function ExploreAppPage() {
               {filteredListings.length === 0 ? (
                 <div
                   style={{
-                    padding: "60px 20px",
+                    padding: "60px 24px",
                     textAlign: "center",
-                    border: "1px solid var(--void-05)",
-                    borderRadius: "12px",
-                    color: "var(--ink-tertiary)",
-                    fontFamily: "var(--font-accent)",
+                    border: "1px dashed #7c3aed",
+                    borderRadius: "14px",
+                    background: "rgba(124, 58, 237, 0.03)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "12px",
                   }}
                 >
-                  No active model quotas found for &quot;{categoryFilter}&quot;. Switch to &quot;[02] LIST QUOTA // SELLER&quot; to list unspent compute.
+                  <div style={{ fontSize: "32px" }}>⚡</div>
+                  <div style={{ fontSize: "16px", fontWeight: "700", color: "#1e1e24" }}>
+                    No Active Compute Pools Yet
+                  </div>
+                  <div style={{ maxWidth: "460px", fontSize: "12px", color: "#64748b", lineHeight: "1.6" }}>
+                    The Kridge marketplace is live and clean on Base Sepolia and GenLayer. Be the first seller to list unused AI API quota and earn passive yield!
+                  </div>
+                  <button
+                    onClick={() => setViewMode("seller")}
+                    className="btn-terminal active"
+                    style={{ marginTop: "8px", padding: "9px 20px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                  >
+                    + LIST AI QUOTA NOW
+                  </button>
                 </div>
               ) : (
                 <div className="service-grid">

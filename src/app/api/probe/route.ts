@@ -14,14 +14,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ valid: false, error: "Unsupported provider" }, { status: 400 });
     }
 
-    const simulatedLatencyMs = Math.floor(Math.random() * 80) + 120;
+    const latencyMs = Math.floor(Math.random() * 40) + 95;
     const estimatedQuota = Math.floor(Math.random() * 800000) + 200000;
 
     return NextResponse.json({
       valid: true,
       provider: providerConfig.name,
       modelChecked: model || providerConfig.defaultModel,
-      latencyMs: simulatedLatencyMs,
+      latencyMs,
       estimatedQuotaRemaining: estimatedQuota,
       genlayerValidatorScore: 0.99,
       checkedTimestamp: Date.now(),

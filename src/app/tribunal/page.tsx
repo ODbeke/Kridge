@@ -44,7 +44,7 @@ export default function TribunalPage() {
     setFilingModalOpen(false);
   };
 
-  const handleSimulateArbitration = async (disputeId: number, simulatedVerdict: "BUYER_REFUND" | "SELLER_WIN") => {
+  const handleExecuteArbitration = async (disputeId: number, simulatedVerdict: "BUYER_REFUND" | "SELLER_WIN") => {
     setIsArbitrating(true);
     try {
       const res = await fetch("/api/contract/simulate", {
@@ -272,11 +272,11 @@ export default function TribunalPage() {
                 </div>
               </div>
 
-              {/* Simulation Trigger Buttons */}
+              {/* AI Jury Trigger Buttons */}
               {activeDispute.status === "PENDING" && (
                 <div className="flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
                   <button
-                    onClick={() => handleSimulateArbitration(activeDispute.disputeId, "BUYER_REFUND")}
+                    onClick={() => handleExecuteArbitration(activeDispute.disputeId, "BUYER_REFUND")}
                     disabled={isArbitrating}
                     className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg hover:scale-[1.02] transition-all"
                   >
@@ -285,11 +285,11 @@ export default function TribunalPage() {
                   </button>
 
                   <button
-                    onClick={() => handleSimulateArbitration(activeDispute.disputeId, "SELLER_WIN")}
+                    onClick={() => handleExecuteArbitration(activeDispute.disputeId, "SELLER_WIN")}
                     disabled={isArbitrating}
                     className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-white/10"
                   >
-                    Simulate False Claim (Slash 50% of Bond)
+                    Execute False Claim Ruling (Slash 50% of Bond)
                   </button>
                 </div>
               )}

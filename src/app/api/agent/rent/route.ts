@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { KridgeProxyService } from "@/gateway/proxy_service";
-import { INITIAL_LISTINGS } from "@/lib/mock-data";
+import { findLiveListing } from "@/lib/live-listings";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
     let sellerAddress = listingDetails?.seller;
     let listingType = listingDetails?.listingType || "RENT";
 
-    if (!provider) {
-      const listing = INITIAL_LISTINGS.find((l) => l.id === Number(listingId));
+    if (!provider && listingId) {
+      const listing = findLiveListing(Number(listingId));
       if (listing) {
         provider = listing.provider;
         modelFamily = listing.modelFamily;
@@ -34,10 +34,10 @@ export async function POST(req: NextRequest) {
       upstreamApiKey: "sk-vault-" + Math.random().toString(36).substring(7),
       allocatedTokens: allocatedTokens || 500000,
       modelFamily: modelFamily || "claude-3-5-sonnet",
-      buyerAddress: agentWallet || "0xAgentAuto_Anon",
-      sellerAddress: sellerAddress || "0xSeller_Default",
+      buyerAddress: agentWallet || "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
+      sellerAddress: sellerAddress || "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
       listingType: listingType as any,
-      durationHours: durationHours || 48
+      durationHours: durationHours || 48,
     });
 
     return NextResponse.json({
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       provider: session.provider,
       modelFamily: session.modelFamily,
       allocatedTokens: session.allocatedTokens,
-      expiresAt: session.expiresAt
+      expiresAt: session.expiresAt,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

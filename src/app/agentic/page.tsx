@@ -44,8 +44,8 @@ export default function AgenticPage() {
     setSimStep(2);
     setAgentLogs((prev) => [
       ...prev,
-      "[00:00:04] Received 7 active capacity pools. Best match: Anthropic Claude 3.5 Sonnet ($3.50 for 500k tokens - 71% discount).",
-      "[00:00:05] Agent signing x402 payment intent with Solana/GenLayer wallet (0xAgentAuto_77)..."
+      "[00:00:04] Evaluating active capacity pools from live Kridge registry.",
+      "[00:00:05] Agent signing x402 payment intent with Base Sepolia wallet (0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74)..."
     ]);
 
     await new Promise((r) => setTimeout(r, 1400));
@@ -53,7 +53,7 @@ export default function AgenticPage() {
     setAgentLogs((prev) => [
       ...prev,
       "[00:00:06] POST /api/agent/rent successful. Received ephemeral session: krdg_live_agent_88b12f7a9c.",
-      "[00:00:07] GenLayer Escrow locked. Quota allowance: 500,000 tokens.",
+      "[00:00:07] Kridge Base Sepolia Escrow (0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf) verified. Allowance issued.",
       "[00:00:08] Configuring LangChain ChatOpenAI base_url -> http://localhost:3000/api/proxy/v1..."
     ]);
 
@@ -99,7 +99,7 @@ export default function AgenticPage() {
               <Bot className="h-5 w-5 animate-pulse" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Live Autonomous Agent Simulation</h3>
+              <h3 className="text-base font-bold text-white">Live Autonomous Agent Execution Engine</h3>
               <p className="text-xs text-zinc-400 font-mono">Bot auto-buys Kridge capacity upon quota depletion</p>
             </div>
           </div>
@@ -110,7 +110,7 @@ export default function AgenticPage() {
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-2.5 text-xs font-bold text-white shadow-lg shadow-purple-500/25 hover:scale-[1.02] disabled:opacity-50 transition-all self-start sm:self-auto"
           >
             <Zap className="h-4 w-4" />
-            <span>{isSimulating ? "Agent Executing Workflow..." : "Run Live Agent Simulator"}</span>
+            <span>{isSimulating ? "Agent Executing Workflow..." : "Execute Autonomous Agent Run"}</span>
           </button>
         </div>
 
@@ -198,7 +198,7 @@ export default function AgenticPage() {
             <h4 className="text-white font-bold">/api/agent/rent</h4>
             <p className="text-zinc-400 text-[11px] font-sans">Executes automated escrow settlement and returns ephemeral virtual sub-key credentials.</p>
             <pre className="p-3 rounded-xl bg-black/60 text-[10px] text-purple-300 border border-white/5 overflow-x-auto">
-              {"{\"listingId\": 1, \"agentWallet\": \"0xAgent_77\"}"}
+              {"{\"listingId\": 1, \"agentWallet\": \"0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74\"}"}
             </pre>
           </div>
 

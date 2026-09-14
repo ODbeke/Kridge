@@ -89,8 +89,17 @@ export default function LandingPage() {
     { name: "Whitepaper", href: "/docs", icon: Globe2 },
   ];
 
-  const handleConnectWallet = (walletName: string) => {
-    setConnectedWallet("0x71C..." + Math.random().toString(36).substring(2, 6).toUpperCase());
+  const handleConnectWallet = async (walletName: string) => {
+    if (typeof window !== "undefined" && (window as any).ethereum) {
+      try {
+        const accounts = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
+        if (accounts && accounts[0]) {
+          setConnectedWallet(accounts[0]);
+        }
+      } catch (err) {
+        console.error("Wallet connect failed:", err);
+      }
+    }
     setWalletModalOpen(false);
   };
 
