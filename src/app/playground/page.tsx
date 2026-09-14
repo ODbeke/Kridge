@@ -15,8 +15,16 @@ interface ChatMessage {
 }
 
 export default function PlaygroundPage() {
-  const { rentals, updateRentalUsage } = useKridgeStore();
+  const { rentals, listings, updateRentalUsage } = useKridgeStore();
   const [selectedSubKey, setSelectedSubKey] = useState<string>("krdg_live_demo_claude_9a8f4c1e7b2d");
+
+  // Activate app body styles on mount
+  useEffect(() => {
+    document.body.classList.add("memoriada-app-body");
+    return () => {
+      document.body.classList.remove("memoriada-app-body");
+    };
+  }, []);
 
   // Read URL search param key if provided from Explore modal
   useEffect(() => {
@@ -30,6 +38,12 @@ export default function PlaygroundPage() {
     }
   }, [rentals]);
 
+  // Compute live stats for header
+  const activeCount = listings.filter((l) => l.remainingTokens > 0).length;
+  const tokenVolume = (
+    listings.reduce((acc, l) => acc + (l.remainingTokens || 0), 0) / 1000000
+  ).toFixed(1) + "M";
+
   // Key catalogue
   const availableKeys = [
     ...rentals.map((r) => ({
@@ -39,18 +53,31 @@ export default function PlaygroundPage() {
       usedTokens: r.usedTokens,
       modelFamily: r.modelFamily,
       priceUsd: r.amountPaidUsd,
-      expiresAt: r.expiresAt
+      expiresAt: r.expiresAt,
     })),
   ];
-  if (!availableKeys.some(k => k.subKey === "krdg_live_demo_claude_9a8f4c1e7b2d")) {
+
+  if (selectedSubKey && !availableKeys.some((k) => k.subKey === selectedSubKey)) {
+    availableKeys.unshift({
+      subKey: selectedSubKey,
+      label: `Active Key (${selectedSubKey.substring(0, 18)}...)`,
+      allocatedTokens: 1000000,
+      usedTokens: 0,
+      modelFamily: "Gemini 3.8 Flash",
+      priceUsd: 0.25,
+      expiresAt: Date.now() + 48 * 3600000,
+    });
+  }
+
+  if (!availableKeys.some((k) => k.subKey === "krdg_live_demo_claude_9a8f4c1e7b2d")) {
     availableKeys.push({
       subKey: "krdg_live_demo_claude_9a8f4c1e7b2d",
       label: "Claude 3.5 Sonnet Starter Key (235,800 tok left)",
       allocatedTokens: 250000,
       usedTokens: 14200,
       modelFamily: "claude-3-5-sonnet",
-      priceUsd: 3.50,
-      expiresAt: Date.now() + 172800000
+      priceUsd: 3.5,
+      expiresAt: Date.now() + 172800000,
     });
   }
 
@@ -140,95 +167,745 @@ export default function PlaygroundPage() {
   };
 
   return (
-    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
-          <div className="inline-flex items-center gap-1.5 rounded-md bg-purple-500/10 px-2.5 py-1 text-xs font-mono font-medium text-purple-400 border border-purple-500/20 mb-2">
-            <Zap className="h-3.5 w-3.5" /><span>INTERACTIVE PROXY GATEWAY SANDBOX</span>
+    <div className="app-shell" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* 1. Unified Kridge Navigation Header */}
+      <header className="nav-terminal">
+        <Link href="/" className="nav-brand">
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span className="brand-title">
+              Kridge<span>.</span>
+            </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Proxy Playground & Key Console</h1>
-          <p className="text-zinc-400 text-sm mt-1">Test prompt execution in real-time, inspect token stream deduction, and export SDK snippets.</p>
-        </div>
-        <Link href="/tribunal" className="flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-950/20 px-4 py-2.5 text-xs font-bold text-rose-300 hover:bg-rose-950/40 transition-all self-start sm:self-auto">
-          <ShieldAlert className="h-3.5 w-3.5 text-rose-400" /><span>File Dispute on GenLayer</span>
         </Link>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-7 flex flex-col rounded-2xl border border-white/10 bg-[#0E131F] shadow-2xl overflow-hidden h-[650px]">
-          <div className="flex items-center justify-between border-b border-white/10 bg-black/40 px-4 py-3 font-mono text-xs flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-zinc-400 flex items-center gap-1"><Key className="h-3.5 w-3.5 text-cyan-400" />Active Key:</span>
-              <select
-                value={selectedSubKey}
-                onChange={(e) => setSelectedSubKey(e.target.value)}
-                className="bg-black/60 border border-white/20 rounded-lg px-2 py-1 text-xs text-cyan-300 font-mono focus:border-cyan-400 focus:outline-none max-w-[260px] truncate"
-              >
-                {availableKeys.map((k) => (
-                  <option key={k.subKey} value={k.subKey}>
-                    {k.label}
-                  </option>
-                ))}
-              </select>
+        {/* Live Persistent Ticker */}
+        <div className="ticker-strip">
+          <div className="ticker-cell">
+            <span className="ticker-lbl">ACTIVE_QUOTAS:</span>
+            <span className="ticker-val">{activeCount} Listings</span>
+          </div>
+          <div style={{ color: "rgba(0, 0, 0, 0.2)" }}>|</div>
+          <div className="ticker-cell">
+            <span className="ticker-lbl">COMPUTE_POOL:</span>
+            <span className="ticker-val">{tokenVolume} Tokens</span>
+          </div>
+        </div>
+
+        {/* Navigation Action Buttons */}
+        <div className="nav-actions">
+          <Link href="/explore" className="btn-terminal">
+            RENT
+          </Link>
+          <Link href="/explore?view=seller" className="btn-terminal">
+            SELL
+          </Link>
+          <Link href="/explore?view=activity" className="btn-terminal">
+            ACTIVITY
+          </Link>
+          <Link href="/explore?view=tribunal" className="btn-terminal">
+            TRIBUNAL
+          </Link>
+          <button className="btn-terminal active" style={{ cursor: "default" }}>
+            PLAYGROUND
+          </button>
+        </div>
+      </header>
+
+      {/* 2. Main Playground Body */}
+      <main
+        style={{
+          flex: 1,
+          maxWidth: "1280px",
+          width: "100%",
+          margin: "0 auto",
+          padding: "32px 20px 60px 20px",
+        }}
+      >
+        {/* Header Hero Section */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "16px",
+            borderBottom: "1px solid #e2dbf3",
+            paddingBottom: "24px",
+            marginBottom: "32px",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "4px 10px",
+                borderRadius: "9999px",
+                background: "rgba(66, 38, 36, 0.08)",
+                border: "1px solid rgba(66, 38, 36, 0.2)",
+                fontSize: "10.5px",
+                fontFamily: "var(--font-accent)",
+                fontWeight: "700",
+                color: "#422624",
+                marginBottom: "10px",
+                letterSpacing: "0.06em",
+              }}
+            >
+              <Zap style={{ width: "13px", height: "13px" }} />
+              <span>INTERACTIVE PROXY GATEWAY SANDBOX</span>
             </div>
-            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />Gateway Live</span>
+            <h1
+              style={{
+                fontSize: "30px",
+                fontWeight: "800",
+                color: "#000000",
+                fontFamily: "var(--font-accent)",
+                letterSpacing: "-0.02em",
+                margin: "0 0 6px 0",
+              }}
+            >
+              Proxy Playground & Key Console
+            </h1>
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#4b5563",
+                margin: 0,
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              Test prompt execution in real-time, inspect token stream deduction, and export SDK snippets.
+            </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-xs">
-            {messages.map((m, i) => (
-              <div key={i} className={"flex flex-col " + (m.role === "user" ? "items-end" : m.role === "system" ? "items-center" : "items-start")}>
-                <div className={"max-w-[85%] rounded-2xl p-4 leading-relaxed " + (m.role === "user" ? "bg-cyan-500/15 border border-cyan-500/30 text-cyan-100" : m.role === "system" ? "bg-rose-950/40 border border-rose-500/40 text-rose-300 text-center text-[11px]" : "bg-black/50 border border-white/10 text-zinc-200")}>
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 font-bold">{m.role === "user" ? "Buyer / Client" : m.role === "system" ? "System Log" : "Kridge Proxy Gateway"}</div>
-                  <p className="whitespace-pre-wrap">{m.content}</p>
-                  {m.latencyMs && (<div className="mt-2 pt-2 border-t border-white/5 flex justify-between text-[10px] text-zinc-400"><span>Latency: {m.latencyMs}ms</span><span>Output: {m.tokens} Tokens</span></div>)}
+          <Link
+            href="/explore?view=tribunal"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              borderRadius: "9999px",
+              border: "1px solid rgba(190, 18, 60, 0.35)",
+              background: "rgba(190, 18, 60, 0.08)",
+              padding: "9px 18px",
+              fontSize: "12px",
+              fontWeight: "700",
+              color: "#be123c",
+              textDecoration: "none",
+              fontFamily: "var(--font-accent)",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <ShieldAlert style={{ width: "15px", height: "15px" }} />
+            <span>File Dispute on GenLayer</span>
+          </Link>
+        </div>
+
+        {/* 3. Grid Workspace */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+            gap: "28px",
+            alignItems: "start",
+          }}
+        >
+          {/* Left Column: Chat Sandbox Console */}
+          <div
+            className="panel-glass"
+            style={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              height: "680px",
+              background: "#ffffff",
+              border: "1px solid #e2dbf3",
+              boxShadow: "0 10px 30px rgba(66, 38, 36, 0.05)",
+            }}
+          >
+            {/* Top Toolbar */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 18px",
+                background: "#f7f5fc",
+                borderBottom: "1px solid #e2dbf3",
+                flexWrap: "wrap",
+                gap: "10px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontFamily: "var(--font-accent)",
+                    fontWeight: "700",
+                    color: "#422624",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  <Key style={{ width: "13px", height: "13px" }} />
+                  Active Key:
+                </span>
+                <select
+                  value={selectedSubKey}
+                  onChange={(e) => setSelectedSubKey(e.target.value)}
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #ddd8f0",
+                    borderRadius: "8px",
+                    padding: "4px 10px",
+                    fontSize: "11px",
+                    fontFamily: "var(--font-accent)",
+                    color: "#1e1e24",
+                    outline: "none",
+                    maxWidth: "280px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {availableKeys.map((k) => (
+                    <option key={k.subKey} value={k.subKey}>
+                      {k.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "11px",
+                  fontFamily: "var(--font-accent)",
+                  fontWeight: "600",
+                  color: "#2a8a4a",
+                }}
+              >
+                <span
+                  style={{
+                    width: "7px",
+                    height: "7px",
+                    borderRadius: "50%",
+                    backgroundColor: "#2a8a4a",
+                    display: "inline-block",
+                  }}
+                />
+                <span>Gateway Live</span>
+              </div>
+            </div>
+
+            {/* Chat Messages Stream */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+                background: "#faf9fd",
+              }}
+            >
+              {messages.map((m, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: m.role === "user" ? "flex-end" : m.role === "system" ? "center" : "flex-start",
+                  }}
+                >
+                  <div
+                    style={{
+                      maxWidth: "85%",
+                      borderRadius: m.role === "user" ? "14px 14px 3px 14px" : "14px 14px 14px 3px",
+                      padding: "14px 16px",
+                      background:
+                        m.role === "user"
+                          ? "#422624"
+                          : m.role === "system"
+                          ? "#fef2f2"
+                          : "#ffffff",
+                      border:
+                        m.role === "user"
+                          ? "1px solid #422624"
+                          : m.role === "system"
+                          ? "1px solid #f87171"
+                          : "1px solid #e2dbf3",
+                      color:
+                        m.role === "user"
+                          ? "#ffffff"
+                          : m.role === "system"
+                          ? "#991b1b"
+                          : "#1e1e24",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "9.5px",
+                        fontWeight: "700",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        marginBottom: "6px",
+                        color:
+                          m.role === "user"
+                            ? "rgba(255, 255, 255, 0.75)"
+                            : m.role === "system"
+                            ? "#b91c1c"
+                            : "#422624",
+                        fontFamily: "var(--font-accent)",
+                      }}
+                    >
+                      {m.role === "user"
+                        ? "Buyer / Client"
+                        : m.role === "system"
+                        ? "Gateway Diagnostic Log"
+                        : "Kridge Proxy Gateway"}
+                    </div>
+                    <p
+                      style={{
+                        fontSize: "13px",
+                        lineHeight: "1.6",
+                        whiteSpace: "pre-wrap",
+                        margin: 0,
+                        fontFamily: "var(--font-sans)",
+                      }}
+                    >
+                      {m.content}
+                    </p>
+                    {m.latencyMs && (
+                      <div
+                        style={{
+                          marginTop: "10px",
+                          paddingTop: "8px",
+                          borderTop: "1px solid #f0edf8",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          fontSize: "10.5px",
+                          color: "#71717a",
+                          fontFamily: "var(--font-accent)",
+                        }}
+                      >
+                        <span>⚡ {m.latencyMs}ms Latency</span>
+                        <span>📊 {m.tokens} Tokens Consumed</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {isLoading && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "#422624",
+                    fontSize: "12px",
+                    fontFamily: "var(--font-accent)",
+                    fontWeight: "600",
+                    padding: "8px 0",
+                  }}
+                >
+                  <Activity style={{ width: "16px", height: "16px", animation: "spin 1.5s linear infinite" }} />
+                  <span>Streaming response through Kridge Proxy Gateway...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Input Prompt Form */}
+            <div
+              style={{
+                borderTop: "1px solid #e2dbf3",
+                padding: "16px",
+                background: "#f7f5fc",
+              }}
+            >
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendPrompt();
+                }}
+                style={{ display: "flex", gap: "10px" }}
+              >
+                <input
+                  type="text"
+                  placeholder="Ask anything or test inference prompt completion..."
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  disabled={isLoading}
+                  style={{
+                    flex: 1,
+                    borderRadius: "10px",
+                    border: "1px solid #ddd8f0",
+                    background: "#ffffff",
+                    padding: "11px 16px",
+                    fontSize: "12.5px",
+                    color: "#000000",
+                    outline: "none",
+                    fontFamily: "var(--font-sans)",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading || !prompt.trim()}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    borderRadius: "10px",
+                    background: "#422624",
+                    color: "#ffffff",
+                    fontWeight: "700",
+                    padding: "11px 18px",
+                    fontSize: "12px",
+                    border: "none",
+                    cursor: isLoading || !prompt.trim() ? "not-allowed" : "pointer",
+                    opacity: isLoading || !prompt.trim() ? 0.5 : 1,
+                    fontFamily: "var(--font-accent)",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <Send style={{ width: "13px", height: "13px" }} />
+                  <span>Send</span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Right Column: Telemetry & Drop-in SDK */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            {/* 1. Virtual Sub-Key Fuel Gauge Card */}
+            <div
+              className="panel-glass"
+              style={{
+                borderRadius: "16px",
+                background: "#ffffff",
+                border: "1px solid #e2dbf3",
+                padding: "22px",
+                boxShadow: "0 8px 24px rgba(66, 38, 36, 0.04)",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "11.5px",
+                  fontFamily: "var(--font-accent)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  color: "#422624",
+                  fontWeight: "800",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  margin: "0 0 16px 0",
+                }}
+              >
+                <Cpu style={{ width: "15px", height: "15px", color: "#422624" }} />
+                <span>Virtual Sub-Key Fuel Gauge</span>
+              </h3>
+
+              <div style={{ marginBottom: "16px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "12px",
+                    fontFamily: "var(--font-accent)",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <span style={{ color: "#4b5563" }}>Remaining Balance:</span>
+                  <span style={{ color: "#2a8a4a", fontWeight: "700" }}>
+                    {remainingTokens.toLocaleString()} / {allocated.toLocaleString()} Tokens
+                  </span>
+                </div>
+                <div
+                  style={{
+                    height: "8px",
+                    width: "100%",
+                    borderRadius: "9999px",
+                    background: "#f0edf8",
+                    overflow: "hidden",
+                    border: "1px solid #ddd8f0",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      borderRadius: "9999px",
+                      background: "linear-gradient(90deg, #422624 0%, #2a8a4a 100%)",
+                      width: `${fuelPct}%`,
+                      transition: "width 0.5s ease",
+                    }}
+                  />
                 </div>
               </div>
-            ))}
-            {isLoading && (<div className="flex items-center gap-2 text-cyan-400 text-xs font-mono"><Activity className="h-4 w-4 animate-spin" /><span>Streaming response through Kridge Gateway...</span></div>)}
-          </div>
 
-          <div className="border-t border-white/10 p-4 bg-black/40">
-            <form onSubmit={(e) => { e.preventDefault(); handleSendPrompt(); }} className="flex gap-2">
-              <input type="text" placeholder="Ask anything or test prompt completion..." value={prompt} onChange={(e) => setPrompt(e.target.value)} disabled={isLoading} className="flex-1 rounded-xl border border-white/10 bg-[#080B10] px-4 py-2.5 text-xs text-white placeholder:text-zinc-500 focus:border-cyan-500 focus:outline-none font-mono" />
-              <button type="submit" disabled={isLoading || !prompt.trim()} className="flex items-center gap-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-bold px-4 py-2.5 text-xs transition-colors"><Send className="h-3.5 w-3.5" /><span>Send</span></button>
-            </form>
-          </div>
-        </div>
+              {/* 2 Tiles: Remaining USD and TTL Expiration */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "12px",
+                  marginBottom: "16px",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: "10px",
+                    background: "#f7f5fc",
+                    border: "1px solid #e2dbf3",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      color: "#71717a",
+                      fontWeight: "700",
+                      letterSpacing: "0.06em",
+                      display: "block",
+                      fontFamily: "var(--font-accent)",
+                    }}
+                  >
+                    EST. REMAINING USD
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: "800",
+                      color: "#059669",
+                      fontFamily: "var(--font-accent)",
+                      marginTop: "4px",
+                      display: "block",
+                    }}
+                  >
+                    ${estRemainingUsd}
+                  </span>
+                </div>
 
-        <div className="lg:col-span-5 space-y-6">
-          <div className="rounded-2xl border border-white/10 bg-[#0E131F] p-6 space-y-4 shadow-xl">
-            <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold flex items-center gap-2"><Cpu className="h-4 w-4 text-cyan-400" /><span>Virtual Sub-Key Fuel Gauge</span></h3>
-            <div className="space-y-1.5 font-mono text-xs">
-              <div className="flex justify-between text-zinc-400"><span>Remaining Balance:</span><span className="text-emerald-400 font-bold">{remainingTokens.toLocaleString()} / {allocated.toLocaleString()} Tokens</span></div>
-              <div className="h-2 w-full rounded-full bg-black/60 overflow-hidden border border-white/5"><div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-500" style={{ width: `${fuelPct}%` }} /></div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-xs font-mono pt-2">
-              <div className="p-3 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] text-zinc-500 block">EST. REMAINING USD</span><span className="text-white font-bold text-sm">${estRemainingUsd}</span></div>
-              <div className="p-3 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] text-zinc-500 block">TTL EXPIRATION</span><span className="text-white font-bold text-sm"><CountdownTimer expiryTimestamp={activeRental?.expiresAt || (Date.now() + 48 * 3600000)} /></span></div>
-            </div>
-
-            {lastMeta && (
-              <div className="rounded-xl border border-white/5 bg-black/40 p-3 font-mono text-[11px] text-zinc-400 space-y-1">
-                <div className="text-zinc-500 text-[10px] uppercase font-bold">Latest Request Trace</div>
-                <div className="flex justify-between"><span>Input / Output:</span><span className="text-white">{lastMeta.promptTokens} / {lastMeta.completionTokens} tok</span></div>
-                <div className="flex justify-between"><span>Gateway Overhead:</span><span className="text-cyan-400">{lastMeta.latencyMs}ms</span></div>
-                <div className="flex justify-between"><span>HMAC Audit Sig:</span><span className="text-zinc-500 truncate max-w-[140px]">{lastMeta.receiptSignature}</span></div>
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: "10px",
+                    background: "#f7f5fc",
+                    border: "1px solid #e2dbf3",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      color: "#71717a",
+                      fontWeight: "700",
+                      letterSpacing: "0.06em",
+                      display: "block",
+                      fontFamily: "var(--font-accent)",
+                    }}
+                  >
+                    TTL EXPIRATION
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "800",
+                      color: "#000000",
+                      fontFamily: "var(--font-accent)",
+                      marginTop: "4px",
+                      display: "block",
+                    }}
+                  >
+                    <CountdownTimer
+                      expiryTimestamp={activeRental?.expiresAt || Date.now() + 48 * 3600000}
+                    />
+                  </span>
+                </div>
               </div>
-            )}
-          </div>
 
-          <div className="rounded-2xl border border-white/10 bg-[#0E131F] p-6 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold flex items-center gap-2"><Code className="h-4 w-4 text-purple-400" /><span>Drop-In Python SDK</span></h3>
-              <button onClick={() => { navigator.clipboard.writeText("from openai import OpenAI\n\nclient = OpenAI(\n    api_key=\"" + selectedSubKey + "\",\n    base_url=\"http://localhost:3000/api/proxy/v1\"\n)\n\nresponse = client.chat.completions.create(\n    model=\"" + (activeRental?.modelFamily || 'claude-3-5-sonnet') + "\",\n    messages=[{\"role\": \"user\", \"content\": \"Hello Kridge!\"}]\n)\nprint(response.choices[0].message.content)"); setCopiedCode(true); setTimeout(() => setCopiedCode(false), 2000); }} className="flex items-center gap-1 text-[11px] font-mono text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20">
-                {copiedCode ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}<span>{copiedCode ? "Copied" : "Copy Code"}</span>
-              </button>
+              {/* Latest Trace Details */}
+              {lastMeta && (
+                <div
+                  style={{
+                    borderRadius: "10px",
+                    border: "1px solid #e2dbf3",
+                    background: "#f7f5fc",
+                    padding: "12px 14px",
+                    fontFamily: "var(--font-accent)",
+                    fontSize: "11px",
+                    color: "#4b5563",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#422624",
+                      fontSize: "10px",
+                      fontWeight: "700",
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Latest Request Trace
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>Input / Output:</span>
+                    <span style={{ fontWeight: "600", color: "#000000" }}>
+                      {lastMeta.promptTokens} / {lastMeta.completionTokens} tok
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>Gateway Overhead:</span>
+                    <span style={{ fontWeight: "700", color: "#422624" }}>{lastMeta.latencyMs}ms</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>HMAC Audit Sig:</span>
+                    <span
+                      style={{
+                        fontFamily: "monospace",
+                        color: "#71717a",
+                        maxWidth: "140px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {lastMeta.receiptSignature}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-            <pre className="rounded-xl bg-black/60 p-3.5 font-mono text-[11px] text-zinc-300 overflow-x-auto leading-relaxed border border-white/5 whitespace-pre-wrap"><code>{`from openai import OpenAI\n\nclient = OpenAI(\n    api_key="${selectedSubKey}",\n    base_url="http://localhost:3000/api/proxy/v1"\n)\n\nresponse = client.chat.completions.create(\n    model="${activeRental?.modelFamily || 'claude-3-5-sonnet'}",\n    messages=[{"role": "user", "content": "Hello Kridge!"}]\n)\nprint(response.choices[0].message.content)`}</code></pre>
+
+            {/* 2. Drop-In Python SDK Card */}
+            <div
+              className="panel-glass"
+              style={{
+                borderRadius: "16px",
+                background: "#ffffff",
+                border: "1px solid #e2dbf3",
+                padding: "22px",
+                boxShadow: "0 8px 24px rgba(66, 38, 36, 0.04)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "14px",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: "11.5px",
+                    fontFamily: "var(--font-accent)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: "#422624",
+                    fontWeight: "800",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    margin: 0,
+                  }}
+                >
+                  <Code style={{ width: "15px", height: "15px", color: "#422624" }} />
+                  <span>Drop-In Python SDK</span>
+                </h3>
+
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `from openai import OpenAI\n\nclient = OpenAI(\n    api_key="${selectedSubKey}",\n    base_url="http://localhost:3000/api/proxy/v1"\n)\n\nresponse = client.chat.completions.create(\n    model="${
+                        activeRental?.modelFamily || "claude-3-5-sonnet"
+                      }",\n    messages=[{"role": "user", "content": "Hello Kridge!"}]\n)\nprint(response.choices[0].message.content)`
+                    );
+                    setCopiedCode(true);
+                    setTimeout(() => setCopiedCode(false), 2000);
+                  }}
+                  className="btn-terminal"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    fontSize: "10.5px",
+                    padding: "4px 10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {copiedCode ? (
+                    <>
+                      <Check style={{ width: "12px", height: "12px", color: "#2a8a4a" }} />
+                      <span style={{ color: "#2a8a4a" }}>Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy style={{ width: "12px", height: "12px" }} />
+                      <span>Copy Code</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <pre
+                style={{
+                  borderRadius: "10px",
+                  background: "#0d1117",
+                  padding: "16px",
+                  fontSize: "11px",
+                  color: "#c9d1d9",
+                  overflowX: "auto",
+                  lineHeight: "1.6",
+                  border: "1px solid #21262d",
+                  whiteSpace: "pre-wrap",
+                  fontFamily: "var(--font-accent)",
+                  margin: 0,
+                }}
+              >
+                <code>{`from openai import OpenAI
+
+client = OpenAI(
+    api_key="${selectedSubKey}",
+    base_url="http://localhost:3000/api/proxy/v1"
+)
+
+response = client.chat.completions.create(
+    model="${activeRental?.modelFamily || "claude-3-5-sonnet"}",
+    messages=[{"role": "user", "content": "Hello Kridge!"}]
+)
+print(response.choices[0].message.content)`}</code>
+              </pre>
+            </div>
+
+            {/* 3. Escrow Assurance Guarantee */}
+            <div
+              style={{
+                padding: "14px 16px",
+                background: "rgba(66, 38, 36, 0.05)",
+                border: "1px solid rgba(66, 38, 36, 0.2)",
+                borderRadius: "12px",
+                fontSize: "12px",
+                color: "#4b5563",
+                lineHeight: "1.5",
+              }}
+            >
+              <strong style={{ color: "#422624" }}>Escrow Assurance:</strong> All inferences through this proxy
+              gateway emit cryptographic HMAC telemetry. If this key is revoked by the seller before your tokens are spent,
+              GenLayer AI consensus validators will review the evidence and release a full refund to your wallet.
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

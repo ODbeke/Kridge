@@ -9,8 +9,9 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isHomePage = pathname === "/";
   const isExplorePage = pathname === "/explore";
+  const isPlaygroundPage = pathname === "/playground";
 
-  if (isHomePage || isExplorePage) {
+  if (isHomePage || isExplorePage || isPlaygroundPage) {
     return <>{children}</>;
   }
 
