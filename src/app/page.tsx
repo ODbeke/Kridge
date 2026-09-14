@@ -5,34 +5,12 @@ import Link from "next/link";
 import {
   Sparkles,
   ArrowRight,
-  ShieldCheck,
   Zap,
-  Award,
-  Layers,
-  CheckCircle2,
-  X,
-  Wallet,
-  ExternalLink,
-  ChevronRight,
-  ChevronDown,
-  Cpu,
-  Bot,
-  Scale,
   DollarSign,
-  HeartHandshake,
-  Globe2,
-  Lock,
-  PlusCircle,
-  Play
+  Bot
 } from "lucide-react";
-import { useKridgeStore } from "@/lib/store";
-import { formatCurrency, formatTokens } from "@/lib/utils";
 
 export default function LandingPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [walletModalOpen, setWalletModalOpen] = useState(false);
-  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
-  const { listings, donors } = useKridgeStore();
 
   const [stats, setStats] = useState({
     discount: "65%",
@@ -79,30 +57,6 @@ export default function LandingPage() {
     });
   }, []);
 
-  const navItems = [
-    { name: "Explore", href: "/explore", icon: Layers },
-    { name: "Sell Quota", href: "/explore?view=seller", icon: PlusCircle },
-    { name: "Playground", href: "/playground", icon: Play },
-    { name: "AI Tribunal", href: "/tribunal", icon: Scale },
-    { name: "Impact Badges", href: "/impact", icon: Award },
-    { name: "Agent Hub", href: "/agentic", icon: Bot },
-    { name: "Whitepaper", href: "/docs", icon: Globe2 },
-  ];
-
-  const handleConnectWallet = async (walletName: string) => {
-    if (typeof window !== "undefined" && (window as any).ethereum) {
-      try {
-        const accounts = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
-        if (accounts && accounts[0]) {
-          setConnectedWallet(accounts[0]);
-        }
-      } catch (err) {
-        console.error("Wallet connect failed:", err);
-      }
-    }
-    setWalletModalOpen(false);
-  };
-
   return (
     <>
       {/* Full-viewport Background Video (Fixed behind content) */}
@@ -124,18 +78,6 @@ export default function LandingPage() {
             <img src="/assets/logo.svg" alt="Kridge Logo" width="30" height="30" />
           </Link>
 
-          <nav className="desktop-nav" aria-label="Main Navigation">
-            {navItems.slice(0, 4).map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="nav-link"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-
           <Link
             href="/explore"
             className="desktop-signin"
@@ -143,51 +85,7 @@ export default function LandingPage() {
             <span>Launch App</span>
             <ArrowRight className="w-3.5 h-3.5 text-cyan-400" />
           </Link>
-
-          <button
-            className="mobile-burger"
-            id="mobile-burger-btn"
-            aria-label="Toggle navigation menu"
-            aria-expanded={menuOpen ? "true" : "false"}
-            aria-controls="mobile-menu"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            <span className="burger-bar"></span>
-            <span className="burger-bar"></span>
-            <span className="burger-bar"></span>
-          </button>
         </header>
-
-        {/* Mobile Navigation Menu Overlay & Sheet */}
-        {menuOpen && (
-          <>
-            <div
-              className="mobile-overlay"
-              id="mobile-overlay"
-              onClick={() => setMenuOpen(false)}
-            ></div>
-            <nav className="mobile-menu" id="mobile-menu" aria-label="Mobile Navigation">
-              {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="mobile-nav-link"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              ))}
-              <Link
-                href="/explore"
-                className="mobile-signin"
-                onClick={() => setMenuOpen(false)}
-              >
-                <span>Launch App</span>
-                <ArrowRight className="w-4 h-4 ml-1 inline text-cyan-400" />
-              </Link>
-            </nav>
-          </>
-        )}
 
         {/* 2. Hero (Center) */}
         <main className="hero">
@@ -281,62 +179,6 @@ export default function LandingPage() {
           </div>
         </footer>
       </div>
-
-      {/* Interactive Web3 Sign In Modal */}
-      {walletModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md p-6 rounded-3xl bg-[#121826] border border-white/10 shadow-2xl space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-                  <Wallet className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">Connect Multi-Chain Wallet</h3>
-                  <p className="text-xs text-gray-400">Base • zkSync • Solana • GenLayer</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setWalletModalOpen(false)}
-                className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                { name: "Base (EVM)", desc: "Coinbase & MetaMask Smart Wallet", icon: "🔵" },
-                { name: "zkSync Era (EVM)", desc: "Account Abstraction & Native Paymasters", icon: "⚡" },
-                { name: "Solana (SVM)", desc: "Phantom & Solflare Instant Micropayments", icon: "🟣" },
-                { name: "GenLayer Testnet", desc: "Native Intelligent Contract Validator", icon: "🧠" },
-              ].map((w) => (
-                <button
-                  key={w.name}
-                  onClick={() => handleConnectWallet(w.name)}
-                  className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-cyan-500/40 transition-all text-left group"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{w.icon}</span>
-                    <div>
-                      <div className="text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors">
-                        {w.name}
-                      </div>
-                      <div className="text-xs text-gray-400">{w.desc}</div>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
-                </button>
-              ))}
-            </div>
-
-            <div className="p-3 rounded-xl bg-black/40 border border-white/5 text-[11px] text-gray-400 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Zero master key exposure. Ephemeral session tokens only.</span>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
