@@ -3,8 +3,17 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useKridgeStore } from "@/lib/store";
-import { KridgeListing, ProviderId, ListingType, SupportedChain } from "@/lib/types";
-import { formatCurrency, formatTokens, formatTimeRemaining } from "@/lib/utils";
+import { KridgeListing, ProviderId, ListingType, SupportedChain, BadgeTier } from "@/lib/types";
+import {
+  formatCurrency,
+  formatTokens,
+  formatTimeRemaining,
+  formatAddress,
+  TIER_CONFIG,
+  getNextTierProgress
+} from "@/lib/utils";
+
+const TIERS_LIST: BadgeTier[] = ["WOOD", "BRONZE", "SILVER", "GOLD", "DIAMOND", "PLATINUM"];
 
 const MODEL_PROVIDERS = [
   { id: "all", label: "All Models" },
@@ -72,10 +81,14 @@ const CHAIN_CONFIGS: Record<
 };
 
 export default function ExploreAppPage() {
-  const { listings, rentals, rentListing, addListing, wallet, switchChain } = useKridgeStore();
+  const { listings, rentals, donors, rentListing, addListing, wallet, switchChain } = useKridgeStore();
 
-  // Navigation & View Mode
-  const [viewMode, setViewMode] = useState<"buyer" | "seller">("buyer");
+  // Navigation & View Mode ("buyer" = RENT, "seller" = SELL, "activity" = ACTIVITY & BADGES)
+  const [viewMode, setViewMode] = useState<"buyer" | "seller" | "activity">("buyer");
+  const [activityTab, setActivityTab] = useState<"purchases" | "listings" | "badges">("purchases");
+  const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({});
+  const [copiedActivityKey, setCopiedActivityKey] = useState<string | null>(null);
+  const [shareSuccess, setShareSuccess] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedListing, setSelectedListing] = useState<KridgeListing | null>(null);
 
@@ -193,6 +206,15 @@ export default function ExploreAppPage() {
   useEffect(() => {
     document.body.classList.add("memoriada-app-body");
 
+    // Check URL search params for deep-link view (e.g. /explore?view=activity)
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const v = params.get("view");
+      if (v === "activity" || v === "seller" || v === "buyer") {
+        setViewMode(v as "buyer" | "seller" | "activity");
+      }
+    }
+
     async function detectWallet() {
       if (typeof window !== "undefined" && (window as any).ethereum) {
         try {
@@ -214,6 +236,55 @@ export default function ExploreAppPage() {
       document.body.classList.remove("memoriada-app-body");
     };
   }, []);
+
+  // Compute user's own published compute pools
+  const myListings = useMemo(() => {
+    return listings.filter((l) => {
+      if (!walletAddress) return true;
+      return l.seller.toLowerCase() === walletAddress.toLowerCase();
+    });
+  }, [listings, walletAddress]);
+
+  // Current donor reputation profile for Badges tab
+  const currentDonor = useMemo(() => {
+    return (
+      donors.find((d) => walletAddress && d.address.toLowerCase() === walletAddress.toLowerCase()) || {
+        address: walletAddress || "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
+        chain: wallet.chain,
+        totalRescuedUsd: 120.0,
+        totalTokensDonated: 4500000,
+        donationsCount: 2,
+        highestTier: "WOOD" as BadgeTier,
+        unlockedBadges: ["WOOD"] as BadgeTier[],
+        rank: 6,
+      }
+    );
+  }, [donors, walletAddress, wallet.chain]);
+
+  const progressInfo = useMemo(() => {
+    return getNextTierProgress(currentDonor.totalRescuedUsd);
+  }, [currentDonor.totalRescuedUsd]);
+
+  const currentTierData = TIER_CONFIG[currentDonor.highestTier] || TIER_CONFIG.WOOD;
+
+  const handleToggleRevealKey = (id: string) => {
+    setRevealedKeys((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleCopyActivityKey = (text: string, id: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedActivityKey(id);
+      setTimeout(() => setCopiedActivityKey(null), 2000);
+    }
+  };
+
+  const handleShareToTwitter = () => {
+    const text = `I am participating in Kridge decentralized AI credit marketplace! Holding the ${currentTierData.name} on-chain badge with $${currentDonor.totalRescuedUsd.toFixed(2)} of rescued AI compute. #GenLayer #Kridge #Base`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
+    setShareSuccess(true);
+    setTimeout(() => setShareSuccess(false), 3000);
+  };
 
   // Filter listings by Provider / Ecosystem
   const filteredListings = useMemo(() => {
@@ -680,15 +751,45 @@ export default function ExploreAppPage() {
           {/* Mode Switcher */}
           <button
             className={`btn-terminal ${viewMode === "buyer" ? "active" : ""}`}
-            onClick={() => setViewMode("buyer")}
+            onClick={() => {
+              setViewMode("buyer");
+              if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore");
+            }}
           >
             RENT
           </button>
           <button
             className={`btn-terminal ${viewMode === "seller" ? "active" : ""}`}
-            onClick={() => setViewMode("seller")}
+            onClick={() => {
+              setViewMode("seller");
+              if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore?view=seller");
+            }}
           >
             SELL
+          </button>
+          <button
+            className={`btn-terminal ${viewMode === "activity" ? "active" : ""}`}
+            onClick={() => {
+              setViewMode("activity");
+              if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore?view=activity");
+            }}
+            style={{ display: "flex", alignItems: "center", gap: "5px" }}
+          >
+            <span>ACTIVITY & BADGES</span>
+            {rentals.length > 0 && (
+              <span
+                style={{
+                  background: viewMode === "activity" ? "#000000" : "#7c3aed",
+                  color: "#ffffff",
+                  fontSize: "9px",
+                  padding: "1px 5px",
+                  borderRadius: "999px",
+                  fontWeight: "bold",
+                }}
+              >
+                {rentals.length}
+              </span>
+            )}
           </button>
         </div>
       </header>
@@ -792,12 +893,17 @@ export default function ExploreAppPage() {
               </div>
 
               {/* 3. Activity & Badges Hub Card */}
-              <Link
-                href="/activity"
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode("activity");
+                  if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore?view=activity");
+                }}
                 className="panel-glass"
                 style={{
+                  width: "100%",
+                  textAlign: "left",
                   display: "block",
-                  textDecoration: "none",
                   padding: "14px 16px",
                   background: "linear-gradient(135deg, rgba(124, 58, 237, 0.07) 0%, rgba(6, 182, 212, 0.05) 100%)",
                   border: "1px solid rgba(124, 58, 237, 0.28)",
@@ -821,7 +927,9 @@ export default function ExploreAppPage() {
                       ACTIVITY & BADGES
                     </span>
                   </div>
-                  <span style={{ fontSize: "13px", color: "#7c3aed", fontWeight: "bold" }}>→</span>
+                  <span style={{ fontSize: "12px", color: "#7c3aed", fontWeight: "bold" }}>
+                    →
+                  </span>
                 </div>
                 <p style={{ margin: 0, fontSize: "10px", color: "#64748b", lineHeight: "1.4" }}>
                   View rented sub-keys, active compute pools & on-chain reputation
@@ -851,7 +959,7 @@ export default function ExploreAppPage() {
                       fontWeight: "bold",
                     }}
                   >
-                    {listings.filter((l) => walletAddress && l.seller.toLowerCase() === walletAddress.toLowerCase()).length} Listed
+                    {myListings.length} Listed
                   </span>
                   <span
                     style={{
@@ -867,7 +975,7 @@ export default function ExploreAppPage() {
                     Badges 🌲
                   </span>
                 </div>
-              </Link>
+              </button>
             </aside>
 
             {/* Right Column: Main Capabilities List */}
@@ -1494,6 +1602,598 @@ export default function ExploreAppPage() {
                 </button>
               </form>
             </div>
+          </div>
+        )}
+
+        {/* ACTIVITY & BADGES VIEW (Matches Explore Page Light Theme) */}
+        {viewMode === "activity" && (
+          <div style={{ maxWidth: "1080px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
+            {/* Top Control Panel */}
+            <div className="panel-glass" style={{ padding: "32px 36px", borderRadius: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
+                <div>
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      background: "rgba(124, 58, 237, 0.1)",
+                      border: "1px solid rgba(124, 58, 237, 0.25)",
+                      color: "#7c3aed",
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      fontFamily: "var(--font-accent)",
+                      letterSpacing: "0.05em",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <span>⚡</span>
+                    <span>PERSONAL PASSPORT & ON-CHAIN REPUTATION</span>
+                  </div>
+                  <h2
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: "28px",
+                      fontWeight: "800",
+                      color: "#1e1e24",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Activity & Badges
+                  </h2>
+                  <p style={{ color: "var(--ink-secondary)", fontSize: "13px", margin: 0 }}>
+                    Manage your rented virtual sub-keys, active compute pools, and on-chain Proof-of-Donation credentials.
+                  </p>
+                </div>
+
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    onClick={() => {
+                      setViewMode("buyer");
+                      if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore");
+                    }}
+                    className="btn-terminal"
+                    style={{ padding: "8px 16px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                  >
+                    ← BACK TO MARKETPLACE
+                  </button>
+                  <button
+                    onClick={() => {
+                      setViewMode("seller");
+                      if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore?view=seller");
+                    }}
+                    className="btn-terminal active"
+                    style={{ padding: "8px 16px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                  >
+                    + LIST QUOTA
+                  </button>
+                </div>
+              </div>
+
+              {/* 4 Summary Stats */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+                  gap: "14px",
+                  marginTop: "24px",
+                }}
+              >
+                <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
+                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
+                    RENTED SUB-KEYS
+                  </span>
+                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#1e1e24", marginTop: "2px" }}>
+                    {rentals.length} Keys
+                  </div>
+                  <span style={{ fontSize: "10px", color: "#71717a" }}>Active escrow sessions</span>
+                </div>
+
+                <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
+                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#059669", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
+                    MY LISTINGS
+                  </span>
+                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#059669", marginTop: "2px" }}>
+                    {myListings.length} Pools
+                  </div>
+                  <span style={{ fontSize: "10px", color: "#71717a" }}>Live on Base Sepolia</span>
+                </div>
+
+                <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
+                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#b45309", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
+                    REPUTATION TIER
+                  </span>
+                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "20px", fontWeight: "800", color: "#b45309", marginTop: "2px" }}>
+                    {currentTierData.icon} {currentTierData.name}
+                  </div>
+                  <span style={{ fontSize: "10px", color: "#71717a" }}>Proof-of-Donation</span>
+                </div>
+
+                <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
+                  <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "700", letterSpacing: "0.06em", display: "block" }}>
+                    COMPUTE RESCUED
+                  </span>
+                  <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#7c3aed", marginTop: "2px" }}>
+                    {formatCurrency(currentDonor.totalRescuedUsd)}
+                  </div>
+                  <span style={{ fontSize: "10px", color: "#71717a" }}>{formatTokens(currentDonor.totalTokensDonated)} tokens</span>
+                </div>
+              </div>
+
+              {/* Sub-Tab Navigation Bar */}
+              <div style={{ display: "flex", gap: "8px", marginTop: "24px", borderBottom: "1px solid #e2dbf3", paddingBottom: "12px" }}>
+                <button
+                  className={`cat-btn ${activityTab === "purchases" ? "active" : ""}`}
+                  onClick={() => setActivityTab("purchases")}
+                  style={{ padding: "8px 18px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                >
+                  🔑 Purchases & Sub-Keys ({rentals.length})
+                </button>
+                <button
+                  className={`cat-btn ${activityTab === "listings" ? "active" : ""}`}
+                  onClick={() => setActivityTab("listings")}
+                  style={{ padding: "8px 18px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                >
+                  ⚡ My Listings ({myListings.length})
+                </button>
+                <button
+                  className={`cat-btn ${activityTab === "badges" ? "active" : ""}`}
+                  onClick={() => setActivityTab("badges")}
+                  style={{ padding: "8px 18px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                >
+                  🏆 Badges & Reputation ({currentDonor.unlockedBadges.length})
+                </button>
+              </div>
+            </div>
+
+            {/* TAB 1: PURCHASES */}
+            {activityTab === "purchases" && (
+              <div>
+                {rentals.length === 0 ? (
+                  <div
+                    className="panel-glass"
+                    style={{
+                      padding: "60px 24px",
+                      textAlign: "center",
+                      border: "1px dashed #7c3aed",
+                      borderRadius: "14px",
+                      background: "rgba(124, 58, 237, 0.03)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "12px",
+                    }}
+                  >
+                    <div style={{ fontSize: "32px" }}>🔑</div>
+                    <div style={{ fontSize: "16px", fontWeight: "700", color: "#1e1e24" }}>
+                      No Active Sub-Keys Found
+                    </div>
+                    <div style={{ maxWidth: "460px", fontSize: "12px", color: "#64748b", lineHeight: "1.6" }}>
+                      You haven't rented or claimed any model compute pools yet. Browse active AI quotas on the marketplace to get your first high-speed virtual key backed by Kridge Escrow.
+                    </div>
+                    <button
+                      onClick={() => {
+                        setViewMode("buyer");
+                        if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore");
+                      }}
+                      className="btn-terminal active"
+                      style={{ marginTop: "8px", padding: "9px 20px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                    >
+                      BROWSE MARKETPLACE NOW
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "16px" }}>
+                    {rentals.map((rental) => {
+                      const isRevealed = !!revealedKeys[rental.subKey];
+                      const displayKey = isRevealed
+                        ? rental.subKey
+                        : rental.subKey.substring(0, 14) + "••••••••••••••••";
+                      const burnedPct = Math.min(
+                        100,
+                        Math.round(((rental.usedTokens || 0) / (rental.allocatedTokens || 1)) * 100)
+                      );
+
+                      return (
+                        <div
+                          key={rental.rentalId}
+                          className="panel-glass"
+                          style={{
+                            padding: "20px",
+                            borderRadius: "14px",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            gap: "16px",
+                          }}
+                        >
+                          <div>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                              <span className="badge-category">{getProviderBadge(rental.provider)}</span>
+                              <span
+                                style={{
+                                  fontSize: "9px",
+                                  fontFamily: "var(--font-accent)",
+                                  fontWeight: "700",
+                                  padding: "2px 6px",
+                                  borderRadius: "4px",
+                                  background: "rgba(5, 150, 105, 0.1)",
+                                  color: "#059669",
+                                  border: "1px solid rgba(5, 150, 105, 0.25)",
+                                }}
+                              >
+                                {rental.status}
+                              </span>
+                            </div>
+
+                            <h3 style={{ fontFamily: "var(--font-display)", fontSize: "18px", fontWeight: "700", color: "#1e1e24", margin: "0 0 6px 0" }}>
+                              {rental.modelFamily}
+                            </h3>
+
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontFamily: "var(--font-accent)", color: "#71717a" }}>
+                              <span>{rental.listingType === "DONATION" ? "FREE COMMUNITY GRANT" : `${formatCurrency(rental.amountPaidUsd)} USDC`}</span>
+                              <span>⏱ {formatTimeRemaining(rental.expiresAt)}</span>
+                            </div>
+                          </div>
+
+                          {/* Sub-Key Box */}
+                          <div
+                            style={{
+                              background: "#f7f5fc",
+                              border: "1px solid #e2dbf3",
+                              borderRadius: "8px",
+                              padding: "10px 12px",
+                            }}
+                          >
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "700", marginBottom: "4px" }}>
+                              <span>VIRTUAL SUB-KEY</span>
+                              <span>METERED PROXY</span>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                              <code style={{ fontSize: "11px", fontFamily: "var(--font-accent)", color: "#1e1e24", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {displayKey}
+                              </code>
+                              <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleRevealKey(rental.subKey)}
+                                  className="btn-terminal"
+                                  style={{ padding: "4px 6px", fontSize: "10px", cursor: "pointer" }}
+                                  title={isRevealed ? "Hide key" : "Reveal key"}
+                                >
+                                  {isRevealed ? "Hide" : "Reveal"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyActivityKey(rental.subKey, rental.subKey)}
+                                  className="btn-terminal active"
+                                  style={{ padding: "4px 8px", fontSize: "10px", cursor: "pointer" }}
+                                >
+                                  {copiedActivityKey === rental.subKey ? "✓ Copied" : "Copy"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Token Progress Bar */}
+                          <div>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", fontFamily: "var(--font-accent)", color: "#71717a", marginBottom: "4px" }}>
+                              <span>Used: {(rental.usedTokens || 0).toLocaleString()} tokens</span>
+                              <span>{burnedPct}% of {formatTokens(rental.allocatedTokens)}</span>
+                            </div>
+                            <div style={{ width: "100%", height: "6px", background: "#e2dbf3", borderRadius: "999px", overflow: "hidden" }}>
+                              <div
+                                style={{
+                                  width: `${Math.max(4, burnedPct)}%`,
+                                  height: "100%",
+                                  background: "linear-gradient(90deg, #7c3aed, #059669)",
+                                  borderRadius: "999px",
+                                  transition: "width 0.3s ease",
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Action links */}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px dashed #e2dbf3", paddingTop: "10px", fontSize: "11px", fontFamily: "var(--font-accent)" }}>
+                            <Link
+                              href="/playground"
+                              style={{ color: "#7c3aed", fontWeight: "700", textDecoration: "none" }}
+                            >
+                              ⚡ Test in Playground →
+                            </Link>
+                            <Link
+                              href="/tribunal"
+                              style={{ color: "#71717a", textDecoration: "none" }}
+                              title="If key is revoked by seller, dispute on GenLayer for escrow refund"
+                            >
+                              ⚖️ Report Issue
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: MY LISTINGS */}
+            {activityTab === "listings" && (
+              <div>
+                {myListings.length === 0 ? (
+                  <div
+                    className="panel-glass"
+                    style={{
+                      padding: "60px 24px",
+                      textAlign: "center",
+                      border: "1px dashed #059669",
+                      borderRadius: "14px",
+                      background: "rgba(5, 150, 105, 0.03)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "12px",
+                    }}
+                  >
+                    <div style={{ fontSize: "32px" }}>⚡</div>
+                    <div style={{ fontSize: "16px", fontWeight: "700", color: "#1e1e24" }}>
+                      No Active Pools Listed Yet
+                    </div>
+                    <div style={{ maxWidth: "460px", fontSize: "12px", color: "#64748b", lineHeight: "1.6" }}>
+                      Turn your unused Google, OpenAI, or Anthropic subscription quota into passive liquid USDC yield or community ESG badges.
+                    </div>
+                    <button
+                      onClick={() => {
+                        setViewMode("seller");
+                        if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore?view=seller");
+                      }}
+                      className="btn-terminal active"
+                      style={{ marginTop: "8px", padding: "9px 20px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                    >
+                      + LIST QUOTA NOW
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "16px" }}>
+                    {myListings.map((listing) => (
+                      <div
+                        key={listing.id}
+                        className="panel-glass"
+                        style={{
+                          padding: "20px",
+                          borderRadius: "14px",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          gap: "16px",
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                            <span className="badge-category">{getProviderBadge(listing.provider)}</span>
+                            <span
+                              style={{
+                                fontSize: "9px",
+                                fontFamily: "var(--font-accent)",
+                                fontWeight: "700",
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                background: "rgba(5, 150, 105, 0.1)",
+                                color: "#059669",
+                                border: "1px solid rgba(5, 150, 105, 0.25)",
+                              }}
+                            >
+                              {listing.listingType === "DONATION" ? "COMMUNITY GRANT" : `${listing.discountPct}% OFF`}
+                            </span>
+                          </div>
+
+                          <h3 style={{ fontFamily: "var(--font-display)", fontSize: "18px", fontWeight: "700", color: "#1e1e24", margin: "0 0 6px 0" }}>
+                            {listing.modelFamily}
+                          </h3>
+                          <p style={{ color: "var(--ink-secondary)", fontSize: "12px", margin: "0 0 12px 0", lineHeight: "1.4" }}>
+                            {listing.description || "Verified live compute pool on Base Sepolia."}
+                          </p>
+
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: "8px",
+                              padding: "10px",
+                              background: "#f7f5fc",
+                              border: "1px solid #e2dbf3",
+                              borderRadius: "8px",
+                            }}
+                          >
+                            <div>
+                              <span style={{ fontSize: "9px", fontFamily: "var(--font-accent)", color: "#71717a", display: "block" }}>CAPACITY</span>
+                              <span style={{ fontSize: "13px", fontFamily: "var(--font-accent)", fontWeight: "700", color: "#7c3aed" }}>
+                                {formatTokens(listing.quotaTokens)}
+                              </span>
+                            </div>
+                            <div>
+                              <span style={{ fontSize: "9px", fontFamily: "var(--font-accent)", color: "#71717a", display: "block" }}>PRICE</span>
+                              <span style={{ fontSize: "13px", fontFamily: "var(--font-accent)", fontWeight: "700", color: "#059669" }}>
+                                {listing.priceUsd === 0 ? "FREE" : `${formatCurrency(listing.priceUsd)} USDC`}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px dashed #e2dbf3", paddingTop: "10px", fontSize: "11px", fontFamily: "var(--font-accent)" }}>
+                          <span style={{ color: "#059669", fontWeight: "600" }}>✓ Live on Base Sepolia</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setViewMode("buyer");
+                              if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore");
+                            }}
+                            style={{ background: "none", border: "none", color: "#7c3aed", fontWeight: "700", cursor: "pointer", padding: 0 }}
+                          >
+                            View on Marketplace →
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 3: BADGES & REPUTATION */}
+            {activityTab === "badges" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                {/* Spotlight Hero */}
+                <div
+                  className="panel-glass"
+                  style={{
+                    padding: "28px 32px",
+                    borderRadius: "16px",
+                    background: "linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, rgba(124, 58, 237, 0.05) 100%)",
+                    border: "1.5px solid rgba(234, 179, 8, 0.35)",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
+                    <div>
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          background: "rgba(234, 179, 8, 0.15)",
+                          border: "1px solid rgba(234, 179, 8, 0.3)",
+                          color: "#b45309",
+                          fontSize: "10px",
+                          fontWeight: "700",
+                          fontFamily: "var(--font-accent)",
+                          letterSpacing: "0.06em",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        <span>🏆</span>
+                        <span>ON-CHAIN ESG CREDENTIAL LEVEL</span>
+                      </div>
+                      <h2
+                        style={{
+                          fontFamily: "var(--font-display)",
+                          fontSize: "26px",
+                          fontWeight: "800",
+                          color: "#1e1e24",
+                          margin: "0 0 6px 0",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <span>{currentTierData.icon}</span>
+                        <span>{currentTierData.name}</span>
+                      </h2>
+                      <p style={{ color: "var(--ink-secondary)", fontSize: "13px", margin: 0, maxWidth: "560px" }}>
+                        {currentTierData.description} Verified on GenLayer Intelligent Contracts.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleShareToTwitter}
+                      className="btn-terminal active"
+                      style={{ padding: "9px 18px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                    >
+                      {shareSuccess ? "Opening X..." : "Share Credential on X"}
+                    </button>
+                  </div>
+
+                  {/* Progress to Next Tier */}
+                  {progressInfo.nextTier && (() => {
+                    const nextTierConfig = TIER_CONFIG[progressInfo.nextTier];
+                    return (
+                      <div style={{ marginTop: "20px", paddingTop: "16px", borderTop: "1px dashed rgba(234, 179, 8, 0.3)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontFamily: "var(--font-accent)", color: "#1e1e24", marginBottom: "6px" }}>
+                          <span>Progress to {nextTierConfig.name}:</span>
+                          <span style={{ color: "#b45309", fontWeight: "700" }}>
+                            ${currentDonor.totalRescuedUsd.toFixed(2)} / ${nextTierConfig.thresholdUsd} ({progressInfo.progressPct.toFixed(0)}%)
+                          </span>
+                        </div>
+                        <div style={{ width: "100%", height: "8px", background: "#e2dbf3", borderRadius: "999px", overflow: "hidden" }}>
+                          <div
+                            style={{
+                              width: `${progressInfo.progressPct}%`,
+                              height: "100%",
+                              background: "linear-gradient(90deg, #f59e0b, #eab308)",
+                              borderRadius: "999px",
+                              transition: "width 0.4s ease",
+                            }}
+                          />
+                        </div>
+                        <p style={{ fontSize: "10px", color: "#71717a", marginTop: "6px", margin: "6px 0 0 0" }}>
+                          Rescuing ${progressInfo.remainingUsd.toFixed(2)} more in expiring credits will upgrade your wallet to {nextTierConfig.name}.
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* All Tiers Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "14px" }}>
+                  {TIERS_LIST.map((tier) => {
+                    const cfg = TIER_CONFIG[tier];
+                    const isUnlocked = currentDonor.unlockedBadges.includes(tier);
+
+                    return (
+                      <div
+                        key={tier}
+                        className="panel-glass"
+                        style={{
+                          padding: "18px",
+                          borderRadius: "12px",
+                          background: isUnlocked ? "#ffffff" : "#fbfafd",
+                          border: isUnlocked ? "1.5px solid #eab308" : "1px solid #e2dbf3",
+                          opacity: isUnlocked ? 1 : 0.65,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "24px" }}>{cfg.icon}</span>
+                          <span
+                            style={{
+                              fontSize: "9px",
+                              fontFamily: "var(--font-accent)",
+                              fontWeight: "700",
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                              background: isUnlocked ? "rgba(234, 179, 8, 0.15)" : "#f1edf9",
+                              color: isUnlocked ? "#b45309" : "#94a3b8",
+                            }}
+                          >
+                            {isUnlocked ? "UNLOCKED & MINTED" : "LOCKED"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <div style={{ fontFamily: "var(--font-display)", fontSize: "15px", fontWeight: "700", color: "#1e1e24" }}>
+                            {cfg.name}
+                          </div>
+                          <div style={{ fontSize: "11px", fontFamily: "var(--font-accent)", color: "#7c3aed", fontWeight: "600", marginTop: "2px" }}>
+                            ${cfg.thresholdUsd.toLocaleString()}+ compute rescued
+                          </div>
+                        </div>
+
+                        <p style={{ margin: 0, fontSize: "11px", color: "#64748b", lineHeight: "1.4" }}>
+                          {cfg.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
