@@ -15,7 +15,7 @@ export const INITIAL_CHAIN_BALANCES: Record<SupportedChain, ChainBalanceInfo> = 
 const STORAGE_KEYS = {
   LISTINGS: "kridge_listings_v2",
   RENTALS: "kridge_rentals_v2",
-  DISPUTES: "kridge_disputes_v3",
+  DISPUTES: "kridge_disputes_v4",
   DONORS: "kridge_donors_v3",
   WALLET: "kridge_wallet_v2",
 };
@@ -91,22 +91,23 @@ export function useKridgeStore() {
         if (typeof window !== "undefined") {
           localStorage.removeItem("kridge_donors_v2");
           localStorage.removeItem("kridge_disputes_v2");
+          localStorage.removeItem("kridge_disputes_v3");
         }
 
         const savedDisputes = localStorage.getItem(STORAGE_KEYS.DISPUTES);
         if (savedDisputes) {
           try {
             const parsed = JSON.parse(savedDisputes);
-            if (Array.isArray(parsed) && parsed.length > 0) {
+            if (Array.isArray(parsed)) {
               setDisputes(parsed);
             } else {
-              setDisputes(INITIAL_DISPUTES);
+              setDisputes([]);
             }
           } catch {
-            setDisputes(INITIAL_DISPUTES);
+            setDisputes([]);
           }
         } else {
-          setDisputes(INITIAL_DISPUTES);
+          setDisputes([]);
         }
 
         const savedDonors = localStorage.getItem(STORAGE_KEYS.DONORS);
