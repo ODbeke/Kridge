@@ -38,17 +38,48 @@ export function useKridgeStore() {
   useEffect(() => {
     async function loadData() {
       try {
-        // 1. Fetch live listings from /api/listings
-        const res = await fetch("/api/listings");
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.listings)) {
-            setListings(data.listings);
-            localStorage.setItem(STORAGE_KEYS.LISTINGS, JSON.stringify(data.listings));
+        // 1. Instantly restore any cached listings from localStorage
+        let localListings: KridgeListing[] = [];
+        const savedListings = localStorage.getItem(STORAGE_KEYS.LISTINGS);
+        if (savedListings) {
+          try {
+            const parsed = JSON.parse(savedListings);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              localListings = parsed;
+              setListings(parsed);
+            }
+          } catch {}
+        }
+
+        // 2. Fetch live listings from server registry and merge bi-directionally
+        try {
+          const res = await fetch("/api/listings");
+          if (res.ok) {
+            const data = await res.json();
+            const serverListings: KridgeListing[] = Array.isArray(data.listings) ? data.listings : [];
+
+            // Combine both sources, using ID as primary key
+            const combinedMap = new Map<number, KridgeListing>();
+            serverListings.forEach((l) => combinedMap.set(l.id, l));
+
+            // Retain any local listings not yet in the server response and sync them
+            localListings.forEach((l) => {
+              if (!combinedMap.has(l.id)) {
+                combinedMap.set(l.id, l);
+                fetch("/api/listings", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(l),
+                }).catch(() => {});
+              }
+            });
+
+            const merged = Array.from(combinedMap.values()).sort((a, b) => b.id - a.id);
+            setListings(merged);
+            localStorage.setItem(STORAGE_KEYS.LISTINGS, JSON.stringify(merged));
           }
-        } else {
-          const savedListings = localStorage.getItem(STORAGE_KEYS.LISTINGS);
-          if (savedListings) setListings(JSON.parse(savedListings));
+        } catch (fetchErr) {
+          console.warn("Could not fetch server listings:", fetchErr);
         }
 
         const savedRentals = localStorage.getItem(STORAGE_KEYS.RENTALS);

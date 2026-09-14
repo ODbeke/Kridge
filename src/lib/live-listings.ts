@@ -1,13 +1,43 @@
+import fs from "fs";
+import path from "path";
 import { KridgeListing } from "./types";
 
-// In-Memory Live Listings Registry (Option 2: Starts with 0 listings, purely dynamic user-created inventory)
-const globalStore = globalThis as unknown as { __KRIDGE_LIVE_LISTINGS__?: KridgeListing[] };
+const DATA_FILE = path.join(process.cwd(), "src/data/live-listings.json");
 
-if (!globalStore.__KRIDGE_LIVE_LISTINGS__) {
-  globalStore.__KRIDGE_LIVE_LISTINGS__ = [];
+function readListingsFromDisk(): KridgeListing[] {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const content = fs.readFileSync(DATA_FILE, "utf-8");
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn("Could not read live-listings from disk:", e);
+  }
+  return [];
 }
 
+function writeListingsToDisk(listings: KridgeListing[]) {
+  try {
+    const dir = path.dirname(DATA_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(listings, null, 2), "utf-8");
+  } catch (e) {
+    console.warn("Could not write live-listings to disk:", e);
+  }
+}
+
+// Global in-memory cache synchronized with persistent disk file
+const globalStore = globalThis as unknown as { __KRIDGE_LIVE_LISTINGS__?: KridgeListing[] };
+
 export function getLiveListings(): KridgeListing[] {
+  if (!globalStore.__KRIDGE_LIVE_LISTINGS__ || globalStore.__KRIDGE_LIVE_LISTINGS__.length === 0) {
+    globalStore.__KRIDGE_LIVE_LISTINGS__ = readListingsFromDisk();
+  }
   return globalStore.__KRIDGE_LIVE_LISTINGS__ || [];
 }
 
@@ -27,6 +57,7 @@ export function addLiveListing(
 
   current.unshift(newListing);
   globalStore.__KRIDGE_LIVE_LISTINGS__ = current;
+  writeListingsToDisk(current);
   return newListing;
 }
 
@@ -40,5 +71,7 @@ export function updateListingTokens(id: number, tokensConsumed: number): boolean
   if (!listing) return false;
 
   listing.remainingTokens = Math.max(0, listing.remainingTokens - tokensConsumed);
+  writeListingsToDisk(current);
   return true;
 }
+
