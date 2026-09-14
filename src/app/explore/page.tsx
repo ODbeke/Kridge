@@ -852,24 +852,6 @@ export default function ExploreAppPage() {
           >
             SELL
           </button>
-          <button
-            className={`btn-terminal ${viewMode === "activity" ? "active" : ""}`}
-            onClick={() => {
-              setViewMode("activity");
-              if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore?view=activity");
-            }}
-          >
-            ACTIVITY
-          </button>
-          <button
-            className={`btn-terminal ${viewMode === "tribunal" ? "active" : ""}`}
-            onClick={() => {
-              setViewMode("tribunal");
-              if (typeof window !== "undefined") window.history.replaceState(null, "", "/explore?view=tribunal");
-            }}
-          >
-            TRIBUNAL
-          </button>
         </div>
       </header>
 
