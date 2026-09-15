@@ -13,19 +13,25 @@ export async function POST(req: NextRequest) {
     let sellerAddress = listingDetails?.seller;
     let listingType = listingDetails?.listingType || "RENT";
 
-    if (!provider && listingId) {
-      const listing = findLiveListing(Number(listingId));
-      if (listing) {
-        provider = listing.provider;
-        modelFamily = listing.modelFamily;
-        allocatedTokens = listing.remainingTokens || listing.quotaTokens;
-        sellerAddress = listing.seller;
-        listingType = listing.listingType;
-      }
+    const liveListing = listingId ? findLiveListing(Number(listingId)) : undefined;
+    if (!provider && liveListing) {
+      provider = liveListing.provider;
+      modelFamily = liveListing.modelFamily;
+      allocatedTokens = liveListing.remainingTokens || liveListing.quotaTokens;
+      sellerAddress = liveListing.seller;
+      listingType = liveListing.listingType;
     }
 
     if (!provider) {
       return NextResponse.json({ error: "Listing not found or details missing" }, { status: 404 });
+    }
+
+    const expiry = listingDetails?.expiryTimestamp || liveListing?.expiryTimestamp;
+    if (expiry && Date.now() >= Number(expiry)) {
+      return NextResponse.json(
+        { error: "This listing has reached its expiration timestamp and can no longer be rented or claimed." },
+        { status: 400 }
+      );
     }
 
     const { getVaultedApiKey } = await import("@/lib/vault");

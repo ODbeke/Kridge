@@ -381,6 +381,16 @@ export default function ExploreAppPage() {
     setTimeout(() => setShareSuccess(false), 3000);
   };
 
+  // Real-time clock to reactively update expiration states without manual page refresh
+  const [currentTime, setCurrentTime] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Filter listings by Provider / Ecosystem
   const filteredListings = useMemo(() => {
     if (categoryFilter === "all") return listings;
@@ -392,14 +402,17 @@ export default function ExploreAppPage() {
 
   // Aggregate stats for the persistent ticker
   const stats = useMemo(() => {
-    const totalTokens = listings.reduce((acc, curr) => acc + curr.quotaTokens, 0);
-    const totalRetail = listings.reduce((acc, curr) => acc + curr.retailValueUsd, 0);
+    const activeListings = listings.filter(
+      (l) => (!l.expiryTimestamp || l.expiryTimestamp > currentTime) && (l.remainingTokens ?? l.quotaTokens) > 0
+    );
+    const totalTokens = activeListings.reduce((acc, curr) => acc + (curr.remainingTokens ?? curr.quotaTokens), 0);
+    const totalRetail = activeListings.reduce((acc, curr) => acc + curr.retailValueUsd, 0);
     return {
-      activeCount: listings.length,
+      activeCount: activeListings.length,
       tokenVolume: formatTokens(totalTokens),
       retailSaved: formatCurrency(totalRetail),
     };
-  }, [listings]);
+  }, [listings, currentTime]);
 
   const handleCopy = (text: string, key: string) => {
     if (navigator.clipboard) {
@@ -546,6 +559,9 @@ export default function ExploreAppPage() {
   };
 
   const handleOpenModal = (listing: KridgeListing) => {
+    if (listing.expiryTimestamp && listing.expiryTimestamp <= Date.now()) {
+      return; // Strictly ignore click if listing has expired
+    }
     setSelectedListing(listing);
     setRentedSubKey(null);
     setRentalTxHash(null);
@@ -554,6 +570,10 @@ export default function ExploreAppPage() {
 
   const handleRentNow = async () => {
     if (!selectedListing) return;
+    if (selectedListing.expiryTimestamp && selectedListing.expiryTimestamp <= Date.now()) {
+      setRentalError("This compute quota has reached its expiry timestamp. No transaction can be signed and no key can be issued.");
+      return;
+    }
     setIsRenting(true);
     setRentalError(null);
 
@@ -1224,99 +1244,166 @@ export default function ExploreAppPage() {
                 </div>
               ) : (
                 <div className="service-grid">
-                  {filteredListings.map((listing) => (
-                    <div
-                      key={listing.id}
-                      className="card-service"
-                      onClick={() => handleOpenModal(listing)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <div>
-                        <div className="card-head">
-                          <span className="badge-category">
-                            {getProviderBadge(listing.provider)}
-                          </span>
-                          <div className="status-online">
-                            <span className="pulse-dot"></span>
-                            {listing.listingType === "DONATION"
-                              ? "FREE FAUCET"
-                              : `${listing.discountPct}% OFF`}
-                          </div>
-                        </div>
+                  {filteredListings.map((listing) => {
+                    const isExpired = !!listing.expiryTimestamp && listing.expiryTimestamp <= currentTime;
 
-                        <h3 className="card-title">{listing.modelFamily}</h3>
-                        <p className="card-description">
-                          {listing.description ||
-                            `Unspent ${listing.modelFamily} capacity available for immediate sub-key reservation.`}
-                        </p>
-                      </div>
+                    return (
+                      <div
+                        key={listing.id}
+                        className={`card-service ${isExpired ? "card-service-expired" : ""}`}
+                        onClick={() => {
+                          if (isExpired) return;
+                          handleOpenModal(listing);
+                        }}
+                        style={{
+                          cursor: isExpired ? "not-allowed" : "pointer",
+                          opacity: isExpired ? 0.52 : 1,
+                          filter: isExpired ? "grayscale(0.7)" : "none",
+                          background: isExpired ? "rgba(243, 240, 248, 0.75)" : undefined,
+                          borderColor: isExpired ? "rgba(0, 0, 0, 0.1)" : undefined,
+                          userSelect: isExpired ? "none" : "auto",
+                        }}
+                      >
+                        <div>
+                          <div className="card-head">
+                            <span className="badge-category">
+                              {getProviderBadge(listing.provider)}
+                            </span>
+                            {isExpired ? (
+                              <div
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "5px",
+                                  padding: "3px 8px",
+                                  borderRadius: "9999px",
+                                  background: "rgba(239, 68, 68, 0.12)",
+                                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                                  color: "#dc2626",
+                                  fontFamily: "var(--font-accent)",
+                                  fontSize: "10px",
+                                  fontWeight: "700",
+                                  letterSpacing: "0.05em",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    width: "5px",
+                                    height: "5px",
+                                    borderRadius: "50%",
+                                    background: "#dc2626",
+                                  }}
+                                />
+                                EXPIRED
+                              </div>
+                            ) : (
+                              <div className="status-online">
+                                <span className="pulse-dot"></span>
+                                {listing.listingType === "DONATION"
+                                  ? "FREE FAUCET"
+                                  : `${listing.discountPct}% OFF`}
+                              </div>
+                            )}
+                          </div>
 
-                      <div>
-                        {/* 3-Metric Recessed Row */}
-                        <div className="metrics-row">
-                          <div>
-                            <div className="metric-lbl">CAPACITY</div>
-                            <div className="metric-val" style={{ color: "var(--accent-cyan)" }}>
-                              {formatTokens(listing.quotaTokens)}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="metric-lbl">SAVINGS</div>
-                            <div className="metric-val" style={{ color: "var(--accent-emerald)" }}>
-                              {listing.listingType === "DONATION" ? "100%" : `${listing.discountPct}%`}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="metric-lbl">EXPIRES</div>
-                            <div className="metric-val" style={{ color: "var(--accent-amber)" }}>
-                              <CountdownTimer expiryTimestamp={listing.expiryTimestamp} />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Card Footer: Rental Rate & Action */}
-                        <div className="card-foot">
-                          <div>
-                            <div className="metric-lbl">
-                              {listing.listingType === "DONATION" ? "GRANT ALLOCATION" : "RENTAL RATE"}
-                            </div>
-                            <div className="price-usdc">
-                              {listing.priceUsd === 0 ? (
-                                <span style={{ color: "var(--accent-emerald)" }}>FREE // 0.00 USDC</span>
-                              ) : (
-                                <>
-                                  {formatCurrency(listing.priceUsd)} USDC
-                                  {listing.retailValueUsd > listing.priceUsd && (
-                                    <span
-                                      style={{
-                                        textDecoration: "line-through",
-                                        opacity: 0.45,
-                                        fontSize: "11px",
-                                        marginLeft: "6px",
-                                        fontWeight: "normal",
-                                      }}
-                                    >
-                                      {formatCurrency(listing.retailValueUsd)}
-                                    </span>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          <div
-                            style={{
-                              fontFamily: "var(--font-accent)",
-                              fontSize: "11px",
-                              color: "#422624",
-                              fontWeight: "700",
-                            }}
+                          <h3
+                            className="card-title"
+                            style={{ color: isExpired ? "#6b7280" : undefined }}
                           >
-                            {listing.listingType === "DONATION" ? "Claim Grant ↗" : "Rent Quota ↗"}
+                            {listing.modelFamily}
+                          </h3>
+                          <p
+                            className="card-description"
+                            style={{ color: isExpired ? "#9ca3af" : undefined }}
+                          >
+                            {isExpired
+                              ? "This compute quota has expired. Ephemeral sub-keys and escrow reservations are closed."
+                              : listing.description ||
+                                `Unspent ${listing.modelFamily} capacity available for immediate sub-key reservation.`}
+                          </p>
+                        </div>
+
+                        <div>
+                          {/* 3-Metric Recessed Row */}
+                          <div className="metrics-row" style={{ opacity: isExpired ? 0.6 : 1 }}>
+                            <div>
+                              <div className="metric-lbl">CAPACITY</div>
+                              <div
+                                className="metric-val"
+                                style={{ color: isExpired ? "#6b7280" : "var(--accent-cyan)" }}
+                              >
+                                {formatTokens(listing.quotaTokens)}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="metric-lbl">SAVINGS</div>
+                              <div
+                                className="metric-val"
+                                style={{ color: isExpired ? "#6b7280" : "var(--accent-emerald)" }}
+                              >
+                                {listing.listingType === "DONATION" ? "100%" : `${listing.discountPct}%`}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="metric-lbl">EXPIRES</div>
+                              <div
+                                className="metric-val"
+                                style={{ color: isExpired ? "#ef4444" : "var(--accent-amber)" }}
+                              >
+                                <CountdownTimer expiryTimestamp={listing.expiryTimestamp} />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Card Footer: Rental Rate & Action */}
+                          <div className="card-foot">
+                            <div>
+                              <div className="metric-lbl">
+                                {listing.listingType === "DONATION" ? "GRANT ALLOCATION" : "RENTAL RATE"}
+                              </div>
+                              <div className="price-usdc">
+                                {listing.priceUsd === 0 ? (
+                                  <span style={{ color: isExpired ? "#6b7280" : "var(--accent-emerald)" }}>
+                                    FREE // 0.00 USDC
+                                  </span>
+                                ) : (
+                                  <>
+                                    <span style={{ color: isExpired ? "#6b7280" : undefined }}>
+                                      {formatCurrency(listing.priceUsd)} USDC
+                                    </span>
+                                    {listing.retailValueUsd > listing.priceUsd && (
+                                      <span
+                                        style={{
+                                          textDecoration: "line-through",
+                                          opacity: 0.45,
+                                          fontSize: "11px",
+                                          marginLeft: "6px",
+                                          fontWeight: "normal",
+                                        }}
+                                      >
+                                        {formatCurrency(listing.retailValueUsd)}
+                                      </span>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: "var(--font-accent)",
+                                fontSize: "11px",
+                                color: isExpired ? "#dc2626" : "#422624",
+                                fontWeight: "700",
+                                cursor: isExpired ? "not-allowed" : "pointer",
+                              }}
+                            >
+                              {isExpired ? "EXPIRED" : listing.listingType === "DONATION" ? "Claim Grant ↗" : "Rent Quota ↗"}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -1440,7 +1527,33 @@ export default function ExploreAppPage() {
                     )}
 
                     {/* Rented Sub-Key Reveal / Action Button */}
-                    {!rentedSubKey ? (
+                    {selectedListing.expiryTimestamp && selectedListing.expiryTimestamp <= currentTime ? (
+                      <div
+                        style={{
+                          padding: "16px 18px",
+                          background: "#fef2f2",
+                          border: "1px solid #f87171",
+                          borderRadius: "8px",
+                          marginBottom: "24px",
+                          fontSize: "13px",
+                          color: "#991b1b",
+                          fontWeight: "600",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                        }}
+                      >
+                        <span style={{ fontSize: "16px" }}>⚠️</span>
+                        <div>
+                          <div style={{ fontWeight: "700", color: "#7f1d1d", marginBottom: "2px" }}>
+                            QUOTA EXPIRED
+                          </div>
+                          <div>
+                            This compute quota reached its expiration timestamp (00:00:00:00). Escrow allocation is locked. No sub-key can be generated and no transaction can be signed.
+                          </div>
+                        </div>
+                      </div>
+                    ) : !rentedSubKey ? (
                       <button
                         type="button"
                         className="btn-publish"
