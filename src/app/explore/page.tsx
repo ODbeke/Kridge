@@ -391,14 +391,33 @@ export default function ExploreAppPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Filter listings by Provider / Ecosystem
+  // Filter listings by Provider / Ecosystem, sorting active listings first and expired listings down
   const filteredListings = useMemo(() => {
-    if (categoryFilter === "all") return listings;
+    let result = listings;
     if (categoryFilter === "community") {
-      return listings.filter((item) => item.listingType === "DONATION");
+      result = listings.filter((item) => item.listingType === "DONATION");
+    } else if (categoryFilter !== "all") {
+      result = listings.filter((item) => item.provider.toLowerCase() === categoryFilter.toLowerCase());
     }
-    return listings.filter((item) => item.provider.toLowerCase() === categoryFilter.toLowerCase());
-  }, [categoryFilter, listings]);
+
+    return [...result].sort((a, b) => {
+      const aExpired = !!a.expiryTimestamp && a.expiryTimestamp <= currentTime;
+      const bExpired = !!b.expiryTimestamp && b.expiryTimestamp <= currentTime;
+
+      // 1. Live/active listings always come first, expired listings go to the bottom
+      if (aExpired !== bExpired) {
+        return aExpired ? 1 : -1;
+      }
+
+      // 2. Among active listings, newest listing IDs come first
+      if (!aExpired && !bExpired) {
+        return b.id - a.id;
+      }
+
+      // 3. Among expired listings, most recently expired comes first
+      return (b.expiryTimestamp || 0) - (a.expiryTimestamp || 0);
+    });
+  }, [categoryFilter, listings, currentTime]);
 
   // Aggregate stats for the persistent ticker
   const stats = useMemo(() => {
