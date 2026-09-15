@@ -917,7 +917,7 @@ export default function ExploreAppPage() {
 
     await addListing({
       seller: walletAddress || "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
-      sellerChain: "base",
+      sellerChain: wallet.chain,
       provider: sellerForm.provider,
       modelFamily: sellerForm.modelFamily,
       listingType: sellerForm.listingType,
@@ -929,8 +929,10 @@ export default function ExploreAppPage() {
       expiryTimestamp: Date.now() + hours * 3600000,
       description:
         sellerForm.description ||
-        `Unspent ${sellerForm.modelFamily} quota listed for rental on Kridge Base Sepolia Escrow.`,
-      tags: ["High Speed", "Escrow Verified"],
+        (wallet.chain === "genlayer"
+          ? `Unspent ${sellerForm.modelFamily} quota listed for rental on Kridge GenLayer Intelligent Escrow.`
+          : `Unspent ${sellerForm.modelFamily} quota listed for rental on Kridge Base Sepolia Escrow.`),
+      tags: wallet.chain === "genlayer" ? ["GenLayer Escrow", "High Speed"] : ["Base Escrow", "High Speed"],
     }, sellerForm.apiKey);
 
     setPublishSuccess(true);
@@ -1550,9 +1552,25 @@ export default function ExploreAppPage() {
                       >
                         <div>
                           <div className="card-head">
-                            <span className="badge-category">
-                              {getProviderBadge(listing.provider)}
-                            </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span className="badge-category">
+                                {getProviderBadge(listing.provider)}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: "9px",
+                                  fontFamily: "var(--font-accent)",
+                                  fontWeight: "bold",
+                                  padding: "2px 6px",
+                                  borderRadius: "4px",
+                                  background: listing.sellerChain === "genlayer" ? "rgba(121, 40, 202, 0.12)" : "rgba(6, 182, 212, 0.1)",
+                                  color: listing.sellerChain === "genlayer" ? "#7928ca" : "#0891b2",
+                                  border: listing.sellerChain === "genlayer" ? "1px solid rgba(121, 40, 202, 0.25)" : "1px solid rgba(6, 182, 212, 0.25)",
+                                }}
+                              >
+                                {listing.sellerChain === "genlayer" ? "GENLAYER" : "BASE"}
+                              </span>
+                            </div>
                             {isExpired ? (
                               <div
                                 style={{
@@ -1645,29 +1663,29 @@ export default function ExploreAppPage() {
                               </div>
                               <div className="price-usdc">
                                 {listing.priceUsd === 0 ? (
-                                  <span style={{ color: isExpired ? "#6b7280" : "var(--accent-emerald)" }}>
-                                    FREE // 0.00 USDC
-                                  </span>
-                                ) : (
-                                  <>
-                                    <span style={{ color: isExpired ? "#4b5563" : undefined }}>
-                                      {formatCurrency(listing.priceUsd)} USDC
-                                    </span>
-                                    {listing.retailValueUsd > listing.priceUsd && (
-                                      <span
-                                        style={{
-                                          textDecoration: "line-through",
-                                          opacity: 0.45,
-                                          fontSize: "11px",
-                                          marginLeft: "6px",
-                                          fontWeight: "normal",
-                                        }}
-                                      >
-                                        {formatCurrency(listing.retailValueUsd)}
-                                      </span>
-                                    )}
-                                  </>
-                                )}
+                                   <span style={{ color: isExpired ? "#6b7280" : "var(--accent-emerald)" }}>
+                                     FREE // 0.00 {listing.sellerChain === "genlayer" ? "GEN" : "USDC"}
+                                   </span>
+                                 ) : (
+                                   <>
+                                     <span style={{ color: isExpired ? "#4b5563" : undefined }}>
+                                       {formatCurrency(listing.priceUsd)} {listing.sellerChain === "genlayer" ? "GEN" : "USDC"}
+                                     </span>
+                                     {listing.retailValueUsd > listing.priceUsd && (
+                                       <span
+                                         style={{
+                                           textDecoration: "line-through",
+                                           opacity: 0.45,
+                                           fontSize: "11px",
+                                           marginLeft: "6px",
+                                           fontWeight: "normal",
+                                         }}
+                                       >
+                                         {formatCurrency(listing.retailValueUsd)}
+                                       </span>
+                                     )}
+                                   </>
+                                 )}
                               </div>
                             </div>
                             <div
@@ -1733,6 +1751,12 @@ export default function ExploreAppPage() {
                           <CountdownTimer expiryTimestamp={selectedListing.expiryTimestamp} />
                         </span>
                       </div>
+                      <div className="info-item">
+                        <span className="info-lbl">Escrow Protocol</span>
+                        <span className="info-val" style={{ color: selectedListing.sellerChain === "genlayer" ? "#7928ca" : "#0891b2", fontWeight: "bold" }}>
+                          {selectedListing.sellerChain === "genlayer" ? "GenLayer Intelligent Contract" : "Base Sepolia Escrow"}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Cross-Chain Payment Route */}
@@ -1760,11 +1784,21 @@ export default function ExploreAppPage() {
                           gap: "6px",
                         }}
                       >
-                        <span>
-                          {CHAIN_CONFIGS[wallet.chain]?.chainName || "Base"}
-                        </span>
-                        <span style={{ color: "#422624" }}>──(Hyperlane)──▶</span>
-                        <span>GenLayer Escrow</span>
+                        {wallet.chain === "genlayer" ? (
+                          <>
+                            <span style={{ color: "#7928ca" }}>GenLayer Native</span>
+                            <span style={{ color: "#71717a" }}>──(Direct)──▶</span>
+                            <span>GenLayer Escrow</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>
+                              {CHAIN_CONFIGS[wallet.chain]?.chainName || "Base"}
+                            </span>
+                            <span style={{ color: "#422624" }}>──(Hyperlane)──▶</span>
+                            <span>GenLayer Escrow</span>
+                          </>
+                        )}
                       </span>
                     </div>
 
@@ -1853,6 +1887,8 @@ export default function ExploreAppPage() {
                           ? "Retry Transaction"
                           : selectedListing.listingType === "DONATION"
                           ? "Claim Free Community Compute Grant"
+                          : wallet.chain === "genlayer"
+                          ? `Confirm & Fund Escrow (${formatCurrency(selectedListing.priceUsd)} USD in GEN)`
                           : `Confirm & Rent Sub-Key for ${formatCurrency(selectedListing.priceUsd)} USDC`}
                       </button>
                     ) : (
@@ -1993,16 +2029,36 @@ export default function ExploreAppPage() {
         {viewMode === "seller" && (
           <div>
             <div className="seller-panel">
-              <h2
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: "28px",
-                  fontWeight: "800",
-                  marginBottom: "8px",
-                }}
-              >
-                List Unspent Quota for Rent
-              </h2>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", marginBottom: "8px" }}>
+                <h2
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: "28px",
+                    fontWeight: "800",
+                    marginBottom: 0,
+                  }}
+                >
+                  List Unspent Quota for Rent
+                </h2>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "5px 12px",
+                    borderRadius: "8px",
+                    background: wallet.chain === "genlayer" ? "rgba(121, 40, 202, 0.1)" : "rgba(6, 182, 212, 0.1)",
+                    border: wallet.chain === "genlayer" ? "1px solid rgba(121, 40, 202, 0.3)" : "1px solid rgba(6, 182, 212, 0.3)",
+                    fontFamily: "var(--font-accent)",
+                    fontSize: "11px",
+                    fontWeight: "bold",
+                    color: wallet.chain === "genlayer" ? "#7928ca" : "#0891b2",
+                  }}
+                >
+                  <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: wallet.chain === "genlayer" ? "#7928ca" : "#0891b2" }} />
+                  <span>TARGET REGISTRY: {wallet.chain === "genlayer" ? "GENLAYER STUDIO NEXT" : "BASE SEPOLIA"}</span>
+                </div>
+              </div>
               <p style={{ color: "var(--ink-secondary)", fontSize: "14px", marginBottom: "28px" }}>
                 Monetize idle or expiring model quotas. Lock in buyer rental payments via Kridge Escrow Intelligent Contracts with GenLayer AI validator dispute protection.
               </p>
@@ -2020,7 +2076,7 @@ export default function ExploreAppPage() {
                     fontSize: "13px",
                   }}
                 >
-                  ✓ Quota listed successfully on Kridge Escrow Registry! Switching to Marketplace...
+                  ✓ Quota listed successfully on Kridge {wallet.chain === "genlayer" ? "GenLayer" : "Base"} Escrow Registry! Switching to Marketplace...
                 </div>
               )}
 
@@ -2066,7 +2122,7 @@ export default function ExploreAppPage() {
                         setSellerForm({ ...sellerForm, listingType: e.target.value as ListingType })
                       }
                     >
-                      <option value="RENT">Discounted Rental (USDC)</option>
+                      <option value="RENT">Discounted Rental {wallet.chain === "genlayer" ? "(Paid in GEN)" : "(Paid in USDC)"}</option>
                       <option value="DONATION">Community Donation / Grant (Free)</option>
                     </select>
                   </div>
@@ -2087,7 +2143,7 @@ export default function ExploreAppPage() {
 
                 <div className="form-row-3col">
                   <div className="form-group-cell">
-                    <label className="label-cell">Rental Price (USDC)</label>
+                    <label className="label-cell">Rental Price {wallet.chain === "genlayer" ? "($USD in GEN)" : "(USDC)"}</label>
                     <input
                       type="number"
                       step="0.10"
@@ -2100,7 +2156,7 @@ export default function ExploreAppPage() {
                   </div>
 
                   <div className="form-group-cell">
-                    <label className="label-cell">Retail Value (USDC)</label>
+                    <label className="label-cell">Retail Value ($USD)</label>
                     <input
                       type="number"
                       step="0.10"
@@ -2229,7 +2285,7 @@ export default function ExploreAppPage() {
                 </div>
 
                 <button type="submit" className="btn-publish">
-                  Publish Quota to Kridge Escrow Registry
+                  Publish Quota to Kridge {wallet.chain === "genlayer" ? "GenLayer" : "Base"} Escrow Registry
                 </button>
               </form>
             </div>
