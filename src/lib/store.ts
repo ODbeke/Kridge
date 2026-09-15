@@ -18,6 +18,7 @@ const STORAGE_KEYS = {
   DISPUTES: "kridge_disputes_v4",
   DONORS: "kridge_donors_v3",
   WALLET: "kridge_wallet_v2",
+  CHAIN: "kridge_selected_chain_v1",
 };
 
 export function useKridgeStore() {
@@ -25,12 +26,23 @@ export function useKridgeStore() {
   const [rentals, setRentals] = useState<UserRentalSession[]>([]);
   const [disputes, setDisputes] = useState<DisputeItem[]>(INITIAL_DISPUTES);
   const [donors, setDonors] = useState<DonorProfile[]>(INITIAL_DONORS);
-  const [wallet, setWallet] = useState<WalletState>({
-    isConnected: false,
-    address: "",
-    chain: "base" as SupportedChain,
-    balanceUsd: 0,
-    chainBalances: INITIAL_CHAIN_BALANCES,
+  const [wallet, setWallet] = useState<WalletState>(() => {
+    let initialChain: SupportedChain = "base";
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("kridge_selected_chain_v1") as SupportedChain | null;
+        if (saved && ["base", "genlayer", "zksync", "solana"].includes(saved)) {
+          initialChain = saved;
+        }
+      } catch {}
+    }
+    return {
+      isConnected: false,
+      address: "",
+      chain: initialChain,
+      balanceUsd: 0,
+      chainBalances: INITIAL_CHAIN_BALANCES,
+    };
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -120,13 +132,34 @@ export function useKridgeStore() {
           } catch {}
         }
 
-        // 2. Auto-detect real MetaMask wallet
+        // 2. Auto-detect saved chain and MetaMask wallet
+        let targetChain: SupportedChain = "base";
+        if (typeof window !== "undefined") {
+          try {
+            const saved = localStorage.getItem(STORAGE_KEYS.CHAIN) as SupportedChain | null;
+            if (saved && ["base", "genlayer", "zksync", "solana"].includes(saved)) {
+              targetChain = saved;
+            }
+          } catch {}
+        }
+
         if (typeof window !== "undefined" && (window as any).ethereum) {
+          try {
+            const chainIdHex = await (window as any).ethereum.request({ method: "eth_chainId" });
+            const hex = (chainIdHex || "").toLowerCase();
+            if (hex === "0xf22d" || hex === "0xa179") {
+              targetChain = "genlayer";
+              localStorage.setItem(STORAGE_KEYS.CHAIN, "genlayer");
+            }
+          } catch {}
+
           const accounts = await (window as any).ethereum.request({ method: "eth_accounts" });
           if (accounts && accounts.length > 0) {
             const addr = accounts[0];
             let ethAmount = 0;
             let usdcAmount = 0;
+            let genAmount = 0;
+
             try {
               const balHex = await (window as any).ethereum.request({
                 method: "eth_getBalance",
@@ -153,11 +186,34 @@ export function useKridgeStore() {
               console.warn("Could not fetch USDC balance:", usdcErr);
             }
 
+            // Fetch live GEN balance from GenLayer Studio Next
+            try {
+              const genRes = await fetch("https://studio-next.genlayer.com/api", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  jsonrpc: "2.0",
+                  id: 1,
+                  method: "eth_getBalance",
+                  params: [addr, "latest"],
+                }),
+              });
+              if (genRes.ok) {
+                const genData = await genRes.json();
+                if (genData?.result) {
+                  genAmount = Number(BigInt(genData.result)) / 1e18;
+                }
+              }
+            } catch (genErr) {
+              console.warn("Could not fetch GEN balance:", genErr);
+            }
+
             setWallet((prev) => ({
               ...prev,
               isConnected: true,
               address: addr,
-              balanceUsd: usdcAmount,
+              chain: targetChain,
+              balanceUsd: targetChain === "genlayer" ? 0 : usdcAmount,
               chainBalances: {
                 ...prev.chainBalances,
                 base: {
@@ -165,9 +221,24 @@ export function useKridgeStore() {
                   nativeAmount: ethAmount,
                   usdValue: usdcAmount,
                 },
+                genlayer: {
+                  ...prev.chainBalances.genlayer,
+                  nativeAmount: genAmount,
+                  usdValue: 0,
+                },
               },
             }));
+          } else {
+            setWallet((prev) => ({
+              ...prev,
+              chain: targetChain,
+            }));
           }
+        } else {
+          setWallet((prev) => ({
+            ...prev,
+            chain: targetChain,
+          }));
         }
       } catch (e) {
         console.error("Initialization error:", e);
@@ -430,12 +501,47 @@ export function useKridgeStore() {
   };
 
   const switchChain = (chain: SupportedChain) => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(STORAGE_KEYS.CHAIN, chain);
+      } catch {}
+    }
     const chainInfo = INITIAL_CHAIN_BALANCES[chain] || INITIAL_CHAIN_BALANCES.base;
     setWallet((prev) => ({
       ...prev,
       chain,
-      balanceUsd: chainInfo.usdValue,
+      balanceUsd: chain === "genlayer" ? 0 : (prev.chainBalances[chain]?.usdValue ?? chainInfo.usdValue),
     }));
+  };
+
+  const updateWalletBalances = (balances: {
+    eth?: number | string;
+    usdc?: number | string;
+    gen?: number | string;
+  }) => {
+    setWallet((prev) => {
+      const ethNum = balances.eth !== undefined ? Number(balances.eth) : prev.chainBalances.base.nativeAmount;
+      const usdcNum = balances.usdc !== undefined ? Number(balances.usdc) : prev.chainBalances.base.usdValue;
+      const genNum = balances.gen !== undefined ? Number(balances.gen) : prev.chainBalances.genlayer.nativeAmount;
+
+      return {
+        ...prev,
+        balanceUsd: prev.chain === "genlayer" ? 0 : usdcNum,
+        chainBalances: {
+          ...prev.chainBalances,
+          base: {
+            ...prev.chainBalances.base,
+            nativeAmount: ethNum,
+            usdValue: usdcNum,
+          },
+          genlayer: {
+            ...prev.chainBalances.genlayer,
+            nativeAmount: genNum,
+            usdValue: 0,
+          },
+        },
+      };
+    });
   };
 
   return {
@@ -451,6 +557,7 @@ export function useKridgeStore() {
     resolveDisputeWithAI,
     resetDispute,
     switchChain,
+    updateWalletBalances,
     updateDonorImpact,
     updateRentalUsage,
   };

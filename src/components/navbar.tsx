@@ -188,7 +188,7 @@ export function Navbar() {
                           <div className={isSelected ? "text-black font-bold" : "text-white"}>{c.name}</div>
                           {cBal && (
                             <div className={`text-[10px] font-mono ${isSelected ? "text-zinc-700" : "text-zinc-500"}`}>
-                              {cBal.nativeAmount} {cBal.symbol} (${cBal.usdValue.toFixed(2)})
+                              {cBal.nativeAmount} {cBal.symbol}{cBal.usdValue > 0 ? ` ($${cBal.usdValue.toFixed(2)})` : ""}
                             </div>
                           )}
                         </div>
@@ -217,7 +217,9 @@ export function Navbar() {
               <span className="text-zinc-600 hidden sm:inline">|</span>
               <div className="hidden sm:flex items-center gap-1.5 font-bold text-white">
                 <span className="text-cyan-400 font-semibold">{activeChainBalance.nativeAmount} {activeChainBalance.symbol}</span>
-                <span className="text-zinc-400 text-[11px]">(${activeChainBalance.usdValue.toFixed(2)})</span>
+                {activeChainBalance.usdValue > 0 && (
+                  <span className="text-zinc-400 text-[11px]">(${activeChainBalance.usdValue.toFixed(2)})</span>
+                )}
               </div>
             </button>
 

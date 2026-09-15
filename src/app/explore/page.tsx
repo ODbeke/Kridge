@@ -95,7 +95,20 @@ const CHAIN_CONFIGS: Record<
   },
 };
 export default function ExploreAppPage() {
-  const { listings, rentals, donors, disputes, rentListing, addListing, wallet, switchChain, fileDispute, resolveDisputeWithAI, resetDispute } = useKridgeStore();
+  const {
+    listings,
+    rentals,
+    donors,
+    disputes,
+    rentListing,
+    addListing,
+    wallet,
+    switchChain,
+    updateWalletBalances,
+    fileDispute,
+    resolveDisputeWithAI,
+    resetDispute,
+  } = useKridgeStore();
 
   // Navigation & View Mode ("buyer" = RENT, "seller" = SELL, "activity" = ACTIVITY & BADGES, "tribunal" = AI TRIBUNAL)
   const [viewMode, setViewMode] = useState<"buyer" | "seller" | "activity" | "tribunal">("buyer");
@@ -158,15 +171,27 @@ export default function ExploreAppPage() {
     setSelectedDisputeId(newDispute.disputeId);
     setDisputeFilingModalOpen(false);
   };
+
+  const handleSubmitDispute = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDisputeRentalId) {
+      alert("Please select a valid rental session to dispute.");
+      return;
+    }
+    fileDispute(selectedDisputeRentalId, disputeReason, disputeTrace);
+    setDisputeFilingModalOpen(false);
+  };
+
+  // State
   const [activityTab, setActivityTab] = useState<"purchases" | "listings" | "badges">("purchases");
   const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({});
   const [copiedActivityKey, setCopiedActivityKey] = useState<string | null>(null);
-  const [shareSuccess, setShareSuccess] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedListing, setSelectedListing] = useState<KridgeListing | null>(null);
 
   // Network Switcher State
   const [isNetworkDropdownOpen, setIsNetworkDropdownOpen] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
 
   // Rental Modal State
   const [rentedSubKey, setRentedSubKey] = useState<string | null>(null);
@@ -179,27 +204,71 @@ export default function ExploreAppPage() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [ethBalance, setEthBalance] = useState("0.0000");
   const [usdcBalance, setUsdcBalance] = useState("0.00");
+  const [genBalance, setGenBalance] = useState("0.0000");
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
 
-  // Helper to fetch real on-chain ETH and official Circle USDC balance on Base Sepolia
+  // Helper to fetch real on-chain ETH and official Circle USDC on Base Sepolia, plus live native GEN on GenLayer
   const fetchWalletBalances = async (address: string) => {
     let eth = "0.0000";
     let usdc = "0.00";
+    let gen = "0.0000";
 
-    if (typeof window === "undefined" || !(window as any).ethereum) {
-      return { eth, usdc };
+    // 1. Fetch live native GEN balance from GenLayer Studio Next RPC endpoint
+    try {
+      const genRes = await fetch("https://studio-next.genlayer.com/api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "eth_getBalance",
+          params: [address, "latest"],
+        }),
+      });
+      if (genRes.ok) {
+        const genData = await genRes.json();
+        if (genData?.result) {
+          const rawWei = BigInt(genData.result);
+          gen = (Number(rawWei) / 1e18).toFixed(4);
+        }
+      }
+    } catch (e) {
+      console.warn("Error fetching GEN balance from GenLayer RPC:", e);
     }
 
+    if (typeof window === "undefined" || !(window as any).ethereum) {
+      return { eth, usdc, gen };
+    }
+
+    // 2. If MetaMask is connected to GenLayer (0xf22d or 0xa179), query eth_getBalance via provider as well
+    try {
+      const currentChain = await (window as any).ethereum.request({ method: "eth_chainId" });
+      const hex = (currentChain || "").toLowerCase();
+      if (hex === "0xf22d" || hex === "0xa179") {
+        const genBalHex = await (window as any).ethereum.request({
+          method: "eth_getBalance",
+          params: [address, "latest"],
+        });
+        if (genBalHex) {
+          gen = (Number(BigInt(genBalHex)) / 1e18).toFixed(4);
+        }
+      }
+    } catch {}
+
+    // 3. Fetch Base Sepolia ETH
     try {
       const balHex = await (window as any).ethereum.request({
         method: "eth_getBalance",
         params: [address, "latest"],
       });
-      eth = (parseInt(balHex, 16) / 1e18).toFixed(4);
+      if (balHex) {
+        eth = (parseInt(balHex, 16) / 1e18).toFixed(4);
+      }
     } catch (e) {
       console.warn("Error fetching ETH balance:", e);
     }
 
+    // 4. Fetch Base Sepolia Circle USDC
     try {
       const cleanAddr = address.toLowerCase().replace("0x", "").padStart(64, "0");
       const data = "0x70a08231" + cleanAddr;
@@ -221,7 +290,7 @@ export default function ExploreAppPage() {
       console.warn("Error fetching USDC balance:", e);
     }
 
-    return { eth, usdc };
+    return { eth, usdc, gen };
   };
 
   // Seller Form State
@@ -292,12 +361,25 @@ export default function ExploreAppPage() {
     async function detectWallet() {
       if (typeof window !== "undefined" && (window as any).ethereum) {
         try {
+          // Detect active chain from wallet or saved preference
+          const currentChain = await (window as any).ethereum.request({ method: "eth_chainId" });
+          const hex = (currentChain || "").toLowerCase();
+          const savedChain = localStorage.getItem("kridge_selected_chain_v1");
+
+          if (hex === "0xf22d" || hex === "0xa179") {
+            switchChain("genlayer");
+          } else if (savedChain && ["base", "genlayer", "zksync", "solana"].includes(savedChain)) {
+            switchChain(savedChain as SupportedChain);
+          }
+
           const accounts = await (window as any).ethereum.request({ method: "eth_accounts" });
           if (accounts && accounts.length > 0) {
             setWalletAddress(accounts[0]);
-            const { eth, usdc } = await fetchWalletBalances(accounts[0]);
+            const { eth, usdc, gen } = await fetchWalletBalances(accounts[0]);
             setEthBalance(eth);
             setUsdcBalance(usdc);
+            setGenBalance(gen);
+            updateWalletBalances({ eth, usdc, gen });
           }
         } catch (err) {
           console.error("MetaMask detection error:", err);
@@ -309,7 +391,19 @@ export default function ExploreAppPage() {
     return () => {
       document.body.classList.remove("memoriada-app-body");
     };
-  }, []);
+  }, [switchChain, updateWalletBalances]);
+
+  // Re-sync balances whenever user switches chain or updates wallet address
+  useEffect(() => {
+    if (walletAddress) {
+      fetchWalletBalances(walletAddress).then(({ eth, usdc, gen }) => {
+        setEthBalance(eth);
+        setUsdcBalance(usdc);
+        setGenBalance(gen);
+        updateWalletBalances({ eth, usdc, gen });
+      });
+    }
+  }, [wallet.chain, walletAddress, updateWalletBalances]);
 
   // Compute user's own published compute pools
   const myListings = useMemo(() => {
@@ -495,7 +589,7 @@ export default function ExploreAppPage() {
   useEffect(() => {
     if (typeof window === "undefined" || !(window as any).ethereum) return;
 
-    const handleChainChanged = (chainIdHex: string) => {
+    const handleChainChanged = async (chainIdHex: string) => {
       const hex = chainIdHex.toLowerCase();
       if (hex === "0x14a34" || hex === "0x2105") {
         switchChain("base");
@@ -504,18 +598,28 @@ export default function ExploreAppPage() {
       } else if (hex === "0xa179" || hex === "0xf22d") {
         switchChain("genlayer");
       }
+      if (walletAddress) {
+        const { eth, usdc, gen } = await fetchWalletBalances(walletAddress);
+        setEthBalance(eth);
+        setUsdcBalance(usdc);
+        setGenBalance(gen);
+        updateWalletBalances({ eth, usdc, gen });
+      }
     };
 
     const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts && accounts.length > 0) {
         setWalletAddress(accounts[0]);
-        const { eth, usdc } = await fetchWalletBalances(accounts[0]);
+        const { eth, usdc, gen } = await fetchWalletBalances(accounts[0]);
         setEthBalance(eth);
         setUsdcBalance(usdc);
+        setGenBalance(gen);
+        updateWalletBalances({ eth, usdc, gen });
       } else {
         setWalletAddress(null);
         setEthBalance("0.0000");
         setUsdcBalance("0.00");
+        setGenBalance("0.0000");
       }
     };
 
@@ -525,7 +629,7 @@ export default function ExploreAppPage() {
       (window as any).ethereum.removeListener?.("chainChanged", handleChainChanged);
       (window as any).ethereum.removeListener?.("accountsChanged", handleAccountsChanged);
     };
-  }, [switchChain]);
+  }, [switchChain, updateWalletBalances, walletAddress]);
 
   const handleConnectWallet = async () => {
     if (typeof window !== "undefined" && (window as any).ethereum) {
@@ -535,38 +639,47 @@ export default function ExploreAppPage() {
           const addr = accounts[0];
           setWalletAddress(addr);
 
-          // Prompt switch to Base Sepolia (0x14a34 / 84532)
-          try {
-            await (window as any).ethereum.request({
-              method: "wallet_switchEthereumChain",
-              params: [{ chainId: "0x14a34" }],
-            });
-          } catch (switchError: any) {
-            if (switchError?.code === 4902) {
+          // Prompt switch to active chain (Base Sepolia or GenLayer Studio Next)
+          const targetChainConfig = CHAIN_CONFIGS[wallet.chain] || CHAIN_CONFIGS.base;
+          if (targetChainConfig.isEvm) {
+            try {
               await (window as any).ethereum.request({
-                method: "wallet_addEthereumChain",
-                params: [
-                  {
-                    chainId: "0x14a34",
-                    chainName: "Base Sepolia",
-                    nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
-                    rpcUrls: ["https://sepolia.base.org"],
-                    blockExplorerUrls: ["https://sepolia.basescan.org"],
-                  },
-                ],
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: targetChainConfig.chainIdHex }],
               });
+            } catch (switchError: any) {
+              if (switchError?.code === 4902 || switchError?.data?.originalError?.code === 4902) {
+                try {
+                  await (window as any).ethereum.request({
+                    method: "wallet_addEthereumChain",
+                    params: [
+                      {
+                        chainId: targetChainConfig.chainIdHex,
+                        chainName: targetChainConfig.chainName,
+                        nativeCurrency: targetChainConfig.nativeCurrency,
+                        rpcUrls: targetChainConfig.rpcUrls,
+                        blockExplorerUrls: targetChainConfig.blockExplorerUrls,
+                      },
+                    ],
+                  });
+                } catch (addErr) {
+                  console.warn("Failed to add network:", addErr);
+                }
+              }
             }
           }
 
-          const { eth, usdc } = await fetchWalletBalances(addr);
+          const { eth, usdc, gen } = await fetchWalletBalances(addr);
           setEthBalance(eth);
           setUsdcBalance(usdc);
+          setGenBalance(gen);
+          updateWalletBalances({ eth, usdc, gen });
         }
       } catch (err) {
         console.error("Wallet connect failed:", err);
       }
     } else {
-      alert("Please install MetaMask to connect your wallet to Base Sepolia Escrow.");
+      alert("Please install MetaMask to connect your Web3 wallet.");
     }
   };
 
@@ -574,6 +687,7 @@ export default function ExploreAppPage() {
     setWalletAddress(null);
     setEthBalance("0.0000");
     setUsdcBalance("0.00");
+    setGenBalance("0.0000");
     setIsWalletDropdownOpen(false);
   };
 
@@ -625,65 +739,124 @@ export default function ExploreAppPage() {
           }
         }
 
-        // Switch to Base Sepolia (0x14a34 = 84532)
-        try {
-          const currentChainId = await (window as any).ethereum.request({ method: "eth_chainId" });
-          if (currentChainId?.toLowerCase() !== "0x14a34") {
-            try {
-              await (window as any).ethereum.request({
-                method: "wallet_switchEthereumChain",
-                params: [{ chainId: "0x14a34" }],
-              });
-            } catch (switchError: any) {
-              if (switchError?.code === 4902) {
+        if (wallet.chain === "genlayer") {
+          // Switch to or verify GenLayer Studio Next (0xf22d = 61997)
+          try {
+            const currentChainId = await (window as any).ethereum.request({ method: "eth_chainId" });
+            const hex = (currentChainId || "").toLowerCase();
+            if (hex !== "0xf22d" && hex !== "0xa179") {
+              try {
                 await (window as any).ethereum.request({
-                  method: "wallet_addEthereumChain",
-                  params: [
-                    {
-                      chainId: "0x14a34",
-                      chainName: "Base Sepolia",
-                      nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
-                      rpcUrls: ["https://sepolia.base.org"],
-                      blockExplorerUrls: ["https://sepolia.basescan.org"],
-                    },
-                  ],
+                  method: "wallet_switchEthereumChain",
+                  params: [{ chainId: "0xf22d" }],
                 });
+              } catch (switchError: any) {
+                if (switchError?.code === 4902) {
+                  await (window as any).ethereum.request({
+                    method: "wallet_addEthereumChain",
+                    params: [
+                      {
+                        chainId: "0xf22d",
+                        chainName: "GenLayer Studio Next",
+                        nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
+                        rpcUrls: ["https://studio-next.genlayer.com/api"],
+                        blockExplorerUrls: ["https://explorer-studio-dev.genlayer.com"],
+                      },
+                    ],
+                  });
+                }
               }
             }
+          } catch (switchWarn) {
+            console.warn("GenLayer switch warning:", switchWarn);
           }
-        } catch (switchWarn) {
-          console.warn("Chain switch warning:", switchWarn);
-        }
 
-        // Prepare valid ERC-20 transfer of USDC to Kridge Escrow Receiver
-        const escrowReceiver = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RECEIVER || "0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf";
-        const cleanReceiver = escrowReceiver.toLowerCase().replace("0x", "").padStart(64, "0");
-        const usdcUnits = Math.round(selectedListing.priceUsd * 1e6);
-        const hexAmount = BigInt(usdcUnits).toString(16).padStart(64, "0");
-        const usdcTransferData = "0xa9059cbb" + cleanReceiver + hexAmount;
+          // GenLayer Escrow deposit transaction (KridgeMarketplace Intelligent Contract)
+          const marketplaceContract = "0xC54DCDCBeB99E5773693F894285756E78EdAf242";
+          const genWei = BigInt(Math.max(1, Math.round(selectedListing.priceUsd * 1e18))).toString(16);
+          const txParams = {
+            from: userAddr,
+            to: marketplaceContract,
+            value: "0x" + genWei,
+          };
 
-        const txParams = {
-          from: userAddr,
-          to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // Official Circle USDC on Base Sepolia
-          data: usdcTransferData,
-          value: "0x0",
-        };
-
-        try {
-          onChainTxHash = await (window as any).ethereum.request({
-            method: "eth_sendTransaction",
-            params: [txParams],
-          });
-        } catch (walletErr: any) {
-          console.error("Wallet transaction declined or failed:", walletErr);
-          if (
-            walletErr?.code === 4001 ||
-            walletErr?.message?.toLowerCase().includes("user rejected") ||
-            walletErr?.message?.toLowerCase().includes("user denied")
-          ) {
-            throw new Error("Transaction was rejected in your wallet. Payment was not confirmed, so no sub-key was issued.");
+          try {
+            onChainTxHash = await (window as any).ethereum.request({
+              method: "eth_sendTransaction",
+              params: [txParams],
+            });
+          } catch (walletErr: any) {
+            console.error("GenLayer transaction declined or failed:", walletErr);
+            if (
+              walletErr?.code === 4001 ||
+              walletErr?.message?.toLowerCase().includes("user rejected") ||
+              walletErr?.message?.toLowerCase().includes("user denied")
+            ) {
+              throw new Error("Transaction was rejected in your wallet. Payment was not confirmed, so no sub-key was issued.");
+            }
+            throw new Error(walletErr?.message || "GenLayer transaction failed. Payment was not confirmed, so no sub-key was issued.");
           }
-          throw new Error(walletErr?.message || "Transaction simulation failed. Payment was not confirmed, so no sub-key was issued.");
+        } else {
+          // Switch to Base Sepolia (0x14a34 = 84532)
+          try {
+            const currentChainId = await (window as any).ethereum.request({ method: "eth_chainId" });
+            if (currentChainId?.toLowerCase() !== "0x14a34") {
+              try {
+                await (window as any).ethereum.request({
+                  method: "wallet_switchEthereumChain",
+                  params: [{ chainId: "0x14a34" }],
+                });
+              } catch (switchError: any) {
+                if (switchError?.code === 4902) {
+                  await (window as any).ethereum.request({
+                    method: "wallet_addEthereumChain",
+                    params: [
+                      {
+                        chainId: "0x14a34",
+                        chainName: "Base Sepolia",
+                        nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+                        rpcUrls: ["https://sepolia.base.org"],
+                        blockExplorerUrls: ["https://sepolia.basescan.org"],
+                      },
+                    ],
+                  });
+                }
+              }
+            }
+          } catch (switchWarn) {
+            console.warn("Chain switch warning:", switchWarn);
+          }
+
+          // Prepare valid ERC-20 transfer of USDC to Kridge Escrow Receiver
+          const escrowReceiver = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RECEIVER || "0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf";
+          const cleanReceiver = escrowReceiver.toLowerCase().replace("0x", "").padStart(64, "0");
+          const usdcUnits = Math.round(selectedListing.priceUsd * 1e6);
+          const hexAmount = BigInt(usdcUnits).toString(16).padStart(64, "0");
+          const usdcTransferData = "0xa9059cbb" + cleanReceiver + hexAmount;
+
+          const txParams = {
+            from: userAddr,
+            to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // Official Circle USDC on Base Sepolia
+            data: usdcTransferData,
+            value: "0x0",
+          };
+
+          try {
+            onChainTxHash = await (window as any).ethereum.request({
+              method: "eth_sendTransaction",
+              params: [txParams],
+            });
+          } catch (walletErr: any) {
+            console.error("Wallet transaction declined or failed:", walletErr);
+            if (
+              walletErr?.code === 4001 ||
+              walletErr?.message?.toLowerCase().includes("user rejected") ||
+              walletErr?.message?.toLowerCase().includes("user denied")
+            ) {
+              throw new Error("Transaction was rejected in your wallet. Payment was not confirmed, so no sub-key was issued.");
+            }
+            throw new Error(walletErr?.message || "Transaction simulation failed. Payment was not confirmed, so no sub-key was issued.");
+          }
         }
 
         if (!onChainTxHash) {
@@ -924,9 +1097,15 @@ export default function ExploreAppPage() {
                     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
                     : walletAddress}
                 </span>
-                <span className="wallet-bal-pill" style={{ color: "#059669", fontWeight: "bold" }}>
-                  ({usdcBalance} USDC)
-                </span>
+                {wallet.chain === "genlayer" ? (
+                  <span className="wallet-bal-pill" style={{ color: "#7928ca", fontWeight: "bold" }}>
+                    ({genBalance} GEN)
+                  </span>
+                ) : (
+                  <span className="wallet-bal-pill" style={{ color: "#059669", fontWeight: "bold" }}>
+                    ({usdcBalance} USDC)
+                  </span>
+                )}
               </button>
             ) : (
               <button
@@ -939,17 +1118,42 @@ export default function ExploreAppPage() {
             )}
 
             {walletAddress && isWalletDropdownOpen && (
-              <div className="wallet-dropdown" style={{ minWidth: "210px" }}>
-                <div className="dropdown-item">
-                  <span className="dropdown-lbl">Circle USDC</span>
-                  <span className="dropdown-val" style={{ color: "#059669", fontWeight: "bold" }}>
-                    {usdcBalance} USDC
-                  </span>
-                </div>
-                <div className="dropdown-item">
-                  <span className="dropdown-lbl">Base Sepolia ETH</span>
-                  <span className="dropdown-val">{ethBalance} ETH</span>
-                </div>
+              <div className="wallet-dropdown" style={{ minWidth: "220px" }}>
+                {wallet.chain === "genlayer" ? (
+                  <>
+                    <div className="dropdown-item">
+                      <span className="dropdown-lbl">GenLayer Native</span>
+                      <span className="dropdown-val" style={{ color: "#7928ca", fontWeight: "bold" }}>
+                        {genBalance} GEN
+                      </span>
+                    </div>
+                    <div className="dropdown-item">
+                      <span className="dropdown-lbl">Circle USDC (Base)</span>
+                      <span className="dropdown-val">{usdcBalance} USDC</span>
+                    </div>
+                    <div className="dropdown-item">
+                      <span className="dropdown-lbl">Base Sepolia ETH</span>
+                      <span className="dropdown-val">{ethBalance} ETH</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="dropdown-item">
+                      <span className="dropdown-lbl">Circle USDC</span>
+                      <span className="dropdown-val" style={{ color: "#059669", fontWeight: "bold" }}>
+                        {usdcBalance} USDC
+                      </span>
+                    </div>
+                    <div className="dropdown-item">
+                      <span className="dropdown-lbl">Base Sepolia ETH</span>
+                      <span className="dropdown-val">{ethBalance} ETH</span>
+                    </div>
+                    <div className="dropdown-item">
+                      <span className="dropdown-lbl">GenLayer Studio</span>
+                      <span className="dropdown-val" style={{ color: "#7928ca" }}>{genBalance} GEN</span>
+                    </div>
+                  </>
+                )}
                 <hr className="dropdown-divider" />
                 <button className="dropdown-btn" onClick={handleDisconnect}>
                   Disconnect Wallet
@@ -1025,43 +1229,103 @@ export default function ExploreAppPage() {
                       gap: "10px",
                     }}
                   >
-                    <div>
-                      <div
-                        style={{
-                          fontFamily: "var(--font-accent)",
-                          fontSize: "18px",
-                          fontWeight: "bold",
-                          color: "#059669",
-                        }}
-                      >
-                        {walletAddress ? usdcBalance : "0.00"} USDC
-                      </div>
-                    </div>
+                    {wallet.chain === "genlayer" ? (
+                      <>
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "9px",
+                              fontFamily: "var(--font-accent)",
+                              color: "#71717a",
+                              fontWeight: "bold",
+                              letterSpacing: "0.06em",
+                              marginBottom: "2px",
+                            }}
+                          >
+                            GENLAYER STUDIO BALANCE
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "var(--font-accent)",
+                              fontSize: "18px",
+                              fontWeight: "bold",
+                              color: "#7928ca",
+                            }}
+                          >
+                            {walletAddress ? genBalance : "0.0000"} GEN
+                          </div>
+                        </div>
 
-                    <div style={{ borderTop: "1px dashed #e2dbf3", paddingTop: "8px" }}>
-                      <div
-                        style={{
-                          fontSize: "9px",
-                          fontFamily: "var(--font-accent)",
-                          color: "#71717a",
-                          fontWeight: "bold",
-                          letterSpacing: "0.06em",
-                        }}
-                      >
-                        BASE SEPOLIA GAS (ETH)
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: "var(--font-accent)",
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          color: "#1e1e24",
-                          marginTop: "2px",
-                        }}
-                      >
-                        {walletAddress ? ethBalance : "0.0000"} ETH
-                      </div>
-                    </div>
+                        <div style={{ borderTop: "1px dashed #e2dbf3", paddingTop: "8px" }}>
+                          <div
+                            style={{
+                              fontSize: "9px",
+                              fontFamily: "var(--font-accent)",
+                              color: "#71717a",
+                              fontWeight: "bold",
+                              letterSpacing: "0.06em",
+                            }}
+                          >
+                            INTELLIGENT ESCROW CONSENSUS
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "var(--font-accent)",
+                              fontSize: "12px",
+                              fontWeight: "600",
+                              color: "#1e1e24",
+                              marginTop: "2px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#7928ca", display: "inline-block" }} />
+                            <span>Active (Studio Next)</span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <div
+                            style={{
+                              fontFamily: "var(--font-accent)",
+                              fontSize: "18px",
+                              fontWeight: "bold",
+                              color: "#059669",
+                            }}
+                          >
+                            {walletAddress ? usdcBalance : "0.00"} USDC
+                          </div>
+                        </div>
+
+                        <div style={{ borderTop: "1px dashed #e2dbf3", paddingTop: "8px" }}>
+                          <div
+                            style={{
+                              fontSize: "9px",
+                              fontFamily: "var(--font-accent)",
+                              color: "#71717a",
+                              fontWeight: "bold",
+                              letterSpacing: "0.06em",
+                            }}
+                          >
+                            BASE SEPOLIA GAS (ETH)
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "var(--font-accent)",
+                              fontSize: "12px",
+                              fontWeight: "600",
+                              color: "#1e1e24",
+                              marginTop: "2px",
+                            }}
+                          >
+                            {walletAddress ? ethBalance : "0.0000"} ETH
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
