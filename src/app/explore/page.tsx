@@ -311,12 +311,17 @@ export default function ExploreAppPage() {
     latencyMs?: number;
     estimatedQuotaRemaining?: number;
     status?: string;
+    error?: string;
   } | null>(null);
   const [publishSuccess, setPublishSuccess] = useState(false);
 
   const handleProbeKey = async () => {
     if (!sellerForm.apiKey) {
-      alert("Please paste your API key to probe validity.");
+      setProbeResult({
+        valid: false,
+        error: "Please paste your upstream API key to probe validity.",
+        status: "EMPTY_KEY",
+      });
       return;
     }
     setIsProbing(true);
@@ -333,13 +338,21 @@ export default function ExploreAppPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.valid) {
-        alert(data.error || "API Key probe failed: Key was rejected by the upstream provider.");
-        setProbeResult({ valid: false, status: "INVALID_KEY" });
+        setProbeResult({
+          valid: false,
+          error: data.error || "API Key probe failed: Key was rejected by the upstream provider.",
+          status: data.status || "INVALID_KEY",
+          latencyMs: data.latencyMs,
+        });
         return;
       }
       setProbeResult(data);
     } catch (e) {
-      alert("Network timeout probing API key.");
+      setProbeResult({
+        valid: false,
+        error: "Network timeout or connection error probing API key.",
+        status: "TIMEOUT",
+      });
     } finally {
       setIsProbing(false);
     }
@@ -906,6 +919,10 @@ export default function ExploreAppPage() {
     if (!sellerForm.modelFamily) return;
     if (!sellerForm.apiKey) {
       alert("Please provide your upstream API key to vault in the Kridge Proxy Gateway.");
+      return;
+    }
+    if (probeResult && !probeResult.valid) {
+      alert("Cannot publish quota: The provided API key failed upstream verification. Please provide an active, valid key.");
       return;
     }
 
@@ -2199,7 +2216,10 @@ export default function ExploreAppPage() {
                       style={{ flex: "1 1 200px" }}
                       placeholder="sk-ant-api03-... or sk-proj-..."
                       value={sellerForm.apiKey}
-                      onChange={(e) => setSellerForm({ ...sellerForm, apiKey: e.target.value })}
+                      onChange={(e) => {
+                        setSellerForm({ ...sellerForm, apiKey: e.target.value });
+                        if (probeResult) setProbeResult(null);
+                      }}
                       required
                     />
                     <button
@@ -2221,23 +2241,53 @@ export default function ExploreAppPage() {
                     </button>
                   </div>
                   {probeResult && (
-                    <div
-                      style={{
-                        marginTop: "8px",
-                        padding: "8px 12px",
-                        borderRadius: "6px",
-                        background: "rgba(42, 138, 74, 0.08)",
-                        border: "1px solid #2a8a4a",
-                        fontSize: "11px",
-                        color: "#2a8a4a",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <span>✓ Key Verified Active ({probeResult.latencyMs}ms latency)</span>
-                      <span>Estimated Quota: ~{probeResult.estimatedQuotaRemaining?.toLocaleString() || "500,000"} tokens</span>
-                    </div>
+                    probeResult.valid ? (
+                      <div
+                        style={{
+                          marginTop: "8px",
+                          padding: "10px 14px",
+                          borderRadius: "8px",
+                          background: "rgba(42, 138, 74, 0.08)",
+                          border: "1px solid #2a8a4a",
+                          fontSize: "11px",
+                          color: "#2a8a4a",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          fontFamily: "var(--font-accent)",
+                        }}
+                      >
+                        <span style={{ fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span>✓</span>
+                          <span>Key Verified Active ({probeResult.latencyMs}ms latency)</span>
+                        </span>
+                        <span>Estimated Quota: ~{probeResult.estimatedQuotaRemaining?.toLocaleString() || "1,000,000"} tokens</span>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          marginTop: "8px",
+                          padding: "10px 14px",
+                          borderRadius: "8px",
+                          background: "rgba(220, 38, 38, 0.08)",
+                          border: "1px solid #dc2626",
+                          fontSize: "11px",
+                          color: "#dc2626",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                          fontFamily: "var(--font-accent)",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "700" }}>
+                          <span>✕</span>
+                          <span>Key Inactive or Rejected by Upstream Provider</span>
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#991b1b", opacity: 0.95 }}>
+                          {probeResult.error || "Upstream provider returned an error. Please verify that your API key is active and correctly copied."}
+                        </div>
+                      </div>
+                    )
                   )}
                 </div>
 
@@ -2284,7 +2334,12 @@ export default function ExploreAppPage() {
                   />
                 </div>
 
-                <button type="submit" className="btn-publish">
+                <button
+                  type="submit"
+                  className="btn-publish"
+                  disabled={probeResult?.valid === false}
+                  style={probeResult?.valid === false ? { opacity: 0.5, cursor: "not-allowed", filter: "grayscale(0.6)" } : undefined}
+                >
                   Publish Quota to Kridge {wallet.chain === "genlayer" ? "GenLayer" : "Base"} Escrow Registry
                 </button>
               </form>
