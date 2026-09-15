@@ -207,97 +207,88 @@ export default function ExploreAppPage() {
   const [genBalance, setGenBalance] = useState("0.0000");
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
 
-  // Non-blocking helper with timeout to avoid freezing if testnet RPCs lag
-  const withTimeout = <T,>(promise: Promise<T>, ms = 2500): Promise<T> => {
-    return Promise.race([
-      promise,
-      new Promise<T>((_, reject) => setTimeout(() => reject(new Error("RPC Timeout")), ms)),
-    ]);
-  };
-
   // Helper to fetch real on-chain ETH and official Circle USDC on Base Sepolia, plus live native GEN on GenLayer
   const fetchWalletBalances = async (address: string) => {
     let eth = "0.0000";
     let usdc = "0.00";
     let gen = "0.0000";
 
-    const fetchGenLayerRpc = async () => {
-      try {
-        const genRes = await withTimeout(
-          fetch("https://studio-next.genlayer.com/api", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              jsonrpc: "2.0",
-              id: 1,
-              method: "eth_getBalance",
-              params: [address, "latest"],
-            }),
-          })
-        );
-        if (genRes.ok) {
-          const genData = await genRes.json();
-          if (genData?.result) {
-            const rawWei = BigInt(genData.result);
-            gen = (Number(rawWei) / 1e18).toFixed(4);
-          }
+    // 1. Fetch live native GEN balance from GenLayer Studio Next RPC endpoint
+    try {
+      const genRes = await fetch("https://studio-next.genlayer.com/api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "eth_getBalance",
+          params: [address, "latest"],
+        }),
+      });
+      if (genRes.ok) {
+        const genData = await genRes.json();
+        if (genData?.result) {
+          const rawWei = BigInt(genData.result);
+          gen = (Number(rawWei) / 1e18).toFixed(4);
         }
-      } catch (e) {
-        // Silently catch so slow RPCs don't stutter the UI
       }
-    };
+    } catch (e) {
+      console.warn("Error fetching GEN balance from GenLayer RPC:", e);
+    }
 
-    const fetchEthereumProviderBalances = async () => {
-      if (typeof window === "undefined" || !(window as any).ethereum) return;
-      const ethObj = (window as any).ethereum;
+    if (typeof window === "undefined" || !(window as any).ethereum) {
+      return { eth, usdc, gen };
+    }
 
-      const pChain = (async () => {
-        try {
-          const currentChain = await withTimeout<string>(ethObj.request({ method: "eth_chainId" }), 1500);
-          const hex = (currentChain || "").toLowerCase();
-          if (hex === "0xf22d" || hex === "0xa179") {
-            const genBalHex = await withTimeout<string>(
-              ethObj.request({ method: "eth_getBalance", params: [address, "latest"] }),
-              2000
-            );
-            if (genBalHex) gen = (Number(BigInt(genBalHex)) / 1e18).toFixed(4);
-          }
-        } catch {}
-      })();
+    // 2. If MetaMask is connected to GenLayer (0xf22d or 0xa179), query eth_getBalance via provider as well
+    try {
+      const currentChain = await (window as any).ethereum.request({ method: "eth_chainId" });
+      const hex = (currentChain || "").toLowerCase();
+      if (hex === "0xf22d" || hex === "0xa179") {
+        const genBalHex = await (window as any).ethereum.request({
+          method: "eth_getBalance",
+          params: [address, "latest"],
+        });
+        if (genBalHex) {
+          gen = (Number(BigInt(genBalHex)) / 1e18).toFixed(4);
+        }
+      }
+    } catch {}
 
-      const pEth = (async () => {
-        try {
-          const balHex = await withTimeout<string>(
-            ethObj.request({ method: "eth_getBalance", params: [address, "latest"] }),
-            2000
-          );
-          if (balHex) eth = (parseInt(balHex, 16) / 1e18).toFixed(4);
-        } catch {}
-      })();
+    // 3. Fetch Base Sepolia ETH
+    try {
+      const balHex = await (window as any).ethereum.request({
+        method: "eth_getBalance",
+        params: [address, "latest"],
+      });
+      if (balHex) {
+        eth = (parseInt(balHex, 16) / 1e18).toFixed(4);
+      }
+    } catch (e) {
+      console.warn("Error fetching ETH balance:", e);
+    }
 
-      const pUsdc = (async () => {
-        try {
-          const cleanAddr = address.toLowerCase().replace("0x", "").padStart(64, "0");
-          const data = "0x70a08231" + cleanAddr;
-          const usdcHex = await withTimeout<string>(
-            ethObj.request({
-              method: "eth_call",
-              params: [{ to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", data }, "latest"],
-            }),
-            2000
-          );
-          if (usdcHex && usdcHex !== "0x") {
-            const rawUnits = parseInt(usdcHex, 16);
-            usdc = (rawUnits / 1e6).toFixed(2);
-          }
-        } catch {}
-      })();
-
-      await Promise.allSettled([pChain, pEth, pUsdc]);
-    };
-
-    // Execute GenLayer RPC and Ethereum calls concurrently
-    await Promise.allSettled([fetchGenLayerRpc(), fetchEthereumProviderBalances()]);
+    // 4. Fetch Base Sepolia Circle USDC
+    try {
+      const cleanAddr = address.toLowerCase().replace("0x", "").padStart(64, "0");
+      const data = "0x70a08231" + cleanAddr;
+      const usdcHex = await (window as any).ethereum.request({
+        method: "eth_call",
+        params: [
+          {
+            to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+            data,
+          },
+          "latest",
+        ],
+      });
+      if (usdcHex && usdcHex !== "0x") {
+        const rawUnits = parseInt(usdcHex, 16);
+        usdc = (rawUnits / 1e6).toFixed(2);
+      }
+    } catch (e) {
+      console.warn("Error fetching USDC balance:", e);
+    }
 
     return { eth, usdc, gen };
   };
@@ -497,14 +488,13 @@ export default function ExploreAppPage() {
     setTimeout(() => setShareSuccess(false), 3000);
   };
 
-  // Periodic clock to reactively update expiration states without continuous main-thread re-renders
+  // Real-time clock to reactively update expiration states without manual page refresh
   const [currentTime, setCurrentTime] = useState<number>(() => Date.now());
 
   useEffect(() => {
-    // Check every 30 seconds for expired listing state transitions instead of every second
     const timer = setInterval(() => {
       setCurrentTime(Date.now());
-    }, 30000);
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
