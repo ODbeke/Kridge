@@ -1276,10 +1276,11 @@ export default function ExploreAppPage() {
                         }}
                         style={{
                           cursor: isExpired ? "not-allowed" : "pointer",
-                          opacity: isExpired ? 0.52 : 1,
-                          filter: isExpired ? "grayscale(0.7)" : "none",
-                          background: isExpired ? "rgba(243, 240, 248, 0.75)" : undefined,
-                          borderColor: isExpired ? "rgba(0, 0, 0, 0.1)" : undefined,
+                          opacity: isExpired ? 0.82 : 1,
+                          filter: isExpired ? "saturate(0.85)" : "none",
+                          background: isExpired ? "rgba(255, 255, 255, 0.72)" : undefined,
+                          borderColor: isExpired ? "#d8d0ea" : undefined,
+                          borderStyle: isExpired ? "dashed" : "solid",
                           userSelect: isExpired ? "none" : "auto",
                         }}
                       >
@@ -1296,8 +1297,8 @@ export default function ExploreAppPage() {
                                   gap: "5px",
                                   padding: "3px 8px",
                                   borderRadius: "9999px",
-                                  background: "rgba(239, 68, 68, 0.12)",
-                                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                                  background: "rgba(220, 38, 38, 0.1)",
+                                  border: "1px solid rgba(220, 38, 38, 0.25)",
                                   color: "#dc2626",
                                   fontFamily: "var(--font-accent)",
                                   fontSize: "10px",
@@ -1327,29 +1328,27 @@ export default function ExploreAppPage() {
 
                           <h3
                             className="card-title"
-                            style={{ color: isExpired ? "#6b7280" : undefined }}
+                            style={{ color: isExpired ? "#374151" : undefined }}
                           >
                             {listing.modelFamily}
                           </h3>
                           <p
                             className="card-description"
-                            style={{ color: isExpired ? "#9ca3af" : undefined }}
+                            style={{ color: isExpired ? "#6b7280" : undefined }}
                           >
-                            {isExpired
-                              ? "This compute quota has expired. Ephemeral sub-keys and escrow reservations are closed."
-                              : listing.description ||
-                                `Unspent ${listing.modelFamily} capacity available for immediate sub-key reservation.`}
+                            {listing.description ||
+                              `Unspent ${listing.modelFamily} capacity available for immediate sub-key reservation.`}
                           </p>
                         </div>
 
                         <div>
                           {/* 3-Metric Recessed Row */}
-                          <div className="metrics-row" style={{ opacity: isExpired ? 0.6 : 1 }}>
+                          <div className="metrics-row">
                             <div>
                               <div className="metric-lbl">CAPACITY</div>
                               <div
                                 className="metric-val"
-                                style={{ color: isExpired ? "#6b7280" : "var(--accent-cyan)" }}
+                                style={{ color: isExpired ? "#4b5563" : "var(--accent-cyan)" }}
                               >
                                 {formatTokens(listing.quotaTokens)}
                               </div>
@@ -1358,7 +1357,7 @@ export default function ExploreAppPage() {
                               <div className="metric-lbl">SAVINGS</div>
                               <div
                                 className="metric-val"
-                                style={{ color: isExpired ? "#6b7280" : "var(--accent-emerald)" }}
+                                style={{ color: isExpired ? "#4b5563" : "var(--accent-emerald)" }}
                               >
                                 {listing.listingType === "DONATION" ? "100%" : `${listing.discountPct}%`}
                               </div>
@@ -1367,7 +1366,7 @@ export default function ExploreAppPage() {
                               <div className="metric-lbl">EXPIRES</div>
                               <div
                                 className="metric-val"
-                                style={{ color: isExpired ? "#ef4444" : "var(--accent-amber)" }}
+                                style={{ color: isExpired ? "#dc2626" : "var(--accent-amber)" }}
                               >
                                 <CountdownTimer expiryTimestamp={listing.expiryTimestamp} />
                               </div>
@@ -1387,7 +1386,7 @@ export default function ExploreAppPage() {
                                   </span>
                                 ) : (
                                   <>
-                                    <span style={{ color: isExpired ? "#6b7280" : undefined }}>
+                                    <span style={{ color: isExpired ? "#4b5563" : undefined }}>
                                       {formatCurrency(listing.priceUsd)} USDC
                                     </span>
                                     {listing.retailValueUsd > listing.priceUsd && (
@@ -1414,6 +1413,10 @@ export default function ExploreAppPage() {
                                 color: isExpired ? "#dc2626" : "#422624",
                                 fontWeight: "700",
                                 cursor: isExpired ? "not-allowed" : "pointer",
+                                padding: isExpired ? "3px 8px" : undefined,
+                                borderRadius: isExpired ? "4px" : undefined,
+                                background: isExpired ? "rgba(220, 38, 38, 0.08)" : undefined,
+                                border: isExpired ? "1px solid rgba(220, 38, 38, 0.2)" : undefined,
                               }}
                             >
                               {isExpired ? "EXPIRED" : listing.listingType === "DONATION" ? "Claim Grant ↗" : "Rent Quota ↗"}
