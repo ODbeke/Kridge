@@ -104,16 +104,17 @@ class KridgeMarketplace(gl.contract.Contract):
     donors: gl.storage.TreeMap[str, str]
 
     def __init__(self):
-        self.listings = gl.storage.TreeMap()
-        self.rentals = gl.storage.TreeMap()
-        self.disputes = gl.storage.TreeMap()
-        self.donors = gl.storage.TreeMap()
-        self._treasury_balance = 0.0
-        self._appeals = {}
+        if not HAS_GENLAYER:
+            self.listings = gl.storage.TreeMap()
+            self.rentals = gl.storage.TreeMap()
+            self.disputes = gl.storage.TreeMap()
+            self.donors = gl.storage.TreeMap()
+            self._treasury_balance = 0.0
+            self._appeals = {}
 
     @property
     def treasury_balance(self):
-        return self._treasury_balance
+        return getattr(self, "_treasury_balance", 0.0)
 
     @gl.public.write
     def create_listing(
@@ -331,7 +332,8 @@ class KridgeMarketplace(gl.contract.Contract):
         fee_cents = int(amount_cents * (PROTOCOL_FEE_BPS / 10000.0))
         seller_cents = amount_cents - fee_cents
         fee_usd = round(fee_cents / 100.0, 4)
-        self._treasury_balance += fee_usd
+        if hasattr(self, "_treasury_balance"):
+            self._treasury_balance += fee_usd
 
         return json.dumps({
             "rental_id": rental_id,
@@ -347,6 +349,8 @@ class KridgeMarketplace(gl.contract.Contract):
 
     def accumulate_settlement_fee(self, gross_amount: float) -> None:
         fee = round(gross_amount * 0.05, 4)
+        if not hasattr(self, "_treasury_balance"):
+            self._treasury_balance = 0.0
         self._treasury_balance += fee
 
     @gl.public.write
@@ -429,6 +433,8 @@ Respond ONLY with BUYER_REFUND or SELLER_WIN."""
         if is_fraudulent_claim:
             refund = bond_amount * 0.50
             slashed = bond_amount * 0.50
+            if not hasattr(self, "_treasury_balance"):
+                self._treasury_balance = 0.0
             self._treasury_balance += slashed
         else:
             refund = bond_amount
@@ -541,7 +547,7 @@ Respond ONLY with BUYER_REFUND or SELLER_WIN."""
             "total_disputes": len(self.disputes),
             "total_volume_usd": 1250.0,
             "total_rescued_usd": 4820.0,
-            "treasury_collected_usd": self._treasury_balance,
+            "treasury_collected_usd": getattr(self, "_treasury_balance", 0.0),
         })
 
 
