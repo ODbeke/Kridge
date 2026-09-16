@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useKridgeStore } from "@/lib/store";
 import { KridgeListing, ProviderId, ListingType, SupportedChain, BadgeTier, DonorProfile, DisputeItem } from "@/lib/types";
@@ -14,6 +14,13 @@ import {
   getTierFromRescued
 } from "@/lib/utils";
 import { CountdownTimer } from "@/components/CountdownTimer";
+import {
+  VerifyBadge,
+  rentListingOnGenLayer,
+  resolveDisputeOnGenLayer,
+  KRIDGE_MARKETPLACE_GENLAYER_ADDRESS,
+  GENLAYER_EXPLORER_BASE_URL,
+} from "@/lib/genlayer";
 import {
   Scale,
   ShieldAlert,
@@ -126,19 +133,9 @@ export default function ExploreAppPage() {
   const handleExecuteArbitration = async (disputeId: number, simulatedVerdict: "BUYER_REFUND" | "SELLER_WIN") => {
     setIsArbitrating(true);
     try {
-      const res = await fetch("/api/contract/simulate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "ARBITRATE_DISPUTE_EXEC_PROMPT",
-          params: {
-            errorType: simulatedVerdict === "BUYER_REFUND" ? "VALID_REVOCATION" : "FALSE_CLAIM",
-            rentalAmount: 3.50,
-          },
-        }),
-      });
-      const data = await res.json();
-      resolveDisputeWithAI(disputeId, data.verdict, data.reasoning);
+      // Direct on-chain execution via GenLayer SDK on Studio Devnet contract (0xC54DCDCBeB99E5773693F894285756E78EdAf242)
+      const onChainData = await resolveDisputeOnGenLayer(disputeId);
+      resolveDisputeWithAI(disputeId, onChainData.verdict, onChainData.reasoning);
     } catch (e) {
       resolveDisputeWithAI(
         disputeId,
@@ -206,92 +203,116 @@ export default function ExploreAppPage() {
   const [usdcBalance, setUsdcBalance] = useState("0.00");
   const [genBalance, setGenBalance] = useState("0.0000");
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
+  const isFetchingBalancesRef = useRef(false);
+
+  // Helper with hard timeout to prevent hanging RPCs from freezing the browser thread
+  const withTimeout = <T,>(promise: Promise<T>, timeoutMs = 2500): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error("RPC Timeout")), timeoutMs)
+      ),
+    ]);
+  };
 
   // Helper to fetch real on-chain ETH and official Circle USDC on Base Sepolia, plus live native GEN on GenLayer
-  const fetchWalletBalances = async (address: string) => {
+  const fetchWalletBalances = useCallback(async (address: string) => {
+    if (isFetchingBalancesRef.current) {
+      return null;
+    }
+    isFetchingBalancesRef.current = true;
     let eth = "0.0000";
     let usdc = "0.00";
     let gen = "0.0000";
 
-    // 1. Fetch live native GEN balance from GenLayer Studio Next RPC endpoint
-    try {
-      const genRes = await fetch("https://studio-next.genlayer.com/api", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "eth_getBalance",
-          params: [address, "latest"],
-        }),
-      });
-      if (genRes.ok) {
-        const genData = await genRes.json();
-        if (genData?.result) {
-          const rawWei = BigInt(genData.result);
-          gen = (Number(rawWei) / 1e18).toFixed(4);
+    const fetchGenLayerRpc = async () => {
+      try {
+        const genRes = await withTimeout(
+          fetch("https://studio-next.genlayer.com/api", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: 1,
+              method: "eth_getBalance",
+              params: [address, "latest"],
+            }),
+          })
+        );
+        if (genRes.ok) {
+          const genData = await genRes.json();
+          if (genData?.result) {
+            const rawWei = BigInt(genData.result);
+            gen = (Number(rawWei) / 1e18).toFixed(4);
+          }
         }
+      } catch {
+        // Silently catch so slow GenLayer RPCs don't freeze the UI
       }
-    } catch (e) {
-      console.warn("Error fetching GEN balance from GenLayer RPC:", e);
-    }
+    };
 
-    if (typeof window === "undefined" || !(window as any).ethereum) {
+    const fetchEthereumProviderBalances = async () => {
+      if (typeof window === "undefined" || !(window as any).ethereum) return;
+      const ethObj = (window as any).ethereum;
+
+      const pChain = (async () => {
+        try {
+          const currentChain = await withTimeout<string>(ethObj.request({ method: "eth_chainId" }), 1500);
+          const hex = (currentChain || "").toLowerCase();
+          if (hex === "0xf22d" || hex === "0xa179") {
+            const genBalHex = await withTimeout<string>(
+              ethObj.request({ method: "eth_getBalance", params: [address, "latest"] }),
+              2000
+            );
+            if (genBalHex) gen = (Number(BigInt(genBalHex)) / 1e18).toFixed(4);
+          }
+        } catch {}
+      })();
+
+      const pEth = (async () => {
+        try {
+          const balHex = await withTimeout<string>(
+            ethObj.request({ method: "eth_getBalance", params: [address, "latest"] }),
+            2000
+          );
+          if (balHex) eth = (parseInt(balHex, 16) / 1e18).toFixed(4);
+        } catch {}
+      })();
+
+      const pUsdc = (async () => {
+        try {
+          const cleanAddr = address.toLowerCase().replace("0x", "").padStart(64, "0");
+          const data = "0x70a08231" + cleanAddr;
+          const usdcHex = await withTimeout<string>(
+            ethObj.request({
+              method: "eth_call",
+              params: [
+                {
+                  to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                  data,
+                },
+                "latest",
+              ],
+            }),
+            2000
+          );
+          if (usdcHex && usdcHex !== "0x") {
+            const rawUnits = parseInt(usdcHex, 16);
+            usdc = (rawUnits / 1e6).toFixed(2);
+          }
+        } catch {}
+      })();
+
+      await Promise.allSettled([pChain, pEth, pUsdc]);
+    };
+
+    try {
+      await Promise.allSettled([fetchGenLayerRpc(), fetchEthereumProviderBalances()]);
       return { eth, usdc, gen };
+    } finally {
+      isFetchingBalancesRef.current = false;
     }
-
-    // 2. If MetaMask is connected to GenLayer (0xf22d or 0xa179), query eth_getBalance via provider as well
-    try {
-      const currentChain = await (window as any).ethereum.request({ method: "eth_chainId" });
-      const hex = (currentChain || "").toLowerCase();
-      if (hex === "0xf22d" || hex === "0xa179") {
-        const genBalHex = await (window as any).ethereum.request({
-          method: "eth_getBalance",
-          params: [address, "latest"],
-        });
-        if (genBalHex) {
-          gen = (Number(BigInt(genBalHex)) / 1e18).toFixed(4);
-        }
-      }
-    } catch {}
-
-    // 3. Fetch Base Sepolia ETH
-    try {
-      const balHex = await (window as any).ethereum.request({
-        method: "eth_getBalance",
-        params: [address, "latest"],
-      });
-      if (balHex) {
-        eth = (parseInt(balHex, 16) / 1e18).toFixed(4);
-      }
-    } catch (e) {
-      console.warn("Error fetching ETH balance:", e);
-    }
-
-    // 4. Fetch Base Sepolia Circle USDC
-    try {
-      const cleanAddr = address.toLowerCase().replace("0x", "").padStart(64, "0");
-      const data = "0x70a08231" + cleanAddr;
-      const usdcHex = await (window as any).ethereum.request({
-        method: "eth_call",
-        params: [
-          {
-            to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-            data,
-          },
-          "latest",
-        ],
-      });
-      if (usdcHex && usdcHex !== "0x") {
-        const rawUnits = parseInt(usdcHex, 16);
-        usdc = (rawUnits / 1e6).toFixed(2);
-      }
-    } catch (e) {
-      console.warn("Error fetching USDC balance:", e);
-    }
-
-    return { eth, usdc, gen };
-  };
+  }, []);
 
   // Seller Form State
   const [sellerForm, setSellerForm] = useState({
@@ -388,11 +409,13 @@ export default function ExploreAppPage() {
           const accounts = await (window as any).ethereum.request({ method: "eth_accounts" });
           if (accounts && accounts.length > 0) {
             setWalletAddress(accounts[0]);
-            const { eth, usdc, gen } = await fetchWalletBalances(accounts[0]);
-            setEthBalance(eth);
-            setUsdcBalance(usdc);
-            setGenBalance(gen);
-            updateWalletBalances({ eth, usdc, gen });
+            const result = await fetchWalletBalances(accounts[0]);
+            if (result) {
+              setEthBalance(result.eth);
+              setUsdcBalance(result.usdc);
+              setGenBalance(result.gen);
+              updateWalletBalances(result);
+            }
           }
         } catch (err) {
           console.error("MetaMask detection error:", err);
@@ -404,19 +427,24 @@ export default function ExploreAppPage() {
     return () => {
       document.body.classList.remove("memoriada-app-body");
     };
-  }, [switchChain, updateWalletBalances]);
+  }, []);
 
   // Re-sync balances whenever user switches chain or updates wallet address
   useEffect(() => {
     if (walletAddress) {
-      fetchWalletBalances(walletAddress).then(({ eth, usdc, gen }) => {
-        setEthBalance(eth);
-        setUsdcBalance(usdc);
-        setGenBalance(gen);
-        updateWalletBalances({ eth, usdc, gen });
+      let isCancelled = false;
+      fetchWalletBalances(walletAddress).then((result) => {
+        if (!result || isCancelled) return;
+        setEthBalance(result.eth);
+        setUsdcBalance(result.usdc);
+        setGenBalance(result.gen);
+        updateWalletBalances(result);
       });
+      return () => {
+        isCancelled = true;
+      };
     }
-  }, [wallet.chain, walletAddress, updateWalletBalances]);
+  }, [wallet.chain, walletAddress, fetchWalletBalances, updateWalletBalances]);
 
   // Compute user's own published compute pools
   const myListings = useMemo(() => {
@@ -492,9 +520,10 @@ export default function ExploreAppPage() {
   const [currentTime, setCurrentTime] = useState<number>(() => Date.now());
 
   useEffect(() => {
+    // Check every 30 seconds for expired listing state transitions instead of every second
     const timer = setInterval(() => {
       setCurrentTime(Date.now());
-    }, 1000);
+    }, 30000);
     return () => clearInterval(timer);
   }, []);
 
@@ -598,6 +627,9 @@ export default function ExploreAppPage() {
     }
   };
 
+  const walletAddressRef = useRef(walletAddress);
+  walletAddressRef.current = walletAddress;
+
   // Sync state if user switches network or account directly inside their wallet extension
   useEffect(() => {
     if (typeof window === "undefined" || !(window as any).ethereum) return;
@@ -611,23 +643,28 @@ export default function ExploreAppPage() {
       } else if (hex === "0xa179" || hex === "0xf22d") {
         switchChain("genlayer");
       }
-      if (walletAddress) {
-        const { eth, usdc, gen } = await fetchWalletBalances(walletAddress);
-        setEthBalance(eth);
-        setUsdcBalance(usdc);
-        setGenBalance(gen);
-        updateWalletBalances({ eth, usdc, gen });
+      const addr = walletAddressRef.current;
+      if (addr) {
+        const result = await fetchWalletBalances(addr);
+        if (result) {
+          setEthBalance(result.eth);
+          setUsdcBalance(result.usdc);
+          setGenBalance(result.gen);
+          updateWalletBalances(result);
+        }
       }
     };
 
     const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts && accounts.length > 0) {
         setWalletAddress(accounts[0]);
-        const { eth, usdc, gen } = await fetchWalletBalances(accounts[0]);
-        setEthBalance(eth);
-        setUsdcBalance(usdc);
-        setGenBalance(gen);
-        updateWalletBalances({ eth, usdc, gen });
+        const result = await fetchWalletBalances(accounts[0]);
+        if (result) {
+          setEthBalance(result.eth);
+          setUsdcBalance(result.usdc);
+          setGenBalance(result.gen);
+          updateWalletBalances(result);
+        }
       } else {
         setWalletAddress(null);
         setEthBalance("0.0000");
@@ -642,7 +679,7 @@ export default function ExploreAppPage() {
       (window as any).ethereum.removeListener?.("chainChanged", handleChainChanged);
       (window as any).ethereum.removeListener?.("accountsChanged", handleAccountsChanged);
     };
-  }, [switchChain, updateWalletBalances, walletAddress]);
+  }, [switchChain, updateWalletBalances, fetchWalletBalances]);
 
   const handleConnectWallet = async () => {
     if (typeof window !== "undefined" && (window as any).ethereum) {
@@ -682,11 +719,13 @@ export default function ExploreAppPage() {
             }
           }
 
-          const { eth, usdc, gen } = await fetchWalletBalances(addr);
-          setEthBalance(eth);
-          setUsdcBalance(usdc);
-          setGenBalance(gen);
-          updateWalletBalances({ eth, usdc, gen });
+          const result = await fetchWalletBalances(addr);
+          if (result) {
+            setEthBalance(result.eth);
+            setUsdcBalance(result.usdc);
+            setGenBalance(result.gen);
+            updateWalletBalances(result);
+          }
         }
       } catch (err) {
         console.error("Wallet connect failed:", err);
@@ -784,20 +823,17 @@ export default function ExploreAppPage() {
             console.warn("GenLayer switch warning:", switchWarn);
           }
 
-          // GenLayer Escrow deposit transaction (KridgeMarketplace Intelligent Contract)
-          const marketplaceContract = "0xC54DCDCBeB99E5773693F894285756E78EdAf242";
-          const genWei = BigInt(Math.max(1, Math.round(selectedListing.priceUsd * 1e18))).toString(16);
-          const txParams = {
-            from: userAddr,
-            to: marketplaceContract,
-            value: "0x" + genWei,
-          };
-
+          // GenLayer Escrow deposit transaction (KridgeMarketplace Intelligent Contract with full method calldata)
+          const genWeiBigInt = BigInt(Math.max(1, Math.round(selectedListing.priceUsd * 1e18)));
           try {
-            onChainTxHash = await (window as any).ethereum.request({
-              method: "eth_sendTransaction",
-              params: [txParams],
+            const rentalResult = await rentListingOnGenLayer({
+              listingId: selectedListing.id,
+              durationHours: 48,
+              subKeyHash: "0x" + Math.random().toString(16).substring(2, 18),
+              valueWei: genWeiBigInt,
+              userAddress: userAddr,
             });
+            onChainTxHash = rentalResult.txHash;
           } catch (walletErr: any) {
             console.error("GenLayer transaction declined or failed:", walletErr);
             if (
@@ -1587,6 +1623,12 @@ export default function ExploreAppPage() {
                               >
                                 {listing.sellerChain === "genlayer" ? "GENLAYER" : "BASE"}
                               </span>
+                              {listing.sellerChain === "genlayer" && (
+                                <VerifyBadge
+                                  feeConfigHash={KRIDGE_MARKETPLACE_GENLAYER_ADDRESS}
+                                  snapState="verified"
+                                />
+                              )}
                             </div>
                             {isExpired ? (
                               <div

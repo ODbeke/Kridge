@@ -19,8 +19,18 @@ export function CountdownTimer({
   const [timeStr, setTimeStr] = useState<string>(() => formatTimeRemaining(expiryTimestamp));
 
   useEffect(() => {
+    if (!expiryTimestamp || expiryTimestamp <= Date.now()) {
+      setTimeStr("00:00:00:00");
+      return;
+    }
+
     setTimeStr(formatTimeRemaining(expiryTimestamp));
     const interval = setInterval(() => {
+      if (Date.now() >= expiryTimestamp) {
+        setTimeStr("00:00:00:00");
+        clearInterval(interval);
+        return;
+      }
       setTimeStr(formatTimeRemaining(expiryTimestamp));
     }, 1000);
 

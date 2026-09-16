@@ -445,7 +445,10 @@ Open [http://localhost:3000](http://localhost:3000) to view Kridge locally.
 Kridge includes a standalone Python test suite that simulates the full lifecycle of the GenLayer Intelligent Contract:
 
 ```bash
-# Run simulator
+# Run contract unit test suite (18 tests covering escrow, health probe, consensus, and tier evaluations)
+python3 -m unittest discover -s tests/contracts
+
+# Run standalone end-to-end multi-validator simulator
 python3 contracts/mock_genlayer_simulator.py
 ```
 

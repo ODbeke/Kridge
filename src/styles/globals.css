@@ -1014,6 +1014,8 @@ body.memoriada-app-body .panel-glass {
   border: 1px solid #e2dbf3 !important;
   box-shadow: 0 12px 32px rgba(66, 38, 36, 0.07), 0 4px 10px rgba(0, 0, 0, 0.02) !important;
   color: #1a1a1a !important;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 body.memoriada-app-body .nav-terminal {
@@ -1075,6 +1077,8 @@ body.memoriada-app-body .card-service {
   box-shadow: 0 10px 24px rgba(66, 38, 36, 0.05) !important;
   padding: 16px 20px !important;
   min-height: 180px !important;
+  transform: translateZ(0);
+  will-change: transform;
 }
 body.memoriada-app-body .card-service:hover {
   border-color: #b08ad4 !important;

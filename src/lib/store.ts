@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { KridgeListing, UserRentalSession, DisputeItem, DonorProfile, SupportedChain, BadgeTier, ListingType, ChainBalanceInfo, WalletState, ProviderId } from "./types";
 import { INITIAL_LISTINGS, INITIAL_DISPUTES, INITIAL_DONORS } from "./mock-data";
 import { getTierFromRescued } from "./utils";
@@ -500,21 +500,27 @@ export function useKridgeStore() {
     saveDisputes(updated);
   };
 
-  const switchChain = (chain: SupportedChain) => {
+  const switchChain = useCallback((chain: SupportedChain) => {
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem(STORAGE_KEYS.CHAIN, chain);
       } catch {}
     }
     const chainInfo = INITIAL_CHAIN_BALANCES[chain] || INITIAL_CHAIN_BALANCES.base;
-    setWallet((prev) => ({
-      ...prev,
-      chain,
-      balanceUsd: chain === "genlayer" ? 0 : (prev.chainBalances[chain]?.usdValue ?? chainInfo.usdValue),
-    }));
-  };
+    setWallet((prev) => {
+      const targetBalanceUsd = chain === "genlayer" ? 0 : (prev.chainBalances[chain]?.usdValue ?? chainInfo.usdValue);
+      if (prev.chain === chain && prev.balanceUsd === targetBalanceUsd) {
+        return prev;
+      }
+      return {
+        ...prev,
+        chain,
+        balanceUsd: targetBalanceUsd,
+      };
+    });
+  }, []);
 
-  const updateWalletBalances = (balances: {
+  const updateWalletBalances = useCallback((balances: {
     eth?: number | string;
     usdc?: number | string;
     gen?: number | string;
@@ -523,6 +529,19 @@ export function useKridgeStore() {
       const ethNum = balances.eth !== undefined ? Number(balances.eth) : prev.chainBalances.base.nativeAmount;
       const usdcNum = balances.usdc !== undefined ? Number(balances.usdc) : prev.chainBalances.base.usdValue;
       const genNum = balances.gen !== undefined ? Number(balances.gen) : prev.chainBalances.genlayer.nativeAmount;
+
+      const currentBaseEth = prev.chainBalances.base.nativeAmount;
+      const currentBaseUsdc = prev.chainBalances.base.usdValue;
+      const currentGen = prev.chainBalances.genlayer.nativeAmount;
+
+      // Equality guard: if balance values haven't changed, return prev to prevent infinite re-render cycles
+      if (
+        currentBaseEth === ethNum &&
+        currentBaseUsdc === usdcNum &&
+        currentGen === genNum
+      ) {
+        return prev;
+      }
 
       return {
         ...prev,
@@ -542,7 +561,7 @@ export function useKridgeStore() {
         },
       };
     });
-  };
+  }, []);
 
   return {
     isLoaded,
