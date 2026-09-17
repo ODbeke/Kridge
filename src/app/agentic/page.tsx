@@ -53,7 +53,7 @@ export default function AgenticPage() {
     setAgentLogs((prev) => [
       ...prev,
       "[00:00:06] POST /api/agent/rent successful. Received ephemeral session: krdg_live_agent_88b12f7a9c.",
-      "[00:00:07] Kridge GenLayer Intelligent Escrow (0xC54DCDCBeB99E5773693F894285756E78EdAf242) verified. Allowance issued.",
+      "[00:00:07] Kridge GenLayer Intelligent Escrow (0x177A9CE45D6FDAF677aD80Ded6F4BBb595CE8bD5) verified. Allowance issued.",
       "[00:00:08] Configuring LangChain ChatOpenAI base_url -> http://localhost:3000/api/proxy/v1..."
     ]);
 

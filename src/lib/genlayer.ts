@@ -2,7 +2,7 @@
  * Kridge GenLayer Intelligent Contract Client & Transaction Kit Service
  * ====================================================================
  * Connects directly to the live KridgeMarketplace Intelligent Contract on GenLayer Studio Devnet
- * Explorer: https://explorer-studio-dev.genlayer.com/address/0xC54DCDCBeB99E5773693F894285756E78EdAf242
+ * Explorer: https://explorer-studio-next.genlayer.com/address/0x177A9CE45D6FDAF677aD80Ded6F4BBb595CE8bD5
  */
 
 import { createClient, chains, createAccount } from "genlayer-js";
@@ -17,8 +17,8 @@ export {
   useTransactionFlow,
 } from "@genlayer/transaction-kit-react";
 
-export const KRIDGE_MARKETPLACE_GENLAYER_ADDRESS = "0xC54DCDCBeB99E5773693F894285756E78EdAf242" as const;
-export const GENLAYER_EXPLORER_BASE_URL = "https://explorer-studio-dev.genlayer.com";
+export const KRIDGE_MARKETPLACE_GENLAYER_ADDRESS = "0x177A9CE45D6FDAF677aD80Ded6F4BBb595CE8bD5" as const;
+export const GENLAYER_EXPLORER_BASE_URL = "https://explorer-studio-next.genlayer.com";
 
 // Shared GenLayer client instance connected to Studio Devnet (Chain ID 61997 / 0xf22d)
 let _clientInstance: ReturnType<typeof createClient> | null = null;

@@ -132,7 +132,7 @@ export default function ExploreAppPage() {
   const handleExecuteArbitration = async (disputeId: number, simulatedVerdict: "BUYER_REFUND" | "SELLER_WIN") => {
     setIsArbitrating(true);
     try {
-      // Direct on-chain execution via GenLayer SDK on Studio Devnet contract (0xC54DCDCBeB99E5773693F894285756E78EdAf242)
+      // Direct on-chain execution via GenLayer SDK on contract (0x177A9CE45D6FDAF677aD80Ded6F4BBb595CE8bD5)
       const onChainData = await resolveDisputeOnGenLayer(disputeId);
       resolveDisputeWithAI(disputeId, onChainData.verdict, onChainData.reasoning);
     } catch (e) {

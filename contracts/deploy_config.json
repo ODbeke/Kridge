@@ -4,9 +4,9 @@
     "genlayer-studionet": {
       "chainId": "61997",
       "rpc": "https://studio-next.genlayer.com/api",
-      "explorer": "https://explorer-studio-dev.genlayer.com",
+      "explorer": "https://explorer-studio-next.genlayer.com",
       "contracts": {
-        "KridgeMarketplace": "0xC54DCDCBeB99E5773693F894285756E78EdAf242",
+        "KridgeMarketplace": "0x177A9CE45D6FDAF677aD80Ded6F4BBb595CE8bD5",
         "Treasury": "0xKridgeTreasury_GenLayer"
       }
     },
@@ -14,7 +14,7 @@
       "chainId": "genlayer-1",
       "rpc": "https://testnet.genlayer.network",
       "contracts": {
-        "KridgeMarketplace": "0xC54DCDCBeB99E5773693F894285756E78EdAf242",
+        "KridgeMarketplace": "0x177A9CE45D6FDAF677aD80Ded6F4BBb595CE8bD5",
         "Treasury": "0xKridgeTreasury_GenLayer",
         "HyperlaneAdapter": "0x7F2B36D36eF59C759882Fe77CfaeF91D3b697851"
       }
