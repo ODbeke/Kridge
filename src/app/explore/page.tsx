@@ -125,8 +125,9 @@ export default function ExploreAppPage() {
   const [isArbitrating, setIsArbitrating] = useState(false);
   const [disputeFilingModalOpen, setDisputeFilingModalOpen] = useState(false);
   const [selectedDisputeRentalId, setSelectedDisputeRentalId] = useState<number>(rentals[0]?.rentalId || 0);
-  const [disputeReason, setDisputeReason] = useState("Upstream 401 Unauthorized: Key was revoked mid-rental by seller.");
-  const [disputeTrace, setDisputeTrace] = useState("HTTP 401: Invalid API Key provided to Anthropic API endpoint. Gateway HMAC receipt #0x7fa89c validates authentic upstream error.");
+  const [disputeCategory, setDisputeCategory] = useState("401_REVOKED");
+  const [disputeReason, setDisputeReason] = useState("Upstream 401 Unauthorized: API key invalidated or revoked mid-rental by seller.");
+  const [disputeTrace, setDisputeTrace] = useState("HTTP 401 Unauthorized: Invalid API key provided to upstream endpoint. Gateway HMAC receipt #0x7fa89c validates authentic upstream revocation.");
 
   const activeDispute = (selectedDisputeId ? disputes.find((d) => d.disputeId === selectedDisputeId) : null) || disputes[0] || null;
 
@@ -147,8 +148,10 @@ export default function ExploreAppPage() {
         trace.includes("200") ||
         trace.includes("active") ||
         trace.includes("false") ||
+        trace.includes("unverified") ||
         reason.includes("false") ||
-        reason.includes("running")
+        reason.includes("running") ||
+        reason.includes("unverified")
       ) {
         calculatedVerdict = "SELLER_WIN";
       } else if (trace.includes("401") || reason.includes("401") || reason.includes("revoked")) {
@@ -185,8 +188,16 @@ export default function ExploreAppPage() {
   };
 
   const openDisputeModal = () => {
-    if (rentals.length > 0 && (!selectedDisputeRentalId || !rentals.some((r) => r.rentalId === selectedDisputeRentalId))) {
-      setSelectedDisputeRentalId(rentals[0].rentalId);
+    const targetRental = (rentals.length > 0 && selectedDisputeRentalId && rentals.find((r) => r.rentalId === selectedDisputeRentalId))
+      ? rentals.find((r) => r.rentalId === selectedDisputeRentalId)
+      : rentals[0];
+
+    if (targetRental) {
+      setSelectedDisputeRentalId(targetRental.rentalId);
+      const prov = targetRental.provider === "gemini" ? "Google Gemini" : targetRental.provider === "anthropic" ? "Anthropic Claude" : targetRental.provider === "openai" ? "OpenAI" : targetRental.provider;
+      setDisputeCategory("401_REVOKED");
+      setDisputeReason("Upstream 401 Unauthorized: API key invalidated or revoked mid-rental by seller.");
+      setDisputeTrace(`HTTP 401 Unauthorized: Invalid API key provided to ${prov} API endpoint. Gateway HMAC receipt #0x7fa89c validates authentic upstream revocation.`);
     }
     setDisputeFilingModalOpen(true);
   };
@@ -3543,25 +3554,6 @@ export default function ExploreAppPage() {
                       {isArbitrating ? "Evaluating with GenLayer Jury (Broadcasting On-Chain)..." : "Trigger AI Jury (gl.exec_prompt)"}
                     </button>
 
-                    <button
-                      type="button"
-                      disabled={isArbitrating || activeDispute.status === "RESOLVED_SELLER_WINS"}
-                      onClick={() => handleExecuteArbitration(activeDispute.disputeId, "SELLER_WIN")}
-                      className="btn-terminal"
-                      style={{
-                        padding: "10px 18px",
-                        fontSize: "11px",
-                        fontWeight: "700",
-                        color: "#be123c",
-                        borderColor: "rgba(225, 29, 72, 0.4)",
-                        background: "rgba(225, 29, 72, 0.05)",
-                        cursor: isArbitrating || activeDispute.status === "RESOLVED_SELLER_WINS" ? "not-allowed" : "pointer",
-                        opacity: isArbitrating || activeDispute.status === "RESOLVED_SELLER_WINS" ? 0.6 : 1,
-                      }}
-                    >
-                      Test False Claim Ruling (Slash 50% Bond)
-                    </button>
-
                     {activeDispute.status !== "PENDING" && (
                       <button
                         type="button"
@@ -3633,35 +3625,37 @@ export default function ExploreAppPage() {
               </div>
 
               <div>
-                <label className="label-cell">Select Dispute Scenario Preset:</label>
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
-                  <button
-                    type="button"
-                    className="btn-terminal"
-                    style={{ fontSize: "10px", padding: "6px 12px", background: "rgba(225, 29, 72, 0.06)", borderColor: "#be123c", color: "#be123c", fontWeight: "700" }}
-                    onClick={() => {
-                      const selectedRental = rentals.find((r) => r.rentalId === selectedDisputeRentalId) || rentals[0];
-                      const prov = selectedRental?.provider === "gemini" ? "Google Gemini" : selectedRental?.provider === "anthropic" ? "Anthropic Claude" : selectedRental?.provider || "upstream";
-                      setDisputeReason(`Upstream 401 Unauthorized: Key was revoked mid-rental by seller.`);
-                      setDisputeTrace(`HTTP 401: Invalid API Key provided to ${prov} API endpoint. Gateway HMAC receipt #0x7fa89c validates authentic upstream error.`);
-                    }}
-                  >
-                    Scenario A: Key Revoked (401 Error → Buyer Refund)
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-terminal"
-                    style={{ fontSize: "10px", padding: "6px 12px", background: "rgba(37, 99, 235, 0.06)", borderColor: "#2563eb", color: "#2563eb", fontWeight: "700" }}
-                    onClick={() => {
-                      const selectedRental = rentals.find((r) => r.rentalId === selectedDisputeRentalId) || rentals[0];
-                      const prov = selectedRental?.provider === "gemini" ? "Google Gemini" : selectedRental?.provider === "anthropic" ? "Anthropic Claude" : selectedRental?.provider || "upstream";
-                      setDisputeReason(`False Claim Test: Complainant claiming outage while seller key is active.`);
-                      setDisputeTrace(`Gateway probe confirms HTTP 200 OK from ${prov} endpoint. Key remains active, unrevoked and operational. Zero 401 errors.`);
-                    }}
-                  >
-                    Scenario B: False Claim (Key is Running → 50% Bond Slashed)
-                  </button>
-                </div>
+                <label className="label-cell">Dispute Category / Incident Type:</label>
+                <select
+                  value={disputeCategory}
+                  onChange={(e) => {
+                    const cat = e.target.value;
+                    setDisputeCategory(cat);
+                    const selectedRental = rentals.find((r) => r.rentalId === selectedDisputeRentalId) || rentals[0];
+                    const prov = selectedRental?.provider === "gemini" ? "Google Gemini" : selectedRental?.provider === "anthropic" ? "Anthropic Claude" : selectedRental?.provider === "openai" ? "OpenAI" : selectedRental?.provider || "upstream";
+                    const hmac = "0x" + Array.from({ length: 12 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+
+                    if (cat === "401_REVOKED") {
+                      setDisputeReason("Upstream 401 Unauthorized: API key invalidated or revoked mid-rental by seller.");
+                      setDisputeTrace(`HTTP 401 Unauthorized: Invalid API key provided to ${prov} API endpoint. Gateway HMAC receipt #${hmac} validates authentic upstream revocation.`);
+                    } else if (cat === "429_RATE_LIMIT") {
+                      setDisputeReason("Premature Rate Limit Exhaustion: Upstream quota exhausted prematurely by concurrent usage.");
+                      setDisputeTrace(`HTTP 429 Too Many Requests: Rate limit tier exceeded on ${prov}. Gateway trace #${hmac} confirms key was actively degraded.`);
+                    } else if (cat === "502_GATEWAY_ERROR") {
+                      setDisputeReason("Upstream Service Failure: Key provider server outage resulting in unfulfilled compute tokens.");
+                      setDisputeTrace(`HTTP 502 Bad Gateway: Upstream ${prov} endpoints unreachable for > 15 minutes. Receipt #${hmac}.`);
+                    } else if (cat === "UNVERIFIED_CLAIM") {
+                      setDisputeReason("Service Disruption Claim: Client reporting credential unresponsiveness.");
+                      setDisputeTrace(`Gateway health check probe confirms HTTP 200 OK from ${prov} endpoint. Key remains active and unrevoked. Receipt #${hmac}.`);
+                    }
+                  }}
+                  className="select-cell"
+                >
+                  <option value="401_REVOKED">Upstream 401 Unauthorized (Credentials Revoked)</option>
+                  <option value="429_RATE_LIMIT">Premature Quota / Rate Limit Depletion (HTTP 429)</option>
+                  <option value="502_GATEWAY_ERROR">Upstream Service Disruption / Outage (HTTP 502)</option>
+                  <option value="UNVERIFIED_CLAIM">Unverified Performance Claim (Inspect Key Health)</option>
+                </select>
               </div>
 
               <div>
