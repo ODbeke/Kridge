@@ -6,7 +6,7 @@ import { INITIAL_LISTINGS, INITIAL_DISPUTES, INITIAL_DONORS } from "./mock-data"
 import { getTierFromRescued } from "./utils";
 
 export const INITIAL_CHAIN_BALANCES: Record<SupportedChain, ChainBalanceInfo> = {
-  genlayer: { name: "GENLAYER", symbol: "GEN", nativeAmount: 2.5, usdValue: 250.0, icon: "🧠" },
+  genlayer: { name: "GENLAYER", symbol: "GEN", nativeAmount: 0.0, usdValue: 0.0, icon: "🧠" },
   base: { name: "Base (Coming Soon)", symbol: "ETH", nativeAmount: 0.0, usdValue: 0.0, icon: "🔵" },
   zksync: { name: "zkSync Era (Coming Soon)", symbol: "ETH", nativeAmount: 0.0, usdValue: 0.0, icon: "⚡" },
   solana: { name: "Solana (Coming Soon)", symbol: "SOL", nativeAmount: 0.0, usdValue: 0.0, icon: "🟣" },
@@ -31,7 +31,7 @@ export function useKridgeStore() {
       isConnected: false,
       address: "",
       chain: "genlayer",
-      balanceUsd: 250,
+      balanceUsd: 0,
       chainBalances: INITIAL_CHAIN_BALANCES,
     };
   });
@@ -42,25 +42,14 @@ export function useKridgeStore() {
     async function loadData() {
       try {
         // 1. Instantly restore any cached listings from localStorage
-        const refreshExpiredTimestamps = (items: KridgeListing[]): KridgeListing[] => {
-          const now = Date.now();
-          return items.map((l) => {
-            if (l.id <= 2 && (!l.expiryTimestamp || l.expiryTimestamp <= now)) {
-              return { ...l, sellerChain: "genlayer", expiryTimestamp: now + 7 * 86400000 };
-            }
-            return { ...l, sellerChain: "genlayer" };
-          });
-        };
-
         let localListings: KridgeListing[] = [];
         const savedListings = localStorage.getItem(STORAGE_KEYS.LISTINGS);
         if (savedListings) {
           try {
             const parsed = JSON.parse(savedListings);
             if (Array.isArray(parsed) && parsed.length > 0) {
-              const refreshed = refreshExpiredTimestamps(parsed);
-              localListings = refreshed;
-              setListings(refreshed);
+              localListings = parsed;
+              setListings(parsed);
             }
           } catch {}
         }
@@ -88,7 +77,7 @@ export function useKridgeStore() {
               }
             });
 
-            const merged = refreshExpiredTimestamps(Array.from(combinedMap.values()).sort((a, b) => b.id - a.id));
+            const merged = Array.from(combinedMap.values()).sort((a, b) => b.id - a.id);
             setListings(merged);
             localStorage.setItem(STORAGE_KEYS.LISTINGS, JSON.stringify(merged));
           }
