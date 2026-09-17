@@ -61,8 +61,8 @@ const CHAIN_CONFIGS: Record<
 > = {
   genlayer: {
     chainIdHex: "0xf22d", // 61997 GenLayer Studio Devnet
-    chainName: "GenLayer Studio Devnet",
-    networkTag: "GENLAYER_STUDIO_DEVNET",
+    chainName: "GENLAYER",
+    networkTag: "GENLAYER",
     rpcUrls: ["https://studio-dev.genlayer.com/api"],
     nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
     blockExplorerUrls: ["https://explorer-studio-dev.genlayer.com"],
@@ -1001,7 +1001,7 @@ export default function ExploreAppPage() {
                 cursor: "pointer",
               }}
             >
-              <span>{CHAIN_CONFIGS[wallet.chain]?.chainName || "GenLayer Studio Devnet"}</span>
+              <span>{CHAIN_CONFIGS[wallet.chain]?.chainName || "GENLAYER"}</span>
               <span style={{ fontSize: "9px", opacity: 0.7 }}>▼</span>
             </button>
 
@@ -1268,7 +1268,7 @@ export default function ExploreAppPage() {
                             }}
                           >
                             <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#7928ca", display: "inline-block" }} />
-                            <span>Active (Studio Next)</span>
+                            <span>Active (GENLAYER)</span>
                           </div>
                         </div>
                       </>

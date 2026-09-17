@@ -38,7 +38,7 @@ const NAV_LINKS = [
 ];
 
 const AVAILABLE_CHAINS: Array<{ id: SupportedChain; name: string; nativeSymbol: string; status: string; isLive: boolean }> = [
-  { id: "genlayer", name: "GenLayer Studio Devnet", nativeSymbol: "GEN", status: "Live Intelligent Contracts", isLive: true },
+  { id: "genlayer", name: "GENLAYER", nativeSymbol: "GEN", status: "Live Intelligent Contracts", isLive: true },
   { id: "base", name: "Base (EVM)", nativeSymbol: "ETH", status: "Coming Soon", isLive: false },
   { id: "zksync", name: "zkSync Era", nativeSymbol: "ETH", status: "Coming Soon", isLive: false },
   { id: "solana", name: "Solana (SVM)", nativeSymbol: "SOL", status: "Coming Soon", isLive: false },

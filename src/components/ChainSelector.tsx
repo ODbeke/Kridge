@@ -2,7 +2,7 @@ import React from "react";
 
 export function ChainSelector({ selected, onSelect }: { selected: string; onSelect: (chain: string) => void }) {
   const chains = [
-    { id: "genlayer", name: "🧠 GenLayer (Native Intelligent Contracts)", isLive: true },
+    { id: "genlayer", name: "🧠 GENLAYER", isLive: true },
     { id: "base", name: "🔵 Base (Coming Soon)", isLive: false },
     { id: "zksync", name: "⚡ zkSync Era (Coming Soon)", isLive: false },
     { id: "solana", name: "🟣 Solana (Coming Soon)", isLive: false }

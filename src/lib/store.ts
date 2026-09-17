@@ -6,7 +6,7 @@ import { INITIAL_LISTINGS, INITIAL_DISPUTES, INITIAL_DONORS } from "./mock-data"
 import { getTierFromRescued } from "./utils";
 
 export const INITIAL_CHAIN_BALANCES: Record<SupportedChain, ChainBalanceInfo> = {
-  genlayer: { name: "GenLayer", symbol: "GEN", nativeAmount: 2.5, usdValue: 250.0, icon: "🧠" },
+  genlayer: { name: "GENLAYER", symbol: "GEN", nativeAmount: 2.5, usdValue: 250.0, icon: "🧠" },
   base: { name: "Base (Coming Soon)", symbol: "ETH", nativeAmount: 0.0, usdValue: 0.0, icon: "🔵" },
   zksync: { name: "zkSync Era (Coming Soon)", symbol: "ETH", nativeAmount: 0.0, usdValue: 0.0, icon: "⚡" },
   solana: { name: "Solana (Coming Soon)", symbol: "SOL", nativeAmount: 0.0, usdValue: 0.0, icon: "🟣" },
