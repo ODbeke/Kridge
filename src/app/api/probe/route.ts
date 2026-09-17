@@ -18,6 +18,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ valid: false, error: "Unsupported provider" }, { status: 400 });
     }
 
+    // Detect key-provider mismatch before making a network call
+    const key = apiKey.trim();
+    const mismatchMap: Record<string, string> = {
+      gemini: "AIzaSy", anthropic: "sk-ant-", openai: "sk-proj-", groq: "gsk_",
+    };
+    for (const [prov, prefix] of Object.entries(mismatchMap)) {
+      if (key.startsWith(prefix) && provider !== prov) {
+        const labels: Record<string, string> = {
+          gemini: "Google Gemini", anthropic: "Anthropic Claude", openai: "OpenAI", groq: "Groq",
+        };
+        return NextResponse.json({
+          valid: false,
+          error: `Key format mismatch: this looks like a ${labels[prov]} key (${prefix}...), but you selected ${providerConfig.name}. Please select the correct provider.`,
+          status: "KEY_PROVIDER_MISMATCH",
+        }, { status: 400 });
+      }
+    }
+
     const startTime = Date.now();
     let isLiveValid = false;
     let statusCode = 200;

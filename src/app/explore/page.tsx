@@ -335,6 +335,32 @@ export default function ExploreAppPage() {
   } | null>(null);
   const [publishSuccess, setPublishSuccess] = useState(false);
 
+  // Auto-detect provider from API key prefix
+  const detectProviderFromKey = (key: string): { provider: ProviderId; model: string } | null => {
+    const k = key.trim();
+    if (k.startsWith("AIzaSy")) return { provider: "gemini", model: "Gemini 2.5 Flash" };
+    if (k.startsWith("sk-ant-")) return { provider: "anthropic", model: "Claude 3.5 Sonnet" };
+    if (k.startsWith("sk-proj-") || k.startsWith("sk-org-")) return { provider: "openai", model: "GPT-4o" };
+    if (k.startsWith("gsk_")) return { provider: "groq", model: "Llama 3.3 70B" };
+    if (k.startsWith("sk-") && !k.startsWith("sk-ant-") && !k.startsWith("sk-proj-") && !k.startsWith("sk-org-") && k.length > 30) return { provider: "deepseek", model: "DeepSeek Chat" };
+    return null;
+  };
+
+  // Provider-key format mismatch warning
+  const keyProviderMismatch = (() => {
+    if (!sellerForm.apiKey) return null;
+    const detected = detectProviderFromKey(sellerForm.apiKey);
+    if (!detected) return null;
+    if (detected.provider !== sellerForm.provider) {
+      const providerLabels: Record<string, string> = {
+        gemini: "Google Gemini", anthropic: "Anthropic Claude", openai: "OpenAI",
+        groq: "Groq", deepseek: "DeepSeek",
+      };
+      return `This looks like a ${providerLabels[detected.provider] || detected.provider} key, but you selected ${providerLabels[sellerForm.provider] || sellerForm.provider}. The probe will fail unless the provider matches.`;
+    }
+    return null;
+  })();
+
   const handleProbeKey = async () => {
     if (!sellerForm.apiKey) {
       setProbeResult({
@@ -2182,10 +2208,16 @@ export default function ExploreAppPage() {
                       type="password"
                       className="input-cell"
                       style={{ flex: "1 1 200px" }}
-                      placeholder="sk-ant-api03-... or sk-proj-..."
+                      placeholder="Paste key (AIzaSy..., sk-ant-..., sk-proj-..., gsk_...)"
                       value={sellerForm.apiKey}
                       onChange={(e) => {
-                        setSellerForm({ ...sellerForm, apiKey: e.target.value });
+                        const newKey = e.target.value;
+                        const detected = detectProviderFromKey(newKey);
+                        if (detected && detected.provider !== sellerForm.provider) {
+                          setSellerForm({ ...sellerForm, apiKey: newKey, provider: detected.provider, modelFamily: detected.model });
+                        } else {
+                          setSellerForm({ ...sellerForm, apiKey: newKey });
+                        }
                         if (probeResult) setProbeResult(null);
                       }}
                       required
@@ -2208,6 +2240,26 @@ export default function ExploreAppPage() {
                       {isProbing ? "Probing..." : "Probe Key"}
                     </button>
                   </div>
+                  {keyProviderMismatch && (
+                    <div
+                      style={{
+                        marginTop: "6px",
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        background: "rgba(234, 179, 8, 0.10)",
+                        border: "1px solid #ca8a04",
+                        fontSize: "11px",
+                        color: "#92400e",
+                        fontFamily: "var(--font-accent)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <span style={{ fontWeight: "700" }}>⚠</span>
+                      <span>{keyProviderMismatch}</span>
+                    </div>
+                  )}
                   {probeResult && (
                     probeResult.valid ? (
                       <div
