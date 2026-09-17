@@ -42,14 +42,25 @@ export function useKridgeStore() {
     async function loadData() {
       try {
         // 1. Instantly restore any cached listings from localStorage
+        const refreshExpiredTimestamps = (items: KridgeListing[]): KridgeListing[] => {
+          const now = Date.now();
+          return items.map((l) => {
+            if (l.id <= 2 && (!l.expiryTimestamp || l.expiryTimestamp <= now)) {
+              return { ...l, sellerChain: "genlayer", expiryTimestamp: now + 7 * 86400000 };
+            }
+            return { ...l, sellerChain: "genlayer" };
+          });
+        };
+
         let localListings: KridgeListing[] = [];
         const savedListings = localStorage.getItem(STORAGE_KEYS.LISTINGS);
         if (savedListings) {
           try {
             const parsed = JSON.parse(savedListings);
             if (Array.isArray(parsed) && parsed.length > 0) {
-              localListings = parsed;
-              setListings(parsed);
+              const refreshed = refreshExpiredTimestamps(parsed);
+              localListings = refreshed;
+              setListings(refreshed);
             }
           } catch {}
         }
@@ -77,7 +88,7 @@ export function useKridgeStore() {
               }
             });
 
-            const merged = Array.from(combinedMap.values()).sort((a, b) => b.id - a.id);
+            const merged = refreshExpiredTimestamps(Array.from(combinedMap.values()).sort((a, b) => b.id - a.id));
             setListings(merged);
             localStorage.setItem(STORAGE_KEYS.LISTINGS, JSON.stringify(merged));
           }

@@ -15,7 +15,6 @@ import {
 } from "@/lib/utils";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import {
-  VerifyBadge,
   rentListingOnGenLayer,
   resolveDisputeOnGenLayer,
   KRIDGE_MARKETPLACE_GENLAYER_ADDRESS,
@@ -1556,12 +1555,6 @@ export default function ExploreAppPage() {
                               >
                                 {listing.sellerChain === "genlayer" ? "GENLAYER" : "BASE"}
                               </span>
-                              {listing.sellerChain === "genlayer" && (
-                                <VerifyBadge
-                                  feeConfigHash={KRIDGE_MARKETPLACE_GENLAYER_ADDRESS}
-                                  snapState="verified"
-                                />
-                              )}
                             </div>
                             {isExpired ? (
                               <div
