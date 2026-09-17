@@ -13,7 +13,7 @@ export const INITIAL_LISTINGS: KridgeListing[] = [
     priceUsd: 0.25,
     retailValueUsd: 0.5,
     discountPct: 50,
-    expiryTimestamp: 1789557997564,
+    expiryTimestamp: 1790240000000,
     description: "High-speed Gemini 3.8 Flash compute pool with 1,000 RPM throughput. Ideal for autonomous agents, low-latency reasoning, and batch processing.",
     tags: [
       "High Speed",
