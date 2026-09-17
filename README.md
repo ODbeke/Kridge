@@ -3,8 +3,9 @@
 > Monetize unused AI subscriptions, access frontier models at 60% to 80% discounts, or donate expiring compute to autonomous agents and open-source builders. Powered by GenLayer Intelligent Contracts, Optimistic Democracy, and Hyperlane.
 
 [![GenLayer Hackathon](https://img.shields.io/badge/GenLayer-Intelligent%20Contracts-7928CA?style=for-the-badge&logo=python)](https://genlayer.com)
-[![Primary Network: Base](https://img.shields.io/badge/Primary%20Network-Base%20Sepolia%20(Active)-0052FF?style=for-the-badge&logo=coinbase)](https://base.org)
-[![Multi-Chain Roadmap](https://img.shields.io/badge/Roadmap-zkSync%20%7C%20Solana%20(Coming%20Soon)-64748B?style=for-the-badge)](https://hyperlane.xyz)
+[![Primary Network: GenLayer](https://img.shields.io/badge/Primary%20Network-GenLayer%20Studio%20Devnet%20(Active)-7928CA?style=for-the-badge&logo=python)](https://explorer-studio-dev.genlayer.com/address/0xC54DCDCBeB99E5773693F894285756E78EdAf242)
+[![Escrow: Payable GEN](https://img.shields.io/badge/Escrow-Native%20Payable%20GEN-059669?style=for-the-badge)](contracts/kridge_marketplace.py)
+[![Cross-Chain Pilot](https://img.shields.io/badge/Cross--Chain-Base%20%7C%20zkSync%20%7C%20Solana%20(Coming%20Soon)-64748B?style=for-the-badge)](https://hyperlane.xyz)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16.3-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge)](LICENSE)
@@ -23,7 +24,7 @@ Kridge is a decentralized secondary compute marketplace and public compute fauce
 
 Kridge introduces an escrow-backed protocol that enables quota holders to safely monetize their idle headroom or donate surplus compute to autonomous agent faucets. By routing traffic through an encrypted proxy gateway that issues isolated, time-bound virtual sub-keys, Kridge guarantees that sellers never reveal their master credentials.
 
-Settlement and arbitration are powered by GenLayer Intelligent Contracts. GenLayer nodes autonomously probe upstream provider endpoints via open web calls (`gl.get_web_data`) and arbitrate consumer disputes using a multi-LLM consensus jury (`gl.exec_prompt`). With support for Base Sepolia as the primary consumer settlement network and Hyperlane for cross-chain relaying, Kridge transforms expiring subscription waste into liquid yield, accessible compute, and on-chain impact.
+Settlement, native payable escrow custody, and dispute arbitration are powered natively by GenLayer Intelligent Contracts deployed on GenLayer Studio Devnet (`0xC54DCDCBeB99E5773693F894285756E78EdAf242`). GenLayer validator nodes autonomously authenticate seller credentials via live web calls (`gl.get_web_data`), custody native `GEN` tokens via `@gl.public.write.payable`, release earnings via `emit_transfer(value=..., on="finalized")`, and arbitrate consumer disputes using a multi-LLM consensus jury (`gl.exec_prompt`). Cross-chain routing from Base, zkSync, and Solana is staged via Hyperlane as a Coming Soon pilot.
 
 ---
 
@@ -90,10 +91,10 @@ Kridge is a decentralized compute escrow marketplace that allows holders of unde
 |      │                                                                      |
 |      ├──────────────────────────────┬───────────────────────────────┐       |
 |      ▼                              ▼                               ▼       |
-|  [ RENT FOR YIELD ]         [ DONATE COMPUTE ]           [ MULTI-CHAIN ]    |
+|  [ RENT FOR YIELD ]         [ DONATE COMPUTE ]           [ COMING SOON ]    |
 |  60% to 80% Discount        Community AI Faucet          Base / zkSync /    |
-|  95% Payout to Seller       Proof-of-Donation Badges     Solana / GenLayer  |
-|  5% Protocol Fee            Public Good for Agents       via Hyperlane      |
+|  Native Payable GEN Escrow  Proof-of-Donation Badges     Solana Cross-Chain |
+|  95% Payout via Transfer    Public Good for Agents       via Hyperlane      |
 |      │                              │                               │       |
 |      └──────────────────────────────┴───────────────────────────────┘       |
 |                                     │                                       |
@@ -252,21 +253,21 @@ To prevent marketplace spam and bad-faith disputes, Kridge enforces mathematical
 
 ---
 
-## Multi-Chain Architecture and Seamless Network Switching
+## Native GenLayer Architecture & Multi-Chain Expansion Roadmap
 
-To deliver the highest security, execution speed, and seamless developer onboarding during the hackathon, **Base (Sepolia)** serves as Kridge primary settlement network for consumer and seller wallets, while **GenLayer** powers the decentralized Intelligent Contract execution engine. Additional chains are queued on our Hyperlane cross-chain expansion roadmap:
+**GenLayer Studio Devnet** is the primary, active settlement and execution layer for Kridge. All listings, credential health verifications, payable escrow deposits, and AI Tribunal dispute arbitrations run natively on the deployed `KridgeMarketplace` Intelligent Contract (`0xC54DCDCBeB99E5773693F894285756E78EdAf242`).
+
+Additional networks are queued on our Hyperlane cross-chain expansion roadmap:
 
 | Network | Status | Chain ID / Type | Role in Kridge Protocol |
 | :--- | :---: | :--- | :--- |
-| **Base** | **ACTIVE** | `8453` / `84532` (EVM) | **Active Settlement Layer**: Consumer onboarding, seller listing, low-cost USDC payments, and escrow deposits. |
-| **GenLayer** | **ACTIVE** | `genlayer-1` / Testnet | **Intelligent Contracts Core**: Web probing (`gl.get_web_data`), Optimistic Democracy, and AI Tribunal dispute arbitration. |
-| **zkSync Era** | *Coming Soon* | `324` / `300` (ZK-EVM) | *On Roadmap*: High-speed ZK rollups for enterprise compute batch settlement via Hyperlane. |
-| **Solana** | *Coming Soon* | Devnet / Mainnet (SVM) | *On Roadmap*: High-throughput autonomous agent escrow checkout and sub-key issuance via SVM program. |
+| **GenLayer Studio Devnet** | **ACTIVE (PRIMARY)** | `61997` / `0xf22d` | **Native Settlement & Intelligent Escrow**: Native `GEN` custody via `@gl.public.write.payable`, live seller key web probing (`gl.get_web_data`), and multi-LLM consensus arbitration (`gl.exec_prompt`). |
+| **Base** | *Coming Soon* | `8453` / `84532` (EVM) | *Cross-Chain Pilot*: EVM consumer liquidity bridge relaying payment intents via Hyperlane Mailboxes to GenLayer escrow. |
+| **zkSync Era** | *Coming Soon* | `324` / `300` (ZK-EVM) | *Cross-Chain Pilot*: High-speed ZK rollups for enterprise compute batch settlement via Hyperlane. |
+| **Solana** | *Coming Soon* | Devnet / Mainnet (SVM) | *Cross-Chain Pilot*: High-throughput autonomous agent checkout and sub-key issuance via SVM program. |
 
 > [!NOTE]
-> **Active Network Focus**: During the current release, **Base** and **GenLayer** are the active networks driving consumer settlement and intelligent contract arbitration. Inactive networks (zkSync Era and Solana) are temporarily disabled in the in-app network selector while their dedicated Hyperlane relayer adapters undergo final testing.
-
-Cross-chain state updates and escrow confirmations route across chains via **Hyperlane Mailbox** (`KridgeHyperlaneReceiver.sol`).
+> **100% GenLayer Native Focus**: For the hackathon submission, all core protocol interactions (buying, listing, health probing, dispute arbitration, and native funds custody) execute directly on **GenLayer Studio Devnet**. The in-app network selector clearly locks to GenLayer, with Base, zkSync, and Solana labeled as **Coming Soon** pending final Hyperlane relayer deployment.
 
 ---
 
@@ -339,8 +340,8 @@ sequenceDiagram
     GenLayer-->>Frontend: Listing #N Active on Marketplace
 
     Buyer->>Frontend: Select Listing & Choose Rental Duration
-    Buyer->>Web3: Sign Escrow Deposit (Base / zkSync / Solana)
-    Web3->>GenLayer: rent_listing() (USDC locked in escrow)
+    Buyer->>Web3: Sign Payable Escrow Transaction (Native GEN via genlayer-js)
+    Web3->>GenLayer: rent_listing() (@gl.public.write.payable custody)
     GenLayer->>Gateway: Issue Ephemeral Virtual Key (krdg_live_...)
     Gateway-->>Buyer: Return Virtual Sub-Key
 
@@ -353,12 +354,12 @@ sequenceDiagram
 
     alt Normal Completion
         Buyer->>GenLayer: complete_rental()
-        GenLayer->>Seller: Release 95% Payout
-        GenLayer->>GenLayer: Route 5% Fee to Treasury
+        GenLayer->>Seller: Release 95% Payout via emit_transfer
+        GenLayer->>GenLayer: Route 5% Fee to Treasury via emit_transfer
     else Dispute (e.g. Seller Revokes Key Upstream)
         Buyer->>GenLayer: file_dispute() (with $1.00 Bond + Audit Receipt)
         GenLayer->>GenLayer: gl.exec_prompt (Validators inspect error trace)
-        GenLayer-->>Buyer: 100% Refund + $1.00 Bond Returned
+        GenLayer-->>Buyer: 100% Refund + $1.00 Bond Returned via emit_transfer
     end
 ```
 
@@ -398,12 +399,12 @@ KRIDGE/
 
 | Network | Contract / Component | Address | Status |
 | :--- | :--- | :--- | :--- |
-| **GenLayer Studio Next** | `KridgeMarketplace` (Intelligent Contract) | [`0xC54DCDCBeB99E5773693F894285756E78EdAf242`](https://explorer-studio-dev.genlayer.com/address/0xC54DCDCBeB99E5773693F894285756E78EdAf242) | **Live and Deployed** |
-| **Base Sepolia** | `KridgeHyperlaneReceiver` (Escrow) | [`0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf`](https://sepolia.basescan.org/address/0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf) | **Live and Active** |
-| **zkSync Era Sepolia** | `KridgeHyperlaneReceiver` | `0x12a99C048A463c647b0197dFa36D4FF3924f7988` | *Coming Soon* |
-| **Solana Devnet** | `KrdgSolanaMailboxReceiver` | `KrdgSolanaMailboxReceiver11111111111111111` | *Coming Soon* |
+| **GenLayer Studio Devnet** | `KridgeMarketplace` (Intelligent Contract) | [`0xC54DCDCBeB99E5773693F894285756E78EdAf242`](https://explorer-studio-dev.genlayer.com/address/0xC54DCDCBeB99E5773693F894285756E78EdAf242) | **Live & Primary (Native Payable Escrow & AI Consensus)** |
+| **Base Sepolia** | `KridgeHyperlaneReceiver` (Cross-Chain Escrow Pilot) | [`0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf`](https://sepolia.basescan.org/address/0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf) | *Coming Soon (Hyperlane Pilot)* |
+| **zkSync Era Sepolia** | `KridgeHyperlaneReceiver` | `0x12a99C048A463c647b0197dFa36D4FF3924f7988` | *Coming Soon (Hyperlane Pilot)* |
+| **Solana Devnet** | `KrdgSolanaMailboxReceiver` | `KrdgSolanaMailboxReceiver11111111111111111` | *Coming Soon (Hyperlane Pilot)* |
 
-> **Multi-Chain Rollout Note**: Kridge is currently focused and live on **Base Sepolia** (for payments and escrow) and **GenLayer** (for intelligent key health verification and dispute arbitration). Additional L2s (zkSync Era) and SVM (Solana) integrations are coming soon.
+> **GenLayer Hackathon Focus**: Kridge is 100% focused and live on **GenLayer Studio Devnet** for native payable escrow custody (`GEN`), live seller key credential authentication, and optimistic multi-LLM dispute resolution. Cross-chain L2 (Base, zkSync) and SVM (Solana) integrations are queued as a Hyperlane expansion pilot.
 
 ---
 
@@ -469,10 +470,12 @@ Kridge was engineered specifically for the **GenLayer Hackathon**:
 | GenLayer Capability | How Kridge Leverages It |
 | :--- | :--- |
 | **Intelligent Contracts (Python)** | The core marketplace logic is authored entirely as a native GenLayer Python contract (`contracts/kridge_marketplace.py`), handling listings, session caps, dynamic tier evaluations, and fee splits. |
-| **Web Data Access (`gl.get_web_data`)** | Validators independently poll live AI provider APIs to confirm key validity, rate limit status, and endpoint health without centralized oracles. |
-| **Subjective AI Consensus (`gl.exec_prompt`)** | The **Kridge AI Tribunal** uses LLM reasoning inside validator nodes to evaluate gateway logs and error traces, resolving disputes where deterministic code cannot decide fault. |
+| **On-Chain Payable Escrow (`@gl.public.write.payable` + `emit_transfer`)** | The Intelligent Contract directly custodies native `GEN` tokens during the rental lifecycle, automatically releasing 95% to the seller on completion or executing full refunds upon AI Tribunal dispute verdicts. |
+| **Live Credential Health Probing (`gl.get_web_data`)** | `verify_listing_health` authenticates seller credentials against live provider endpoints (`api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com`, `api.groq.com`, `api.deepseek.com`), detecting invalid/revoked keys on-chain before consumers rent. |
+| **Subjective AI Consensus (`gl.exec_prompt`)** | The **Kridge AI Tribunal** uses multi-LLM reasoning inside validator nodes to evaluate gateway logs and error traces, resolving disputes where deterministic code cannot decide fault. |
 | **Optimistic Democracy** | Standard rental sessions resolve optimistically, while disputed sessions escalate automatically to validator juries. |
-| **Cross-Chain Interoperability** | Combined with **Hyperlane**, Kridge brings GenLayer intelligent contract capabilities to users on Base, zkSync Era, and Solana. |
+| **Native `genlayer-js` & Transaction Kit** | Production frontend integration directly invoking GenLayer contract functions, encoding GenVM calldata, displaying `<VerifyBadge />` components, and tracking real-time transactions on GenLayer Studio Devnet. |
+| **Cross-Chain Expansion (Coming Soon)** | Combined with **Hyperlane**, Kridge routes cross-chain payment intents from Base, zkSync Era, and Solana into GenLayer Intelligent Escrow. |
 
 ---
 

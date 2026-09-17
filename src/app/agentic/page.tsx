@@ -45,7 +45,7 @@ export default function AgenticPage() {
     setAgentLogs((prev) => [
       ...prev,
       "[00:00:04] Evaluating active capacity pools from live Kridge registry.",
-      "[00:00:05] Agent signing x402 payment intent with Base Sepolia wallet (0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74)..."
+      "[00:00:05] Agent signing x402 payment intent with GenLayer wallet (0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74)..."
     ]);
 
     await new Promise((r) => setTimeout(r, 1400));
@@ -53,7 +53,7 @@ export default function AgenticPage() {
     setAgentLogs((prev) => [
       ...prev,
       "[00:00:06] POST /api/agent/rent successful. Received ephemeral session: krdg_live_agent_88b12f7a9c.",
-      "[00:00:07] Kridge Base Sepolia Escrow (0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf) verified. Allowance issued.",
+      "[00:00:07] Kridge GenLayer Intelligent Escrow (0xC54DCDCBeB99E5773693F894285756E78EdAf242) verified. Allowance issued.",
       "[00:00:08] Configuring LangChain ChatOpenAI base_url -> http://localhost:3000/api/proxy/v1..."
     ]);
 

@@ -60,25 +60,25 @@ const CHAIN_CONFIGS: Record<
     status: "active" | "disabled";
   }
 > = {
+  genlayer: {
+    chainIdHex: "0xf22d", // 61997 GenLayer Studio Devnet
+    chainName: "GenLayer Studio Devnet",
+    networkTag: "GENLAYER_STUDIO_DEVNET",
+    rpcUrls: ["https://studio-dev.genlayer.com/api"],
+    nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
+    blockExplorerUrls: ["https://explorer-studio-dev.genlayer.com"],
+    isEvm: true,
+    status: "active",
+  },
   base: {
     chainIdHex: "0x14a34", // 84532 Base Sepolia
-    chainName: "Base",
+    chainName: "Base (Coming Soon)",
     networkTag: "BASE_SEPOLIA",
     rpcUrls: ["https://sepolia.base.org"],
     nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
     blockExplorerUrls: ["https://sepolia.basescan.org"],
     isEvm: true,
-    status: "active",
-  },
-  genlayer: {
-    chainIdHex: "0xf22d", // 61997 GenLayer Studio Next
-    chainName: "GenLayer",
-    networkTag: "GENLAYER_STUDIO_NEXT",
-    rpcUrls: ["https://studio-next.genlayer.com/api"],
-    nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
-    blockExplorerUrls: ["https://explorer-studio-dev.genlayer.com"],
-    isEvm: true,
-    status: "active",
+    status: "disabled",
   },
   zksync: {
     chainIdHex: "0x12c", // 300 zkSync Sepolia
@@ -509,8 +509,8 @@ export default function ExploreAppPage() {
   const handleShareToTwitter = () => {
     const text =
       currentDonor.totalRescuedUsd > 0
-        ? `I am participating in Kridge decentralized AI credit marketplace! Holding the ${currentTierData.name} on-chain badge with $${currentDonor.totalRescuedUsd.toFixed(2)} of rescued AI compute. #GenLayer #Kridge #Base`
-        : `I am participating in Kridge decentralized AI credit marketplace on Base Sepolia & GenLayer! Saving unused AI API compute from expiring at zero value. #GenLayer #Kridge #Base`;
+        ? `I am participating in Kridge decentralized AI credit marketplace! Holding the ${currentTierData.name} on-chain badge with $${currentDonor.totalRescuedUsd.toFixed(2)} of rescued AI compute. #GenLayer #Kridge`
+        : `I am participating in Kridge decentralized AI credit marketplace on GenLayer! Saving unused AI API compute from expiring at zero value via Intelligent Contracts. #GenLayer #Kridge`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
     setShareSuccess(true);
     setTimeout(() => setShareSuccess(false), 3000);
@@ -636,11 +636,7 @@ export default function ExploreAppPage() {
 
     const handleChainChanged = async (chainIdHex: string) => {
       const hex = chainIdHex.toLowerCase();
-      if (hex === "0x14a34" || hex === "0x2105") {
-        switchChain("base");
-      } else if (hex === "0x12c" || hex === "0x144") {
-        switchChain("zksync");
-      } else if (hex === "0xa179" || hex === "0xf22d") {
+      if (hex === "0xa179" || hex === "0xf22d") {
         switchChain("genlayer");
       }
       const addr = walletAddressRef.current;
@@ -656,20 +652,22 @@ export default function ExploreAppPage() {
     };
 
     const handleAccountsChanged = async (accounts: string[]) => {
-      if (accounts && accounts.length > 0) {
-        setWalletAddress(accounts[0]);
-        const result = await fetchWalletBalances(accounts[0]);
-        if (result) {
-          setEthBalance(result.eth);
-          setUsdcBalance(result.usdc);
-          setGenBalance(result.gen);
-          updateWalletBalances(result);
-        }
-      } else {
+      if (!accounts || accounts.length === 0) {
         setWalletAddress(null);
         setEthBalance("0.0000");
         setUsdcBalance("0.00");
         setGenBalance("0.0000");
+        updateWalletBalances({ eth: "0.0000", usdc: "0.00", gen: "0.0000" });
+        return;
+      }
+      const addr = accounts[0];
+      setWalletAddress(addr);
+      const result = await fetchWalletBalances(addr);
+      if (result) {
+        setEthBalance(result.eth);
+        setUsdcBalance(result.usdc);
+        setGenBalance(result.gen);
+        updateWalletBalances(result);
       }
     };
 
@@ -689,8 +687,8 @@ export default function ExploreAppPage() {
           const addr = accounts[0];
           setWalletAddress(addr);
 
-          // Prompt switch to active chain (Base Sepolia or GenLayer Studio Next)
-          const targetChainConfig = CHAIN_CONFIGS[wallet.chain] || CHAIN_CONFIGS.base;
+          // Prompt switch to active chain (GenLayer Studio Devnet)
+          const targetChainConfig = CHAIN_CONFIGS[wallet.chain] || CHAIN_CONFIGS.genlayer;
           if (targetChainConfig.isEvm) {
             try {
               await (window as any).ethereum.request({
@@ -791,121 +789,58 @@ export default function ExploreAppPage() {
           }
         }
 
-        if (wallet.chain === "genlayer") {
-          // Switch to or verify GenLayer Studio Next (0xf22d = 61997)
-          try {
-            const currentChainId = await (window as any).ethereum.request({ method: "eth_chainId" });
-            const hex = (currentChainId || "").toLowerCase();
-            if (hex !== "0xf22d" && hex !== "0xa179") {
-              try {
+        // Always execute rental directly on GenLayer Intelligent Contract
+        try {
+          const currentChainId = await (window as any).ethereum.request({ method: "eth_chainId" });
+          const hex = (currentChainId || "").toLowerCase();
+          if (hex !== "0xf22d" && hex !== "0xa179") {
+            try {
+              await (window as any).ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: "0xf22d" }],
+              });
+            } catch (switchError: any) {
+              if (switchError?.code === 4902) {
                 await (window as any).ethereum.request({
-                  method: "wallet_switchEthereumChain",
-                  params: [{ chainId: "0xf22d" }],
+                  method: "wallet_addEthereumChain",
+                  params: [
+                    {
+                      chainId: "0xf22d",
+                      chainName: "GenLayer Studio Devnet",
+                      nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
+                      rpcUrls: ["https://studio-dev.genlayer.com/api"],
+                      blockExplorerUrls: ["https://explorer-studio-dev.genlayer.com"],
+                    },
+                  ],
                 });
-              } catch (switchError: any) {
-                if (switchError?.code === 4902) {
-                  await (window as any).ethereum.request({
-                    method: "wallet_addEthereumChain",
-                    params: [
-                      {
-                        chainId: "0xf22d",
-                        chainName: "GenLayer Studio Next",
-                        nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
-                        rpcUrls: ["https://studio-next.genlayer.com/api"],
-                        blockExplorerUrls: ["https://explorer-studio-dev.genlayer.com"],
-                      },
-                    ],
-                  });
-                }
               }
             }
-          } catch (switchWarn) {
-            console.warn("GenLayer switch warning:", switchWarn);
           }
+        } catch (switchWarn) {
+          console.warn("GenLayer switch warning:", switchWarn);
+        }
 
-          // GenLayer Escrow deposit transaction (KridgeMarketplace Intelligent Contract with full method calldata)
-          const genWeiBigInt = BigInt(Math.max(1, Math.round(selectedListing.priceUsd * 1e18)));
-          try {
-            const rentalResult = await rentListingOnGenLayer({
-              listingId: selectedListing.id,
-              durationHours: 48,
-              subKeyHash: "0x" + Math.random().toString(16).substring(2, 18),
-              valueWei: genWeiBigInt,
-              userAddress: userAddr,
-            });
-            onChainTxHash = rentalResult.txHash;
-          } catch (walletErr: any) {
-            console.error("GenLayer transaction declined or failed:", walletErr);
-            if (
-              walletErr?.code === 4001 ||
-              walletErr?.message?.toLowerCase().includes("user rejected") ||
-              walletErr?.message?.toLowerCase().includes("user denied")
-            ) {
-              throw new Error("Transaction was rejected in your wallet. Payment was not confirmed, so no sub-key was issued.");
-            }
-            throw new Error(walletErr?.message || "GenLayer transaction failed. Payment was not confirmed, so no sub-key was issued.");
+        // GenLayer Escrow deposit transaction (KridgeMarketplace Intelligent Contract with full method calldata)
+        const genWeiBigInt = BigInt(Math.max(1, Math.round(selectedListing.priceUsd * 1e18)));
+        try {
+          const rentalResult = await rentListingOnGenLayer({
+            listingId: selectedListing.id,
+            durationHours: 48,
+            subKeyHash: "0x" + Math.random().toString(16).substring(2, 18),
+            valueWei: genWeiBigInt,
+            userAddress: userAddr,
+          });
+          onChainTxHash = rentalResult.txHash;
+        } catch (walletErr: any) {
+          console.error("GenLayer transaction declined or failed:", walletErr);
+          if (
+            walletErr?.code === 4001 ||
+            walletErr?.message?.toLowerCase().includes("user rejected") ||
+            walletErr?.message?.toLowerCase().includes("user denied")
+          ) {
+            throw new Error("Transaction was rejected in your wallet. Payment was not confirmed, so no sub-key was issued.");
           }
-        } else {
-          // Switch to Base Sepolia (0x14a34 = 84532)
-          try {
-            const currentChainId = await (window as any).ethereum.request({ method: "eth_chainId" });
-            if (currentChainId?.toLowerCase() !== "0x14a34") {
-              try {
-                await (window as any).ethereum.request({
-                  method: "wallet_switchEthereumChain",
-                  params: [{ chainId: "0x14a34" }],
-                });
-              } catch (switchError: any) {
-                if (switchError?.code === 4902) {
-                  await (window as any).ethereum.request({
-                    method: "wallet_addEthereumChain",
-                    params: [
-                      {
-                        chainId: "0x14a34",
-                        chainName: "Base Sepolia",
-                        nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
-                        rpcUrls: ["https://sepolia.base.org"],
-                        blockExplorerUrls: ["https://sepolia.basescan.org"],
-                      },
-                    ],
-                  });
-                }
-              }
-            }
-          } catch (switchWarn) {
-            console.warn("Chain switch warning:", switchWarn);
-          }
-
-          // Prepare valid ERC-20 transfer of USDC to Kridge Escrow Receiver
-          const escrowReceiver = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RECEIVER || "0x9787c1EB118114462Ea43ec098ffBc5A6eB18Baf";
-          const cleanReceiver = escrowReceiver.toLowerCase().replace("0x", "").padStart(64, "0");
-          const usdcUnits = Math.round(selectedListing.priceUsd * 1e6);
-          const hexAmount = BigInt(usdcUnits).toString(16).padStart(64, "0");
-          const usdcTransferData = "0xa9059cbb" + cleanReceiver + hexAmount;
-
-          const txParams = {
-            from: userAddr,
-            to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // Official Circle USDC on Base Sepolia
-            data: usdcTransferData,
-            value: "0x0",
-          };
-
-          try {
-            onChainTxHash = await (window as any).ethereum.request({
-              method: "eth_sendTransaction",
-              params: [txParams],
-            });
-          } catch (walletErr: any) {
-            console.error("Wallet transaction declined or failed:", walletErr);
-            if (
-              walletErr?.code === 4001 ||
-              walletErr?.message?.toLowerCase().includes("user rejected") ||
-              walletErr?.message?.toLowerCase().includes("user denied")
-            ) {
-              throw new Error("Transaction was rejected in your wallet. Payment was not confirmed, so no sub-key was issued.");
-            }
-            throw new Error(walletErr?.message || "Transaction simulation failed. Payment was not confirmed, so no sub-key was issued.");
-          }
+          throw new Error(walletErr?.message || "GenLayer transaction failed. Payment was not confirmed, so no sub-key was issued.");
         }
 
         if (!onChainTxHash) {
@@ -970,7 +905,7 @@ export default function ExploreAppPage() {
 
     await addListing({
       seller: walletAddress || "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
-      sellerChain: wallet.chain,
+      sellerChain: "genlayer",
       provider: sellerForm.provider,
       modelFamily: sellerForm.modelFamily,
       listingType: sellerForm.listingType,
@@ -982,10 +917,8 @@ export default function ExploreAppPage() {
       expiryTimestamp: Date.now() + hours * 3600000,
       description:
         sellerForm.description ||
-        (wallet.chain === "genlayer"
-          ? `Unspent ${sellerForm.modelFamily} quota listed for rental on Kridge GenLayer Intelligent Escrow.`
-          : `Unspent ${sellerForm.modelFamily} quota listed for rental on Kridge Base Sepolia Escrow.`),
-      tags: wallet.chain === "genlayer" ? ["GenLayer Escrow", "High Speed"] : ["Base Escrow", "High Speed"],
+        `Unspent ${sellerForm.modelFamily} quota listed for rental on Kridge GenLayer Intelligent Escrow.`,
+      tags: ["GenLayer Escrow", "High Speed"],
     }, sellerForm.apiKey);
 
     setPublishSuccess(true);
@@ -1069,7 +1002,7 @@ export default function ExploreAppPage() {
                 cursor: "pointer",
               }}
             >
-              <span>{CHAIN_CONFIGS[wallet.chain]?.chainName || "Base"}</span>
+              <span>{CHAIN_CONFIGS[wallet.chain]?.chainName || "GenLayer Studio Devnet"}</span>
               <span style={{ fontSize: "9px", opacity: 0.7 }}>▼</span>
             </button>
 
@@ -1269,7 +1202,7 @@ export default function ExploreAppPage() {
                   <span className="pulse-dot active-glow"></span>
                   <span className="wallet-card-title">WALLET</span>
                   <span className="wallet-card-net">
-                    {CHAIN_CONFIGS[wallet.chain]?.networkTag || "BASE_SEPOLIA"}
+                    {CHAIN_CONFIGS[wallet.chain]?.networkTag || "GENLAYER_STUDIO_DEVNET"}
                   </span>
                 </div>
                 <div className="wallet-card-body">
@@ -1570,7 +1503,7 @@ export default function ExploreAppPage() {
                     No Active Compute Pools Yet
                   </div>
                   <div style={{ maxWidth: "460px", fontSize: "12px", color: "#64748b", lineHeight: "1.6" }}>
-                    The Kridge marketplace is live and clean on Base Sepolia and GenLayer. Be the first seller to list unused AI API quota and earn passive yield!
+                    The Kridge marketplace is live and clean on GenLayer Studio Devnet. Be the first seller to list unused AI API quota and earn passive yield!
                   </div>
                   <button
                     onClick={() => setViewMode("seller")}
@@ -2022,12 +1955,12 @@ export default function ExploreAppPage() {
                               alignItems: "center",
                             }}
                           >
-                            <span>Base Sepolia Escrow Tx:</span>
+                            <span>GenLayer Intelligent Escrow Tx:</span>
                             <a
-                              href={`https://sepolia.basescan.org/tx/${rentalTxHash}`}
+                              href={`${GENLAYER_EXPLORER_BASE_URL}/tx/${rentalTxHash}`}
                               target="_blank"
                               rel="noreferrer"
-                              style={{ color: "#38bdf8", textDecoration: "underline" }}
+                              style={{ color: "#a855f7", textDecoration: "underline", fontWeight: "600" }}
                             >
                               {rentalTxHash.substring(0, 10)}...{rentalTxHash.substring(rentalTxHash.length - 6)} ↗
                             </a>
@@ -2114,8 +2047,8 @@ export default function ExploreAppPage() {
                     color: wallet.chain === "genlayer" ? "#7928ca" : "#0891b2",
                   }}
                 >
-                  <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: wallet.chain === "genlayer" ? "#7928ca" : "#0891b2" }} />
-                  <span>TARGET REGISTRY: {wallet.chain === "genlayer" ? "GENLAYER STUDIO NEXT" : "BASE SEPOLIA"}</span>
+                  <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#7928ca" }} />
+                  <span>TARGET REGISTRY: GENLAYER STUDIO DEVNET</span>
                 </div>
               </div>
               <p style={{ color: "var(--ink-secondary)", fontSize: "14px", marginBottom: "28px" }}>
@@ -2135,7 +2068,7 @@ export default function ExploreAppPage() {
                     fontSize: "13px",
                   }}
                 >
-                  ✓ Quota listed successfully on Kridge {wallet.chain === "genlayer" ? "GenLayer" : "Base"} Escrow Registry! Switching to Marketplace...
+                  ✓ Quota listed successfully on Kridge GenLayer Intelligent Escrow Registry! Switching to Marketplace...
                 </div>
               )}
 
@@ -2382,7 +2315,7 @@ export default function ExploreAppPage() {
                   disabled={probeResult?.valid === false}
                   style={probeResult?.valid === false ? { opacity: 0.5, cursor: "not-allowed", filter: "grayscale(0.6)" } : undefined}
                 >
-                  Publish Quota to Kridge {wallet.chain === "genlayer" ? "GenLayer" : "Base"} Escrow Registry
+                  Publish Quota to Kridge GenLayer Intelligent Escrow Registry
                 </button>
               </form>
             </div>
@@ -2473,7 +2406,7 @@ export default function ExploreAppPage() {
                   <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#059669", marginTop: "2px" }}>
                     {myListings.length} Pools
                   </div>
-                  <span style={{ fontSize: "10px", color: "#71717a" }}>Live on Base Sepolia</span>
+                  <span style={{ fontSize: "10px", color: "#71717a" }}>Live on GenLayer Studio Devnet</span>
                 </div>
 
                 <div style={{ padding: "14px 18px", background: "#f7f5fc", border: "1px solid #e2dbf3", borderRadius: "10px" }}>
@@ -2767,7 +2700,7 @@ export default function ExploreAppPage() {
                             {listing.modelFamily}
                           </h3>
                           <p style={{ color: "var(--ink-secondary)", fontSize: "12px", margin: "0 0 12px 0", lineHeight: "1.4" }}>
-                            {listing.description || "Verified live compute pool on Base Sepolia."}
+                            {listing.description || "Verified live compute pool on GenLayer Studio Devnet."}
                           </p>
 
                           <div
@@ -2797,7 +2730,7 @@ export default function ExploreAppPage() {
                         </div>
 
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px dashed #e2dbf3", paddingTop: "10px", fontSize: "11px", fontFamily: "var(--font-accent)" }}>
-                          <span style={{ color: "#059669", fontWeight: "600" }}>✓ Live on Base Sepolia</span>
+                          <span style={{ color: "#7928ca", fontWeight: "600" }}>✓ Live on GenLayer Intelligent Escrow</span>
                           <button
                             type="button"
                             onClick={() => {

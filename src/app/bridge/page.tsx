@@ -75,13 +75,13 @@ export default function BridgePage() {
       <div className="border-b border-white/10 pb-6">
         <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-500/10 px-2.5 py-1 text-xs font-mono font-medium text-blue-400 border border-blue-500/20 mb-2">
           <Globe2 className="h-3.5 w-3.5" />
-          <span>HYPERLANE MODULAR INTERCHAIN MESSAGING</span>
+          <span>HYPERLANE MODULAR INTERCHAIN MESSAGING • COMING SOON (PILOT)</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
           Cross-Chain Interoperability Bridge
         </h1>
         <p className="text-zinc-400 text-sm mt-1">
-          Lock native liquidity on Base Sepolia or Solana and dispatch intents to GenLayer settlement.
+          Settlement and intelligent contracts are natively live on GenLayer Studio Devnet. Cross-chain liquidity dispatch from Base, zkSync, and Solana is currently in pilot preview via Hyperlane.
         </p>
       </div>
 
@@ -91,7 +91,7 @@ export default function BridgePage() {
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <Zap className="h-5 w-5 text-blue-400" />
-              <span>Hyperlane Cross-Chain Message Relayer</span>
+              <span>Hyperlane Cross-Chain Message Relayer (Pilot)</span>
             </h3>
             <p className="text-xs text-zinc-400 font-mono">Dispatches Mailbox.dispatch() cross-chain to GenLayer Settlement Hub</p>
           </div>
@@ -109,15 +109,15 @@ export default function BridgePage() {
         {/* Configuration Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-xs">
           <div>
-            <span className="text-zinc-400 block mb-1">Origin Source Chain:</span>
+            <span className="text-zinc-400 block mb-1">Origin Source Chain (Preview):</span>
             <select
               value={sourceChain}
               onChange={(e) => setSourceChain(e.target.value as SupportedChain)}
               className="w-full rounded-xl border border-white/10 bg-black/40 px-3.5 py-2.5 text-xs text-white focus:border-cyan-500 focus:outline-none"
             >
-              <option value="base">🔵 Base (Coinbase L2 / EVM)</option>
-              <option value="zksync">⚡ zkSync Era (ZK-Rollup / EVM)</option>
-              <option value="solana">🟣 Solana (Sealevel / SVM)</option>
+              <option value="base">🔵 Base (Coming Soon - EVM)</option>
+              <option value="zksync">⚡ zkSync Era (Coming Soon - ZK-Rollup)</option>
+              <option value="solana">🟣 Solana (Coming Soon - SVM)</option>
             </select>
           </div>
 

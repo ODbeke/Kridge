@@ -127,12 +127,12 @@ export default function DocsPage() {
       <section id="hyperlane-multichain" className="space-y-4 pt-4">
         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
           <span className="text-blue-400 font-mono">04.</span>
-          <span>Multi-Chain via Hyperlane</span>
+          <span>Multi-Chain via Hyperlane (Coming Soon: Base, zkSync, Solana)</span>
         </h2>
         <div className="rounded-2xl border border-blue-500/30 bg-[#0E1322] p-6 space-y-4 text-xs text-zinc-300 leading-relaxed shadow-xl">
           <p>
-            Kridge supports <strong className="text-white">Base (EVM)</strong>, <strong className="text-white">zkSync Era (ZK-Rollup)</strong>, and <strong className="text-white">Solana (SVM)</strong>. 
-            Hyperlane Mailbox contracts serialize payment intents on origin chains and dispatch messages to GenLayer for intelligent verification and state management.
+            Kridge settlement, native payable escrow, and AI validator juries run natively on <strong className="text-purple-400">GenLayer Studio Devnet</strong>. 
+            Cross-chain liquidity routing from <strong className="text-white">Base (EVM)</strong>, <strong className="text-white">zkSync Era (ZK-Rollup)</strong>, and <strong className="text-white">Solana (SVM)</strong> is queued as a Hyperlane Mailbox pilot, allowing multi-chain developers to tap into GenLayer Intelligent Contracts seamlessly.
           </p>
         </div>
       </section>

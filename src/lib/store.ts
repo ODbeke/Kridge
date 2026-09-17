@@ -6,10 +6,10 @@ import { INITIAL_LISTINGS, INITIAL_DISPUTES, INITIAL_DONORS } from "./mock-data"
 import { getTierFromRescued } from "./utils";
 
 export const INITIAL_CHAIN_BALANCES: Record<SupportedChain, ChainBalanceInfo> = {
-  base: { name: "Base", symbol: "ETH", nativeAmount: 0.0, usdValue: 0.0, icon: "🔵" },
-  zksync: { name: "zkSync Era", symbol: "ETH", nativeAmount: 0.0, usdValue: 0.0, icon: "⚡" },
-  solana: { name: "Solana", symbol: "SOL", nativeAmount: 0.0, usdValue: 0.0, icon: "🟣" },
-  genlayer: { name: "GenLayer", symbol: "GEN", nativeAmount: 0.0, usdValue: 0.0, icon: "🧠" },
+  genlayer: { name: "GenLayer", symbol: "GEN", nativeAmount: 2.5, usdValue: 250.0, icon: "🧠" },
+  base: { name: "Base (Coming Soon)", symbol: "ETH", nativeAmount: 0.0, usdValue: 0.0, icon: "🔵" },
+  zksync: { name: "zkSync Era (Coming Soon)", symbol: "ETH", nativeAmount: 0.0, usdValue: 0.0, icon: "⚡" },
+  solana: { name: "Solana (Coming Soon)", symbol: "SOL", nativeAmount: 0.0, usdValue: 0.0, icon: "🟣" },
 };
 
 const STORAGE_KEYS = {
@@ -27,20 +27,11 @@ export function useKridgeStore() {
   const [disputes, setDisputes] = useState<DisputeItem[]>(INITIAL_DISPUTES);
   const [donors, setDonors] = useState<DonorProfile[]>(INITIAL_DONORS);
   const [wallet, setWallet] = useState<WalletState>(() => {
-    let initialChain: SupportedChain = "base";
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("kridge_selected_chain_v1") as SupportedChain | null;
-        if (saved && ["base", "genlayer", "zksync", "solana"].includes(saved)) {
-          initialChain = saved;
-        }
-      } catch {}
-    }
     return {
       isConnected: false,
       address: "",
-      chain: initialChain,
-      balanceUsd: 0,
+      chain: "genlayer",
+      balanceUsd: 250,
       chainBalances: INITIAL_CHAIN_BALANCES,
     };
   });
@@ -132,13 +123,13 @@ export function useKridgeStore() {
           } catch {}
         }
 
-        // 2. Auto-detect saved chain and MetaMask wallet
-        let targetChain: SupportedChain = "base";
+        // 2. Auto-detect saved chain and MetaMask wallet (default to GenLayer)
+        let targetChain: SupportedChain = "genlayer";
         if (typeof window !== "undefined") {
           try {
             const saved = localStorage.getItem(STORAGE_KEYS.CHAIN) as SupportedChain | null;
-            if (saved && ["base", "genlayer", "zksync", "solana"].includes(saved)) {
-              targetChain = saved;
+            if (saved === "genlayer") {
+              targetChain = "genlayer";
             }
           } catch {}
         }
@@ -501,23 +492,21 @@ export function useKridgeStore() {
   };
 
   const switchChain = useCallback((chain: SupportedChain) => {
+    if (chain !== "genlayer") {
+      // Base / zkSync / Solana are marked coming soon for the GenLayer Hackathon
+      console.info(`${chain} is coming soon. Focus remains on GenLayer native Intelligent Contracts.`);
+      return;
+    }
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(STORAGE_KEYS.CHAIN, chain);
+        localStorage.setItem(STORAGE_KEYS.CHAIN, "genlayer");
       } catch {}
     }
-    const chainInfo = INITIAL_CHAIN_BALANCES[chain] || INITIAL_CHAIN_BALANCES.base;
-    setWallet((prev) => {
-      const targetBalanceUsd = chain === "genlayer" ? 0 : (prev.chainBalances[chain]?.usdValue ?? chainInfo.usdValue);
-      if (prev.chain === chain && prev.balanceUsd === targetBalanceUsd) {
-        return prev;
-      }
-      return {
-        ...prev,
-        chain,
-        balanceUsd: targetBalanceUsd,
-      };
-    });
+    setWallet((prev) => ({
+      ...prev,
+      chain: "genlayer",
+      balanceUsd: prev.chainBalances.genlayer?.usdValue || 250,
+    }));
   }, []);
 
   const updateWalletBalances = useCallback((balances: {

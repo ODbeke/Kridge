@@ -143,7 +143,7 @@ export default function ImpactPage() {
         <div className="rounded-2xl border border-purple-500/20 bg-purple-950/10 p-6 shadow-xl">
           <span className="text-xs font-mono text-purple-400 uppercase tracking-wider block mb-1">Verified ESG Donors</span>
           <div className="text-3xl sm:text-4xl font-bold font-mono text-purple-300">{totalDonorsCount} {totalDonorsCount === 1 ? "Donor" : "Donors"}</div>
-          <p className="text-xs text-zinc-400 mt-1">On GenLayer, Base, zkSync & Solana</p>
+          <p className="text-xs text-zinc-400 mt-1">Native GenLayer AI Escrow</p>
         </div>
       </div>
 
@@ -280,7 +280,7 @@ export default function ImpactPage() {
               {donors.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-zinc-400 font-mono text-xs">
-                    No donations registered yet. Donate expiring AI compute quota on Base Sepolia or GenLayer to join the Hall of Fame!
+                    No donations registered yet. Donate expiring AI compute quota on GenLayer to join the Hall of Fame!
                   </td>
                 </tr>
               ) : (

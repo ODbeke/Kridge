@@ -4,7 +4,7 @@ export const INITIAL_LISTINGS: KridgeListing[] = [
   {
     id: 1,
     seller: "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
-    sellerChain: "base",
+    sellerChain: "genlayer",
     provider: "gemini",
     modelFamily: "Gemini 3.8 Flash",
     listingType: "RENT",
@@ -27,7 +27,7 @@ export const INITIAL_LISTINGS: KridgeListing[] = [
   {
     id: 2,
     seller: "0x4d6D430B92c6252b21278Eb7a71eB61e4CC50f74",
-    sellerChain: "base",
+    sellerChain: "genlayer",
     provider: "gemini",
     modelFamily: "Gemini 3.8 Flash",
     listingType: "DONATION",
@@ -37,7 +37,7 @@ export const INITIAL_LISTINGS: KridgeListing[] = [
     retailValueUsd: 0.5,
     discountPct: 100,
     expiryTimestamp: 1789461600000,
-    description: "Unspent Gemini 3.8 Flash quota listed for rental on Kridge Base Sepolia Escrow.",
+    description: "Unspent Gemini 3.8 Flash quota listed for rental on Kridge GenLayer Intelligent Escrow.",
     tags: [
       "Community Grant",
       "Escrow Verified"

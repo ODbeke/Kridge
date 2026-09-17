@@ -37,11 +37,11 @@ const NAV_LINKS = [
   { href: "/bridge", label: "Bridge", icon: Globe2 },
 ];
 
-const AVAILABLE_CHAINS: Array<{ id: SupportedChain; name: string; nativeSymbol: string }> = [
-  { id: "base", name: "Base", nativeSymbol: "ETH" },
-  { id: "genlayer", name: "GenLayer", nativeSymbol: "GEN" },
-  { id: "zksync", name: "zkSync Era", nativeSymbol: "ETH" },
-  { id: "solana", name: "Solana", nativeSymbol: "SOL" },
+const AVAILABLE_CHAINS: Array<{ id: SupportedChain; name: string; nativeSymbol: string; status: string; isLive: boolean }> = [
+  { id: "genlayer", name: "GenLayer Studio Devnet", nativeSymbol: "GEN", status: "Live Intelligent Contracts", isLive: true },
+  { id: "base", name: "Base (EVM)", nativeSymbol: "ETH", status: "Coming Soon", isLive: false },
+  { id: "zksync", name: "zkSync Era", nativeSymbol: "ETH", status: "Coming Soon", isLive: false },
+  { id: "solana", name: "Solana (SVM)", nativeSymbol: "SOL", status: "Coming Soon", isLive: false },
 ];
 
 export function Navbar() {
@@ -174,26 +174,37 @@ export function Navbar() {
                     <button
                       key={c.id}
                       onClick={() => {
-                        switchChain(c.id);
-                        setChainMenuOpen(false);
+                        if (c.isLive) {
+                          switchChain(c.id);
+                          setChainMenuOpen(false);
+                        }
                       }}
                       className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-left transition-all ${
                         isSelected
-                          ? "bg-white text-black font-bold shadow-md"
-                          : "text-zinc-300 hover:bg-white/5 hover:text-white"
+                          ? "bg-purple-600/20 text-purple-200 border border-purple-500/40 font-bold shadow-md"
+                          : c.isLive
+                          ? "text-zinc-300 hover:bg-white/5 hover:text-white"
+                          : "text-zinc-500 hover:bg-white/[0.02] opacity-75 cursor-not-allowed"
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <div>
-                          <div className={isSelected ? "text-black font-bold" : "text-white"}>{c.name}</div>
-                          {cBal && (
-                            <div className={`text-[10px] font-mono ${isSelected ? "text-zinc-700" : "text-zinc-500"}`}>
+                          <div className="flex items-center gap-2">
+                            <span className={isSelected ? "text-white font-bold" : "text-zinc-300"}>{c.name}</span>
+                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full uppercase tracking-wider ${
+                              c.isLive ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold" : "bg-zinc-800 text-zinc-400"
+                            }`}>
+                              {c.status}
+                            </span>
+                          </div>
+                          {cBal && c.isLive && (
+                            <div className="text-[10px] font-mono text-purple-300/80 mt-0.5">
                               {cBal.nativeAmount} {cBal.symbol}{cBal.usdValue > 0 ? ` ($${cBal.usdValue.toFixed(2)})` : ""}
                             </div>
                           )}
                         </div>
                       </div>
-                      {isSelected && <CheckCircle2 className="h-4 w-4 text-black" />}
+                      {isSelected && <CheckCircle2 className="h-4 w-4 text-purple-400 shrink-0" />}
                     </button>
                   );
                 })}
