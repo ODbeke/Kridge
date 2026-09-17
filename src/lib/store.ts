@@ -427,7 +427,13 @@ export function useKridgeStore() {
     return newDispute;
   };
 
-  const resolveDisputeWithAI = (disputeId: number, verdict: "BUYER_REFUND" | "SELLER_WIN", reasoning: string) => {
+  const resolveDisputeWithAI = (
+    disputeId: number,
+    verdict: "BUYER_REFUND" | "SELLER_WIN",
+    reasoning: string,
+    txHash?: string,
+    onChain?: boolean
+  ) => {
     const updatedDisputes = disputes.map((d) => {
       if (d.disputeId === disputeId) {
         return {
@@ -435,6 +441,8 @@ export function useKridgeStore() {
           status: verdict === "BUYER_REFUND" ? ("RESOLVED_BUYER_WINS" as const) : ("RESOLVED_SELLER_WINS" as const),
           verdictReasoning: reasoning,
           resolvedAt: Date.now(),
+          txHash,
+          onChain: !!onChain,
           validatorVotes: [
             {
               validator: "GenLayer-Validator-01 (Llama-3-70b)",

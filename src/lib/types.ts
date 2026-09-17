@@ -62,6 +62,8 @@ export interface DisputeItem {
     statement: string;
   }>;
   resolvedAt?: number;
+  txHash?: string;
+  onChain?: boolean;
 }
 
 export interface DonorProfile {
