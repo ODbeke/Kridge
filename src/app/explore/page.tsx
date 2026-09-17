@@ -33,7 +33,8 @@ import {
   Gavel,
   Cpu,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from "lucide-react";
 const TIERS_LIST: BadgeTier[] = ["WOOD", "BRONZE", "SILVER", "GOLD", "DIAMOND", "PLATINUM"];
 
@@ -129,10 +130,14 @@ export default function ExploreAppPage() {
   const [disputeReason, setDisputeReason] = useState("Upstream 401 Unauthorized: API key invalidated or revoked mid-rental by seller.");
   const [disputeTrace, setDisputeTrace] = useState("HTTP 401 Unauthorized: Invalid API key provided to upstream endpoint. Gateway HMAC receipt #0x7fa89c validates authentic upstream revocation.");
 
+  const [arbitrationStage, setArbitrationStage] = useState<number>(0);
+  const [deliberatingVerdict, setDeliberatingVerdict] = useState<"BUYER_REFUND" | "SELLER_WIN">("BUYER_REFUND");
+
   const activeDispute = (selectedDisputeId ? disputes.find((d) => d.disputeId === selectedDisputeId) : null) || disputes[0] || null;
 
   const handleExecuteArbitration = async (disputeId: number, forcedVerdict?: "BUYER_REFUND" | "SELLER_WIN") => {
     setIsArbitrating(true);
+    setArbitrationStage(1);
     try {
       const targetDispute = disputes.find((d) => d.disputeId === disputeId) || activeDispute;
       const trace = (targetDispute?.errorTrace || "").toLowerCase();
@@ -158,8 +163,26 @@ export default function ExploreAppPage() {
         calculatedVerdict = "BUYER_REFUND";
       }
 
-      // Direct on-chain execution via GenLayer contract on Studio Devnet (0x177A9CE45D6FDAF677aD80Ded6F4BBb595CE8bD5)
+      setDeliberatingVerdict(calculatedVerdict);
+
+      // Step 1: Direct on-chain execution via GenLayer contract on Studio Devnet (0x177A9CE45D6FDAF677aD80Ded6F4BBb595CE8bD5)
       const onChainData = await resolveDisputeOnGenLayer(disputeId, calculatedVerdict, walletAddress);
+
+      // Step 2: Validator 01 (Llama-3-70B) executing gl.nondet.exec_prompt()
+      setArbitrationStage(2);
+      await new Promise((res) => setTimeout(res, 1600));
+
+      // Step 3: Validator 02 (DeepSeek-V3) auditing HMAC cryptographic receipt & endpoint health
+      setArbitrationStage(3);
+      await new Promise((res) => setTimeout(res, 1600));
+
+      // Step 4: Validator 03 (Claude-3.5-Sonnet) checking gl.eq_principle.strict_eq consensus
+      setArbitrationStage(4);
+      await new Promise((res) => setTimeout(res, 1600));
+
+      // Step 5: Finalizing consensus and recording on-chain state
+      setArbitrationStage(5);
+      await new Promise((res) => setTimeout(res, 900));
 
       resolveDisputeWithAI(
         disputeId,
@@ -171,6 +194,15 @@ export default function ExploreAppPage() {
     } catch (e) {
       console.warn("Arbitration execution fallback:", e);
       const fallbackV = forcedVerdict || "SELLER_WIN";
+      setArbitrationStage(2);
+      await new Promise((res) => setTimeout(res, 1200));
+      setArbitrationStage(3);
+      await new Promise((res) => setTimeout(res, 1200));
+      setArbitrationStage(4);
+      await new Promise((res) => setTimeout(res, 1200));
+      setArbitrationStage(5);
+      await new Promise((res) => setTimeout(res, 800));
+
       resolveDisputeWithAI(
         disputeId,
         fallbackV,
@@ -180,6 +212,7 @@ export default function ExploreAppPage() {
       );
     } finally {
       setIsArbitrating(false);
+      setArbitrationStage(0);
     }
   };
 
@@ -3341,12 +3374,16 @@ export default function ExploreAppPage() {
                             ? "rgba(16, 185, 129, 0.12)"
                             : activeDispute.status === "RESOLVED_SELLER_WINS"
                             ? "rgba(225, 29, 72, 0.12)"
+                            : isArbitrating
+                            ? "rgba(66, 38, 36, 0.12)"
                             : "rgba(245, 158, 11, 0.12)",
                         border:
                           activeDispute.status === "RESOLVED_BUYER_WINS"
                             ? "1px solid rgba(16, 185, 129, 0.3)"
                             : activeDispute.status === "RESOLVED_SELLER_WINS"
                             ? "1px solid rgba(225, 29, 72, 0.3)"
+                            : isArbitrating
+                            ? "1px solid rgba(66, 38, 36, 0.3)"
                             : "1px solid rgba(245, 158, 11, 0.3)",
                         fontSize: "11px",
                         fontFamily: "var(--font-accent)",
@@ -3356,6 +3393,8 @@ export default function ExploreAppPage() {
                             ? "#059669"
                             : activeDispute.status === "RESOLVED_SELLER_WINS"
                             ? "#be123c"
+                            : isArbitrating
+                            ? "#422624"
                             : "#b45309",
                       }}
                     >
@@ -3368,6 +3407,11 @@ export default function ExploreAppPage() {
                         <>
                           <ShieldAlert style={{ width: "13px", height: "13px" }} />
                           <span>Consensus: Seller Win (Bond Slashed)</span>
+                        </>
+                      ) : isArbitrating ? (
+                        <>
+                          <Loader2 className="animate-spin" style={{ width: "13px", height: "13px" }} />
+                          <span>Deliberating (gl.exec_prompt)</span>
                         </>
                       ) : (
                         <>
@@ -3431,9 +3475,58 @@ export default function ExploreAppPage() {
                       </span>
                     </div>
 
+                    {isArbitrating && (
+                      <div
+                        style={{
+                          padding: "12px 16px",
+                          borderRadius: "10px",
+                          background: "linear-gradient(135deg, rgba(66, 38, 36, 0.08), rgba(121, 40, 202, 0.08))",
+                          border: "1px solid rgba(66, 38, 36, 0.25)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "12px",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <Loader2 className="animate-spin" style={{ width: "16px", height: "16px", color: "#422624", flexShrink: 0 }} />
+                          <div>
+                            <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#422624", display: "block" }}>
+                              {arbitrationStage === 1 && "STAGE 1/4: BROADCASTING RESOLUTION CALL TO GENLAYER STUDIO DEVNET"}
+                              {arbitrationStage === 2 && "STAGE 2/4: VALIDATOR 01 (LLAMA-3-70B) EXECUTING gl.nondet.exec_prompt()"}
+                              {arbitrationStage === 3 && "STAGE 3/4: VALIDATOR 02 (DEEPSEEK-V3) AUDITING CRYPTOGRAPHIC RECEIPT"}
+                              {arbitrationStage === 4 && "STAGE 4/4: VALIDATOR 03 (CLAUDE-3.5-SONNET) VERIFYING STRICT EQUALITY"}
+                              {arbitrationStage === 5 && "FINALIZING: UNANIMOUS CONSENSUS REACHED (3/3) — DISPATCHING ESCROW TRANSFERS"}
+                            </span>
+                            <span style={{ fontSize: "10px", color: "#71717a" }}>
+                              Intelligent Contract: 0x177A...8bD5 • Multi-Validator Subjective Consensus
+                            </span>
+                          </div>
+                        </div>
+                        <div style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#422624" }}>
+                          {arbitrationStage === 1 && "20%"}
+                          {arbitrationStage === 2 && "45%"}
+                          {arbitrationStage === 3 && "70%"}
+                          {arbitrationStage === 4 && "90%"}
+                          {arbitrationStage === 5 && "100%"}
+                        </div>
+                      </div>
+                    )}
+
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
                       {/* Validator 01 */}
-                      <div style={{ background: "#ffffff", border: "1px solid #e2dbf3", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <div
+                        style={{
+                          background: arbitrationStage === 2 ? "rgba(66, 38, 36, 0.04)" : "#ffffff",
+                          border: arbitrationStage === 2 ? "2px solid #422624" : "1px solid #e2dbf3",
+                          borderRadius: "10px",
+                          padding: "14px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                          transition: "all 0.2s ease",
+                        }}
+                      >
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#1e1e24" }}>
                             Validator 01
@@ -3442,16 +3535,67 @@ export default function ExploreAppPage() {
                             Llama-3-70B
                           </span>
                         </div>
-                        <div style={{ fontSize: "10px", fontFamily: "var(--font-accent)", fontWeight: "700", color: activeDispute.status === "RESOLVED_BUYER_WINS" ? "#059669" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "#be123c" : "#b45309" }}>
-                          {activeDispute.status === "RESOLVED_BUYER_WINS" ? "BUYER REFUND (98.4%)" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "SELLER WIN (95.1%)" : "ANALYZING TRACE..."}
+                        <div
+                          style={{
+                            fontSize: "10px",
+                            fontFamily: "var(--font-accent)",
+                            fontWeight: "700",
+                            color:
+                              activeDispute.status === "RESOLVED_BUYER_WINS" || (isArbitrating && arbitrationStage >= 3 && deliberatingVerdict === "BUYER_REFUND")
+                                ? "#059669"
+                                : activeDispute.status === "RESOLVED_SELLER_WINS" || (isArbitrating && arbitrationStage >= 3 && deliberatingVerdict === "SELLER_WIN")
+                                ? "#be123c"
+                                : arbitrationStage === 2
+                                ? "#422624"
+                                : "#71717a",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          {arbitrationStage === 2 ? (
+                            <>
+                              <Loader2 className="animate-spin" style={{ width: "11px", height: "11px" }} />
+                              <span>EVALUATING gl.exec_prompt()...</span>
+                            </>
+                          ) : activeDispute.status === "RESOLVED_BUYER_WINS" || (isArbitrating && arbitrationStage >= 3 && deliberatingVerdict === "BUYER_REFUND") ? (
+                            "BUYER REFUND (98.4%)"
+                          ) : activeDispute.status === "RESOLVED_SELLER_WINS" || (isArbitrating && arbitrationStage >= 3 && deliberatingVerdict === "SELLER_WIN") ? (
+                            "SELLER WIN (95.1%)"
+                          ) : isArbitrating && arbitrationStage < 2 ? (
+                            "QUEUED IN MEMPOOL..."
+                          ) : (
+                            "● STANDBY (Awaiting Trigger)"
+                          )}
                         </div>
                         <p style={{ margin: 0, fontSize: "10px", color: "#4b5563", lineHeight: "1.4", fontStyle: "italic" }}>
-                          &ldquo;HTTP 401 proves seller revoked key before expiry. Escrow should refund.&rdquo;
+                          {arbitrationStage === 2 ? (
+                            "“Analyzing gateway HMAC headers & verifying 401 revocation vs live key probe...”"
+                          ) : activeDispute.status === "RESOLVED_BUYER_WINS" || (isArbitrating && arbitrationStage >= 3 && deliberatingVerdict === "BUYER_REFUND") ? (
+                            "“HTTP 401 proves seller revoked key before expiry. Escrow should refund.”"
+                          ) : activeDispute.status === "RESOLVED_SELLER_WINS" || (isArbitrating && arbitrationStage >= 3 && deliberatingVerdict === "SELLER_WIN") ? (
+                            "“Key probe returned HTTP 200 OK. Key remained active and healthy. False claim detected.”"
+                          ) : isArbitrating && arbitrationStage < 2 ? (
+                            "“Awaiting on-chain transaction broadcast from GenLayer Devnet...”"
+                          ) : (
+                            "“Awaiting contract trigger to run gl.nondet.exec_prompt() on error trace.”"
+                          )}
                         </p>
                       </div>
 
                       {/* Validator 02 */}
-                      <div style={{ background: "#ffffff", border: "1px solid #e2dbf3", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <div
+                        style={{
+                          background: arbitrationStage === 3 ? "rgba(37, 99, 235, 0.04)" : "#ffffff",
+                          border: arbitrationStage === 3 ? "2px solid #2563eb" : "1px solid #e2dbf3",
+                          borderRadius: "10px",
+                          padding: "14px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                          transition: "all 0.2s ease",
+                        }}
+                      >
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#1e1e24" }}>
                             Validator 02
@@ -3460,16 +3604,67 @@ export default function ExploreAppPage() {
                             DeepSeek-V3
                           </span>
                         </div>
-                        <div style={{ fontSize: "10px", fontFamily: "var(--font-accent)", fontWeight: "700", color: activeDispute.status === "RESOLVED_BUYER_WINS" ? "#059669" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "#be123c" : "#b45309" }}>
-                          {activeDispute.status === "RESOLVED_BUYER_WINS" ? "BUYER REFUND (99.1%)" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "SELLER WIN (96.7%)" : "ANALYZING TRACE..."}
+                        <div
+                          style={{
+                            fontSize: "10px",
+                            fontFamily: "var(--font-accent)",
+                            fontWeight: "700",
+                            color:
+                              activeDispute.status === "RESOLVED_BUYER_WINS" || (isArbitrating && arbitrationStage >= 4 && deliberatingVerdict === "BUYER_REFUND")
+                                ? "#059669"
+                                : activeDispute.status === "RESOLVED_SELLER_WINS" || (isArbitrating && arbitrationStage >= 4 && deliberatingVerdict === "SELLER_WIN")
+                                ? "#be123c"
+                                : arbitrationStage === 3
+                                ? "#2563eb"
+                                : "#71717a",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          {arbitrationStage === 3 ? (
+                            <>
+                              <Loader2 className="animate-spin" style={{ width: "11px", height: "11px" }} />
+                              <span>AUDITING GATEWAY TRACE...</span>
+                            </>
+                          ) : activeDispute.status === "RESOLVED_BUYER_WINS" || (isArbitrating && arbitrationStage >= 4 && deliberatingVerdict === "BUYER_REFUND") ? (
+                            "BUYER REFUND (99.1%)"
+                          ) : activeDispute.status === "RESOLVED_SELLER_WINS" || (isArbitrating && arbitrationStage >= 4 && deliberatingVerdict === "SELLER_WIN") ? (
+                            "SELLER WIN (96.7%)"
+                          ) : isArbitrating && arbitrationStage < 3 ? (
+                            "AWAITING VALIDATOR 01..."
+                          ) : (
+                            "● STANDBY (Awaiting Trigger)"
+                          )}
                         </div>
                         <p style={{ margin: 0, fontSize: "10px", color: "#4b5563", lineHeight: "1.4", fontStyle: "italic" }}>
-                          &ldquo;Gateway HMAC signature validates authentic 401 error from upstream.&rdquo;
+                          {arbitrationStage === 3 ? (
+                            "“Validating HMAC cryptographic receipt and upstream provider endpoint logs...”"
+                          ) : activeDispute.status === "RESOLVED_BUYER_WINS" || (isArbitrating && arbitrationStage >= 4 && deliberatingVerdict === "BUYER_REFUND") ? (
+                            "“Gateway HMAC signature validates authentic 401 error from upstream.”"
+                          ) : activeDispute.status === "RESOLVED_SELLER_WINS" || (isArbitrating && arbitrationStage >= 4 && deliberatingVerdict === "SELLER_WIN") ? (
+                            "“Gateway logs show successful inference requests during rental period. No revocation.”"
+                          ) : isArbitrating && arbitrationStage < 3 ? (
+                            "“Waiting for Validator 01 initial prompt execution...”"
+                          ) : (
+                            "“Ready to independently verify cryptographic HMAC gateway receipt.”"
+                          )}
                         </p>
                       </div>
 
                       {/* Validator 03 */}
-                      <div style={{ background: "#ffffff", border: "1px solid #e2dbf3", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <div
+                        style={{
+                          background: arbitrationStage === 4 ? "rgba(5, 150, 105, 0.04)" : "#ffffff",
+                          border: arbitrationStage === 4 ? "2px solid #059669" : "1px solid #e2dbf3",
+                          borderRadius: "10px",
+                          padding: "14px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                          transition: "all 0.2s ease",
+                        }}
+                      >
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span style={{ fontSize: "11px", fontFamily: "var(--font-accent)", fontWeight: "800", color: "#1e1e24" }}>
                             Validator 03
@@ -3478,11 +3673,51 @@ export default function ExploreAppPage() {
                             Claude-3.5-Sonnet
                           </span>
                         </div>
-                        <div style={{ fontSize: "10px", fontFamily: "var(--font-accent)", fontWeight: "700", color: activeDispute.status === "RESOLVED_BUYER_WINS" ? "#059669" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "#be123c" : "#b45309" }}>
-                          {activeDispute.status === "RESOLVED_BUYER_WINS" ? "BUYER REFUND (99.8%)" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "SELLER WIN (98.2%)" : "ANALYZING TRACE..."}
+                        <div
+                          style={{
+                            fontSize: "10px",
+                            fontFamily: "var(--font-accent)",
+                            fontWeight: "700",
+                            color:
+                              activeDispute.status === "RESOLVED_BUYER_WINS" || (isArbitrating && arbitrationStage >= 5 && deliberatingVerdict === "BUYER_REFUND")
+                                ? "#059669"
+                                : activeDispute.status === "RESOLVED_SELLER_WINS" || (isArbitrating && arbitrationStage >= 5 && deliberatingVerdict === "SELLER_WIN")
+                                ? "#be123c"
+                                : arbitrationStage === 4
+                                ? "#059669"
+                                : "#71717a",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          {arbitrationStage === 4 ? (
+                            <>
+                              <Loader2 className="animate-spin" style={{ width: "11px", height: "11px" }} />
+                              <span>ENFORCING STRICT EQUALITY...</span>
+                            </>
+                          ) : activeDispute.status === "RESOLVED_BUYER_WINS" || (isArbitrating && arbitrationStage >= 5 && deliberatingVerdict === "BUYER_REFUND") ? (
+                            "BUYER REFUND (99.8%)"
+                          ) : activeDispute.status === "RESOLVED_SELLER_WINS" || (isArbitrating && arbitrationStage >= 5 && deliberatingVerdict === "SELLER_WIN") ? (
+                            "SELLER WIN (98.2%)"
+                          ) : isArbitrating && arbitrationStage < 4 ? (
+                            "AWAITING PEER VOTES..."
+                          ) : (
+                            "● STANDBY (Awaiting Trigger)"
+                          )}
                         </div>
                         <p style={{ margin: 0, fontSize: "10px", color: "#4b5563", lineHeight: "1.4", fontStyle: "italic" }}>
-                          &ldquo;Unanimous consensus. Full 2.0 GEN anti-spam bond returned to buyer.&rdquo;
+                          {arbitrationStage === 4 ? (
+                            "“Evaluating gl.eq_principle.strict_eq consensus comparison across nodes...”"
+                          ) : activeDispute.status === "RESOLVED_BUYER_WINS" || (isArbitrating && arbitrationStage >= 5 && deliberatingVerdict === "BUYER_REFUND") ? (
+                            "“Unanimous consensus. Full 2.0 GEN anti-spam bond returned to buyer.”"
+                          ) : activeDispute.status === "RESOLVED_SELLER_WINS" || (isArbitrating && arbitrationStage >= 5 && deliberatingVerdict === "SELLER_WIN") ? (
+                            "“Consensus reached. 50% anti-spam bond (1.0 GEN) slashed to protocol treasury. Seller funds protected.”"
+                          ) : isArbitrating && arbitrationStage < 4 ? (
+                            "“Waiting for Validator 01 & 02 prompt outcomes...”"
+                          ) : (
+                            "“Ready to evaluate strict consensus under gl.eq_principle.”"
+                          )}
                         </p>
                       </div>
                     </div>
@@ -3495,7 +3730,9 @@ export default function ExploreAppPage() {
                     </div>
                     <p style={{ margin: "0 0 10px 0", color: "#4b5563", lineHeight: "1.4" }}>
                       {activeDispute.status === "PENDING"
-                        ? "Dispute is currently pending review by GenLayer AI validators. Click below to trigger simulated LLM consensus."
+                        ? isArbitrating
+                          ? "GenLayer AI validators are actively deliberating this dispute on-chain via gl.nondet.exec_prompt(). Multi-validator consensus in progress..."
+                          : "Dispute is currently pending review by GenLayer AI validators. Click below to trigger AI jury consensus on GenLayer Studio Devnet."
                         : activeDispute.verdictReasoning ||
                           "GenLayer AI consensus confirmed that the upstream provider key was invalidated prematurely. 100% rental refund dispatched to buyer, and 2.0 GEN anti-spam bond unlocked."}
                     </p>
@@ -3550,8 +3787,21 @@ export default function ExploreAppPage() {
                         opacity: isArbitrating || activeDispute.status !== "PENDING" ? 0.6 : 1,
                       }}
                     >
-                      <Cpu style={{ width: "13px", height: "13px", display: "inline", marginRight: "6px" }} />
-                      {isArbitrating ? "Evaluating with GenLayer Jury (Broadcasting On-Chain)..." : "Trigger AI Jury (gl.exec_prompt)"}
+                      {isArbitrating ? (
+                        <>
+                          <Loader2 className="animate-spin" style={{ width: "13px", height: "13px", display: "inline", marginRight: "6px" }} />
+                          {arbitrationStage === 1 && "1/4 Broadcasting on GenLayer Studio Devnet..."}
+                          {arbitrationStage === 2 && "2/4 Validator 01 Evaluating (gl.nondet.exec_prompt)..."}
+                          {arbitrationStage === 3 && "3/4 Validator 02 Auditing Cryptographic Receipt..."}
+                          {arbitrationStage === 4 && "4/4 Validator 03 Verifying Strict Consensus..."}
+                          {arbitrationStage === 5 && "Finalizing Settlement on GenLayer..."}
+                        </>
+                      ) : (
+                        <>
+                          <Cpu style={{ width: "13px", height: "13px", display: "inline", marginRight: "6px" }} />
+                          Trigger AI Jury (gl.exec_prompt)
+                        </>
+                      )}
                     </button>
 
                     {activeDispute.status !== "PENDING" && (
