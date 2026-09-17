@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SUPPORTED_PROVIDERS } from "@/gateway/providers";
 
+// Ensure this route is never statically cached by Next.js
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
 export async function POST(req: NextRequest) {
   try {
     const { provider, apiKey, model } = await req.json();
@@ -22,7 +26,7 @@ export async function POST(req: NextRequest) {
     try {
       // Execute live HTTP probe against the provider's models endpoint
       let probeUrl = providerConfig.testEndpoint;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const headers: Record<string, string> = {};
 
       if (provider === "gemini") {
         probeUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`;
@@ -33,17 +37,23 @@ export async function POST(req: NextRequest) {
         headers["Authorization"] = `Bearer ${apiKey.trim()}`;
       }
 
+      console.log(`[PROBE] provider=${provider} url=${probeUrl} headers=${JSON.stringify(Object.keys(headers))}`);
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const resp = await fetch(probeUrl, {
         method: "GET",
         headers,
         signal: controller.signal,
+        cache: "no-store",
       });
       clearTimeout(timeoutId);
 
       statusCode = resp.status;
+      const respBody = await resp.text().catch(() => "");
+      console.log(`[PROBE] response status=${statusCode} body=${respBody.substring(0, 300)}`);
+
       if (resp.ok) {
         isLiveValid = true;
       } else if (resp.status === 401 || resp.status === 403 || resp.status === 400) {
