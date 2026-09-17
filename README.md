@@ -37,6 +37,7 @@ Settlement, native payable escrow custody, and dispute arbitration are powered n
 - [Seller Safe Capacity and Quota Estimation](#seller-safe-capacity-and-quota-estimation)
 - [Why GenLayer Intelligent Contracts?](#why-genlayer-intelligent-contracts)
 - [Security: The Virtual Sub-Key Architecture](#security-the-virtual-sub-key-architecture)
+- [Security: Why Probing Does Not Require an On-Chain Signed Txn (Zero Key Leakage)](#security-why-probing-does-not-require-an-on-chain-signed-txn-zero-key-leakage)
 - [Dual Listing Modes: Rent vs. Donate](#dual-listing-modes-rent-vs-donate)
 - [Protocol Economics and Dispute Resolution](#protocol-economics-and-dispute-resolution)
 - [Multi-Chain Architecture and Seamless Network Switching](#multi-chain-architecture-and-seamless-network-switching)
@@ -196,6 +197,43 @@ The buyer **NEVER** receives the seller raw API key (`sk-ant-...` or `sk-proj-..
 2. **Ephemeral Sub-Keys**: The buyer receives a unique sub-key prefix (`krdg_live_[hex]`).
 3. **Streaming Token Metering**: Every request and completion chunk is metered in real time.
 4. **HMAC Cryptographic Receipts**: Every call generates a signed receipt containing timestamp, latency, status code, prompt tokens, and completion tokens. This serves as tamper-evident evidence in the event of an AI Tribunal dispute.
+
+---
+
+### Security: Why Probing Does Not Require an On-Chain Signed Txn (Zero Key Leakage)
+
+A fundamental security principle of the Kridge architecture is **absolute upstream credential privacy**. Sellers frequently ask: *"Why doesn't the seller have to sign an on-chain transaction with their API key when running the credential health probe or creating a listing?"*
+
+#### The Fundamental Blockchain Exposure Problem
+> [!CAUTION]
+> **Public Blockchains Are 100% Transparent**: Everything included in an on-chain signed transaction—including smart contract function arguments, input parameters, and calldata—is permanently etched into the public ledger. Mempool listeners, public indexers, and blockchain explorers (such as Etherscan or GenLayer Explorer) index and display raw transaction input data in plaintext.
+>
+> If a seller signed a transaction that passed their master API key (`sk-proj-...` or `sk-ant-...`) directly to a smart contract to "prove" validity, **their secret key would be instantly leaked to the entire world**, vulnerable to immediate draining, unauthorized access, and provider account suspension.
+
+#### Kridge's Zero-Exposure Probing Architecture
+To eliminate this risk while maintaining verifiable marketplace integrity, Kridge decouples **credential validation** from **on-chain settlement** through a three-stage zero-exposure pipeline:
+
+1. **Gasless Off-Chain Pre-Flight Probing (`POST /api/probe`)**:
+   - When a seller enters their API key in the Seller Studio, Kridge executes a zero-gas, off-chain pre-flight probe over direct HTTPS from the secure Kridge Gateway sandbox to the official provider endpoint (`api.openai.com`, `api.anthropic.com`, etc.).
+   - This validates key active status, organization tier, model access, rate limits, and latency entirely in volatile server memory.
+   - **No transaction is signed, no gas is spent, and zero bytes are broadcast to the blockchain mempool or public explorer.**
+
+2. **Isolated Gateway Vault Encryption**:
+   - The master API key is stored securely in the local Gateway Vault encrypted using **AES-256-GCM**.
+   - The key is only accessible by the proxy router to inject upstream headers during active buyer sessions.
+   - The buyer is only ever issued an ephemeral **Virtual Sub-Key** (`krdg_live_...`) with strict token caps and time-to-live (TTL) limits.
+
+3. **On-Chain Listing & Validator Verification Without Secret Exposure (`verify_listing_health`)**:
+   - When registering a listing on GenLayer via `create_listing`, only non-sensitive marketplace metadata is passed in the on-chain transaction: `provider`, `model`, `price_per_k_tokens`, `total_tokens`, and a local reference ID.
+   - When GenLayer validators execute the on-chain health probe (`verify_listing_health`), the contract method accepts **only the public `listing_id`**:
+     ```python
+     @gl.public.write
+     def verify_listing_health(self, listing_id: int) -> bool:
+         # Operates solely on public listing_id; no private keys are ever accepted or stored on-chain
+     ```
+   - GenLayer validator nodes query public provider endpoint availability and gateway health via `gl.get_web_data`.
+
+Through this design, **sellers enjoy 100% credential safety with zero risk of key leakage**, while buyers and validators obtain transparent on-chain guarantees backed by GenLayer's payable escrow and optimistic dispute arbitration.
 
 ---
 
@@ -474,7 +512,7 @@ Kridge was engineered specifically for the **GenLayer Hackathon**:
 | **Live Credential Health Probing (`gl.get_web_data`)** | `verify_listing_health` authenticates seller credentials against live provider endpoints (`api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com`, `api.groq.com`, `api.deepseek.com`), detecting invalid/revoked keys on-chain before consumers rent. |
 | **Subjective AI Consensus (`gl.exec_prompt`)** | The **Kridge AI Tribunal** uses multi-LLM reasoning inside validator nodes to evaluate gateway logs and error traces, resolving disputes where deterministic code cannot decide fault. |
 | **Optimistic Democracy** | Standard rental sessions resolve optimistically, while disputed sessions escalate automatically to validator juries. |
-| **Native `genlayer-js` & Transaction Kit** | Production frontend integration directly invoking GenLayer contract functions, encoding GenVM calldata, displaying `<VerifyBadge />` components, and tracking real-time transactions on GenLayer Studio Devnet. |
+| **Native `genlayer-js` & Transaction Kit** | Production frontend integration directly invoking GenLayer contract functions, encoding GenVM calldata, providing responsive terminal UI interactions, and tracking real-time transactions on GenLayer Studio Devnet. |
 | **Cross-Chain Expansion (Coming Soon)** | Combined with **Hyperlane**, Kridge routes cross-chain payment intents from Base, zkSync Era, and Solana into GenLayer Intelligent Escrow. |
 
 ---
