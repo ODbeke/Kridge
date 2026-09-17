@@ -16,6 +16,7 @@ import {
 import { CountdownTimer } from "@/components/CountdownTimer";
 import {
   rentListingOnGenLayer,
+  fileDisputeOnGenLayer,
   resolveDisputeOnGenLayer,
   KRIDGE_MARKETPLACE_GENLAYER_ADDRESS,
   GENLAYER_EXPLORER_BASE_URL,
@@ -1535,7 +1536,7 @@ export default function ExploreAppPage() {
                       fontWeight: "bold",
                     }}
                   >
-                    $1.00 Anti-Spam Bond
+                    2.0 GEN Anti-Spam Bond
                   </span>
                 </div>
               </button>
@@ -3068,7 +3069,7 @@ export default function ExploreAppPage() {
                     }}
                   >
                     <ShieldAlert style={{ width: "13px", height: "13px", display: "inline", marginRight: "6px" }} />
-                    FILE NEW DISPUTE ($1.00 BOND)
+                    FILE NEW DISPUTE (2.0 GEN BOND)
                   </button>
                 </div>
               </div>
@@ -3090,7 +3091,7 @@ export default function ExploreAppPage() {
                     ESCROW BONDS LOCKED
                   </span>
                   <div style={{ fontFamily: "var(--font-accent)", fontSize: "22px", fontWeight: "800", color: "#422624", marginTop: "2px" }}>
-                    ${disputes.reduce((acc, d) => acc + (d.bondAmountUsd || 1.0), 0).toFixed(2)} USD
+                    {disputes.reduce((acc, d) => acc + (d.bondAmountGen || 2.0), 0).toFixed(1)} GEN
                   </div>
                   <span style={{ fontSize: "10px", color: "#71717a" }}>Anti-Sybil Complainant Bonds</span>
                 </div>
@@ -3169,7 +3170,7 @@ export default function ExploreAppPage() {
                 >
                   <strong style={{ color: "#422624" }}>How Escrow Disputes Work:</strong>
                   <div style={{ marginTop: "4px" }}>
-                    If an upstream API key is invalidated early or encounters server-side 401/403/429 errors during your rental session, you can stake a <strong>$1.00 Anti-Spam Bond</strong> to summon the GenLayer Multi-LLM Jury. Verified claims automatically refund 100% of your rental fee plus return your full bond.
+                    If an upstream API key is invalidated early or encounters server-side 401/403/429 errors during your rental session, you can stake a <strong>2.0 GEN Anti-Spam Bond</strong> to summon the GenLayer Multi-LLM Jury. Verified claims automatically refund 100% of your rental fee plus return your full bond.
                   </div>
                 </div>
 
@@ -3186,7 +3187,7 @@ export default function ExploreAppPage() {
                     }}
                   >
                     <ShieldAlert style={{ width: "13px", height: "13px", display: "inline", marginRight: "6px" }} />
-                    File Escrow Dispute ($1.00 Bond)
+                    File Escrow Dispute (2.0 GEN Bond)
                   </button>
                   <button
                     onClick={() => {
@@ -3270,7 +3271,7 @@ export default function ExploreAppPage() {
 
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "10px", fontFamily: "var(--font-accent)" }}>
                               <span style={{ color: "#059669", fontWeight: "700" }}>
-                                Bond: ${(dispute.bondAmountUsd || 1.0).toFixed(2)} USD
+                                Bond: {(dispute.bondAmountGen || 2.0).toFixed(1)} GEN
                               </span>
                               <span style={{ color: "#422624", fontWeight: "700", textTransform: "uppercase" }}>
                                 {dispute.provider}
@@ -3299,7 +3300,7 @@ export default function ExploreAppPage() {
                       </span>
                     </div>
                     <p style={{ margin: 0, fontSize: "11px", color: "#4b5563", lineHeight: "1.5" }}>
-                      Filing a dispute requires staking a <strong>$1.00 anti-spam bond</strong>. Valid claims (e.g. revoked API keys or upstream outages) return <strong>100% of the bond + full rental refund</strong>. Fraudulent or unsubstantiated claims forfeit 50% ($0.50) slashed to the treasury.
+                      Filing a dispute requires staking a <strong>2.0 GEN anti-spam bond</strong>. Valid claims (e.g. revoked API keys or upstream outages) return <strong>100% of the bond (2.0 GEN) + full rental refund</strong>. Fraudulent or unsubstantiated claims forfeit 50% (1.0 GEN) slashed to the treasury.
                     </p>
                   </div>
                 </div>
@@ -3310,7 +3311,7 @@ export default function ExploreAppPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", borderBottom: "1px solid #e2dbf3", paddingBottom: "16px" }}>
                     <div>
                       <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", color: "#422624", fontWeight: "800", letterSpacing: "0.06em", display: "block", marginBottom: "4px" }}>
-                        GENLAYER INTELLIGENT CONTRACT ARBITRATION #0X65
+                        GENLAYER INTELLIGENT CONTRACT ARBITRATION #0X177A
                       </span>
                       <h3 style={{ fontFamily: "var(--font-display)", fontSize: "20px", fontWeight: "800", color: "#1e1e24", margin: 0 }}>
                         {activeDispute.reason}
@@ -3382,11 +3383,18 @@ export default function ExploreAppPage() {
                       </div>
                       <div>
                         <span style={{ color: "#71717a", display: "block" }}>Anti-Spam Bond Staked:</span>
-                        <span style={{ fontWeight: "700", color: "#059669" }}>$1.00 USD (GenLayer Locked)</span>
+                        <span style={{ fontWeight: "700", color: "#059669" }}>2.0 GEN (GenLayer Locked)</span>
                       </div>
                       <div>
                         <span style={{ color: "#71717a", display: "block" }}>Smart Contract Arbiter:</span>
-                        <span style={{ fontWeight: "700", color: "#2563eb" }}>0x65...7e21 (Intelligent Contract)</span>
+                        <a
+                          href="https://explorer-studio-next.genlayer.com/address/0x177A9CE45D6FDAF677aD80Ded6F4BBb595CE8bD5"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontWeight: "700", color: "#2563eb", textDecoration: "underline" }}
+                        >
+                          0x177A...8bD5 (Intelligent Contract)
+                        </a>
                       </div>
                     </div>
 
@@ -3463,7 +3471,7 @@ export default function ExploreAppPage() {
                           {activeDispute.status === "RESOLVED_BUYER_WINS" ? "BUYER REFUND (99.8%)" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "SELLER WIN (98.2%)" : "ANALYZING TRACE..."}
                         </div>
                         <p style={{ margin: 0, fontSize: "10px", color: "#4b5563", lineHeight: "1.4", fontStyle: "italic" }}>
-                          &ldquo;Unanimous consensus. Full $1.00 anti-spam bond returned to buyer.&rdquo;
+                          &ldquo;Unanimous consensus. Full 2.0 GEN anti-spam bond returned to buyer.&rdquo;
                         </p>
                       </div>
                     </div>
@@ -3478,7 +3486,7 @@ export default function ExploreAppPage() {
                       {activeDispute.status === "PENDING"
                         ? "Dispute is currently pending review by GenLayer AI validators. Click below to trigger simulated LLM consensus."
                         : activeDispute.verdictReasoning ||
-                          "GenLayer AI consensus confirmed that the upstream provider key was invalidated prematurely. 100% rental refund dispatched to buyer, and $1.00 anti-spam bond unlocked."}
+                          "GenLayer AI consensus confirmed that the upstream provider key was invalidated prematurely. 100% rental refund dispatched to buyer, and 2.0 GEN anti-spam bond unlocked."}
                     </p>
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px dashed #e2dbf3", paddingTop: "10px", flexWrap: "wrap", gap: "10px" }}>
@@ -3492,10 +3500,10 @@ export default function ExploreAppPage() {
                         <span style={{ color: "#71717a" }}>Anti-Spam Bond: </span>
                         <strong style={{ color: activeDispute.status === "RESOLVED_BUYER_WINS" ? "#059669" : activeDispute.status === "RESOLVED_SELLER_WINS" ? "#be123c" : "#b45309" }}>
                           {activeDispute.status === "RESOLVED_BUYER_WINS"
-                            ? "$1.00 USD (100% Returned)"
+                            ? "2.0 GEN (100% Returned)"
                             : activeDispute.status === "RESOLVED_SELLER_WINS"
-                            ? "$0.50 USD (50% Slashed to Treasury)"
-                            : "$1.00 USD (Locked)"}
+                            ? "1.0 GEN (50% Slashed to Treasury)"
+                            : "2.0 GEN (Locked)"}
                         </strong>
                       </div>
                     </div>
@@ -3689,7 +3697,7 @@ export default function ExploreAppPage() {
                   lineHeight: "1.5",
                 }}
               >
-                🔒 A <strong>$1.00 Anti-Spam Bond</strong> will be locked in escrow. If your claim is valid, you receive 100% of the bond + full rental refund back. If false, 50% ($0.50) is slashed to the treasury.
+                🔒 A <strong>2.0 GEN Anti-Spam Bond</strong> will be locked in escrow. If your claim is valid, you receive 100% of the bond (2.0 GEN) + full rental refund back. If false, 50% (1.0 GEN) is slashed to the treasury.
               </div>
             </div>
 
@@ -3715,7 +3723,7 @@ export default function ExploreAppPage() {
                   background: "linear-gradient(135deg, #e11d48, #be123c)",
                 }}
               >
-                Lock $1.00 Bond &amp; File Dispute
+                Lock 2.0 GEN Bond &amp; File Dispute
               </button>
             </div>
           </div>

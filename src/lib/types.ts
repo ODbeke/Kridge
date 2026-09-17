@@ -52,6 +52,7 @@ export interface DisputeItem {
   reason: string;
   errorTrace: string;
   bondAmountUsd: number;
+  bondAmountGen?: number;
   status: "PENDING" | "RESOLVED_BUYER_WINS" | "RESOLVED_SELLER_WINS";
   verdictReasoning?: string;
   validatorVotes?: Array<{

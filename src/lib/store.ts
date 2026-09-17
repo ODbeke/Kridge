@@ -414,6 +414,7 @@ export function useKridgeStore() {
       reason,
       errorTrace,
       bondAmountUsd: 1.0,
+      bondAmountGen: 2.0,
       status: "PENDING",
     };
 

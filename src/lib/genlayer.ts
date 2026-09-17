@@ -120,18 +120,39 @@ export async function fileDisputeOnGenLayer(params: {
   // If in browser with window.ethereum on GenLayer, prompt user to sign on-chain transaction
   if (typeof window !== "undefined" && (window as any).ethereum) {
     try {
-      const currentChain = await (window as any).ethereum.request({ method: "eth_chainId" });
-      const hex = (currentChain || "").toLowerCase();
+      let sender = params.userAddress;
       const accounts = await (window as any).ethereum.request({ method: "eth_accounts" });
-      const sender = params.userAddress || accounts?.[0];
+      sender = sender || accounts?.[0];
+      if (!sender) {
+        const requested = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
+        sender = requested?.[0];
+      }
 
-      if ((hex === "0xf22d" || hex === "0xa179") && sender) {
+      let currentChain = await (window as any).ethereum.request({ method: "eth_chainId" });
+      let hex = (currentChain || "").toLowerCase();
+
+      // Switch to GenLayer if not currently active
+      if (hex !== "0xf22d" && hex !== "0xa179") {
+        try {
+          await (window as any).ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0xf22d" }],
+          });
+          currentChain = await (window as any).ethereum.request({ method: "eth_chainId" });
+          hex = (currentChain || "").toLowerCase();
+        } catch {}
+      }
+
+      if (sender) {
+        // Stake 2.0 native GEN bond into escrow contract
+        const bondWei = 2n * 10n**18n;
         const txHash = await (window as any).ethereum.request({
           method: "eth_sendTransaction",
           params: [
             {
               from: sender,
               to: KRIDGE_MARKETPLACE_GENLAYER_ADDRESS,
+              value: "0x" + bondWei.toString(16),
               data: "0x" + Buffer.from(
                 JSON.stringify({
                   method: "file_dispute",
@@ -176,12 +197,30 @@ export async function resolveDisputeOnGenLayer(
   // If in browser with window.ethereum on GenLayer, prompt user to broadcast on-chain settlement
   if (typeof window !== "undefined" && (window as any).ethereum) {
     try {
-      const currentChain = await (window as any).ethereum.request({ method: "eth_chainId" });
-      const hex = (currentChain || "").toLowerCase();
+      let sender = userAddress;
       const accounts = await (window as any).ethereum.request({ method: "eth_accounts" });
-      const sender = userAddress || accounts?.[0];
+      sender = sender || accounts?.[0];
+      if (!sender) {
+        const requested = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
+        sender = requested?.[0];
+      }
 
-      if ((hex === "0xf22d" || hex === "0xa179") && sender) {
+      let currentChain = await (window as any).ethereum.request({ method: "eth_chainId" });
+      let hex = (currentChain || "").toLowerCase();
+
+      // Switch to GenLayer if not currently active
+      if (hex !== "0xf22d" && hex !== "0xa179") {
+        try {
+          await (window as any).ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0xf22d" }],
+          });
+          currentChain = await (window as any).ethereum.request({ method: "eth_chainId" });
+          hex = (currentChain || "").toLowerCase();
+        } catch {}
+      }
+
+      if (sender) {
         const txHash = await (window as any).ethereum.request({
           method: "eth_sendTransaction",
           params: [
